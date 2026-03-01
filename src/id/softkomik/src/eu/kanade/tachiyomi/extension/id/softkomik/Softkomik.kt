@@ -103,9 +103,9 @@ class Softkomik : HttpSource() {
 
         val mangas = libData.data.map { manga ->
             SManga.create().apply {
-                setUrlWithoutDomain(manga.title_slug)
-                title = manga.title
-                thumbnail_url = "$coverUrl/${manga.gambar.removePrefix("/")}"
+                setUrlWithoutDomain(manga.title_slug!!)
+                title = manga.title!!
+                thumbnail_url = "$coverUrl/${manga.gambar!!.removePrefix("/")}"
             }
         }
         return MangasPage(mangas, libData.page < libData.maxPage)
@@ -121,7 +121,7 @@ class Softkomik : HttpSource() {
         val slug = response.request.url.pathSegments.lastOrNull()!!
         return SManga.create().apply {
             setUrlWithoutDomain(slug)
-            title = manga.title
+            title = manga.title!!
             author = manga.author
             description = manga.sinopsis
             genre = manga.Genre?.joinToString()
@@ -130,7 +130,7 @@ class Softkomik : HttpSource() {
                 "tamat" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
-            thumbnail_url = "$coverUrl/${manga.gambar.removePrefix("/")}"
+            thumbnail_url = "$coverUrl/${manga.gambar!!.removePrefix("/")}"
         }
     }
 
@@ -146,7 +146,7 @@ class Softkomik : HttpSource() {
         val dto = response.parseAs<ChapterListDto>()
         val slug = response.request.url.pathSegments[1]
         return dto.chapter.map { chapter ->
-            val chapterNumStr = chapter.chapter
+            val chapterNumStr = chapter.chapter!!
             val chapterNum = chapterNumStr.toFloatOrNull() ?: -1f
             val displayNum = formatChapterDisplay(chapterNumStr)
             SChapter.create().apply {
@@ -173,10 +173,10 @@ class Softkomik : HttpSource() {
         val data = response.extractNextJs<ChapterPageDataDto>()
             ?: throw Exception("Could not find chapter data")
 
-        val imageSrc = if (data.imageSrc.isEmpty()) {
+        val imageSrc = if (data.imageSrc.isNullOrEmpty()) {
             val slug = response.request.url.pathSegments[0]
             val chapter = response.request.url.pathSegments[2]
-            val url = "$apiUrl/komik/$slug/chapter/$chapter/img/${data._id}"
+            val url = "$apiUrl/komik/$slug/chapter/$chapter/img/${data._id!!}"
             client.newCall(GET(url, headers)).execute().use {
                 it.parseAs<ChapterPageImagesDto>().imageSrc
             }
@@ -184,7 +184,7 @@ class Softkomik : HttpSource() {
             data.imageSrc
         }
 
-        if (imageSrc.isEmpty()) {
+        if (imageSrc.isNullOrEmpty()) {
             throw Exception("No pages found")
         }
 
@@ -263,6 +263,7 @@ class Softkomik : HttpSource() {
                 return currentSessionSync
             }
 
+            client.newCall(GET("$baseUrl/", headers)).execute().close()
             client.newCall(POST("$baseUrl/api/me", headers, "".toRequestBody())).execute().close()
 
             val newSession = client.newCall(GET("$baseUrl/api/sessions", headers)).execute().use {
