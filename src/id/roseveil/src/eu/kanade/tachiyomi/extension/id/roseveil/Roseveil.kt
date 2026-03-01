@@ -10,11 +10,14 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
+import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import java.text.SimpleDateFormat
+import uy.kohesive.injekt.injectLazy
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 class Roseveil : HttpSource() {
@@ -29,12 +32,20 @@ class Roseveil : HttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
+    private val json: Json by injectLazy()
+
+    private val apiJson = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
+    override val client = network.client.newBuilder()
         .rateLimit(2)
         .build()
 
     override fun headersBuilder() = Headers.Builder()
         .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
 
     // ============================== Popular & Latest ==============================
     override fun popularMangaRequest(page: Int): Request {
@@ -115,7 +126,7 @@ class Roseveil : HttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET("$apiUrl/series/comic/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val data = response.parseAs<MangaDetailDto>()
+        val data = response.parseAs<MangaDetailDto>(apiJson)
         title = data.title
         author = data.author
         artist = data.artist
@@ -138,14 +149,14 @@ class Roseveil : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = response.parseAs<MangaDetailDto>()
+        val data = response.parseAs<MangaDetailDto>(apiJson)
         val seriesSlug = data.slug
         return data.units.map { unit ->
             SChapter.create().apply {
                 url = "$seriesSlug/chapter/${unit.slug}"
-                name = "Chapter ${unit.number.removeSuffix(".00")}"
+                name = "Chapter ${formatChapterNumber(unit.number)}"
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
-                date_upload = dateFormat.tryParse(unit.date)
+                date_upload = tryParse(unit.date)
             }
         }
     }
@@ -159,7 +170,7 @@ class Roseveil : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.parseAs<PageListDto>()
+        val data = response.parseAs<PageListDto>(apiJson)
         return data.chapter.pages.map { page ->
             Page(page.index - 1, "", page.url)
         }
@@ -169,7 +180,7 @@ class Roseveil : HttpSource() {
 
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
-        val data = response.parseAs<SearchResponseDto>()
+        val data = response.parseAs<SearchResponseDto>(apiJson)
         val mangas = data.data.map { item ->
             SManga.create().apply {
                 url = item.slug
@@ -180,7 +191,24 @@ class Roseveil : HttpSource() {
         return MangasPage(mangas, data.page < data.totalPages)
     }
 
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+    private fun formatChapterNumber(number: String): String {
+        return number.toFloatOrNull()?.let {
+            chapterNumberFormatter.format(it)
+        } ?: number
+    }
+
+    private val chapterNumberFormatter = DecimalFormat("#.##", DecimalFormatSymbols(Locale.US))
+
+    private fun tryParse(date: String?): Long {
+        if (date == null) return 0
+        return try {
+            dateFormat.parse(date)?.time ?: 0
+        } catch (_: Exception) {
+            0
+        }
+    }
+
+    private val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 
     // =============================== Filters ======================================
     override fun getFilterList(): FilterList = FilterList(
