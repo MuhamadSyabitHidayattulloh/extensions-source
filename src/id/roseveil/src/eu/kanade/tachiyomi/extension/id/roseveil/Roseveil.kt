@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.id.roseveil
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -11,7 +10,6 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
-import kotlinx.serialization.Serializable
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -100,6 +98,11 @@ class Roseveil : HttpSource() {
                     }
                     is SortFilter -> {
                         addQueryParameter("sort", filter.toUriPart())
+                    }
+                    is TypeFilter -> {
+                        if (filter.toUriPart().isNotBlank()) {
+                            addQueryParameter("genre", filter.toUriPart())
+                        }
                     }
                     is GenreFilter -> {
                         if (filter.toUriPart().isNotBlank()) {
@@ -191,145 +194,8 @@ class Roseveil : HttpSource() {
     override fun getFilterList(): FilterList = FilterList(
         SortFilter(),
         StatusFilter(),
+        TypeFilter(),
         GenreFilter(),
-    )
-
-    private class SortFilter :
-        UriPartFilter(
-            "Urutkan Berdasarkan",
-            arrayOf(
-                Pair("Paling Baru", "new"),
-                Pair("Paling Banyak Dilihat", "views"),
-                Pair("Rating Terbaik", "rating"),
-                Pair("A-Z", "title"),
-            ),
-        )
-
-    private class StatusFilter :
-        UriPartFilter(
-            "Status",
-            arrayOf(
-                Pair("Semua", ""),
-                Pair("Ongoing", "ONGOING"),
-                Pair("Completed", "COMPLETED"),
-            ),
-        )
-
-    private class GenreFilter :
-        UriPartFilter(
-            "Genre",
-            arrayOf(
-                Pair("Semua", ""),
-                Pair("Action", "action"),
-                Pair("Adult", "adult"),
-                Pair("Adventure", "adventure"),
-                Pair("Animals", "animals"),
-                Pair("Boys Love", "boys-love"),
-                Pair("Comedy", "comedy"),
-                Pair("Crime", "crime"),
-                Pair("Demon", "demon"),
-                Pair("Drama", "drama"),
-                Pair("Ecchi", "ecchi"),
-                Pair("Fantasy", "fantasy"),
-                Pair("Game", "game"),
-                Pair("Gender Bender", "gender-bender"),
-                Pair("Harem", "harem"),
-                Pair("Historical", "historical"),
-                Pair("Horror", "horror"),
-                Pair("Isekai", "isekai"),
-                Pair("Josei", "josei"),
-                Pair("Magic", "magic"),
-                Pair("Manhwa", "manhwa"),
-                Pair("Martial Arts", "martial-arts"),
-                Pair("Mature", "mature"),
-                Pair("Medical", "medical"),
-                Pair("Mirror", "mirror"),
-                Pair("Mystery", "mystery"),
-                Pair("Office Workers", "office-workers"),
-                Pair("Project", "project"),
-                Pair("Psychological", "psychological"),
-                Pair("Regression", "regression"),
-                Pair("Reincarnation", "reincarnation"),
-                Pair("Revenge", "revenge"),
-                Pair("Reverse Harem", "reverse-harem"),
-                Pair("Romance", "romance"),
-                Pair("Royalty", "royalty"),
-                Pair("School Life", "school-life"),
-                Pair("Sci Fi", "sci-fi"),
-                Pair("Seinen", "seinen"),
-                Pair("Shoujo", "shoujo"),
-                Pair("Shounen", "shounen"),
-                Pair("Shounen Ai", "shounen-ai"),
-                Pair("Slice Of Life", "slice-of-life"),
-                Pair("Smut", "smut"),
-                Pair("Super Power", "super-power"),
-                Pair("Supernatural", "supernatural"),
-                Pair("Survival", "survival"),
-                Pair("Thriller", "thriller"),
-                Pair("Transmigration", "transmigration"),
-                Pair("Yaoi", "yaoi"),
-            ),
-        )
-
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) : Filter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
-    }
-
-    // =============================== DTOs =========================================
-    @Serializable
-    data class SearchResponseDto(
-        val data: List<MangaItemDto>,
-        val page: Int,
-        val total_pages: Int,
-    )
-
-    @Serializable
-    data class MangaItemDto(
-        val title: String,
-        val slug: String,
-        val poster_image_url: String? = null,
-    )
-
-    @Serializable
-    data class MangaDetailDto(
-        val title: String,
-        val slug: String,
-        val synopsis: String? = null,
-        val poster_image_url: String? = null,
-        val author_name: String? = null,
-        val artist_name: String? = null,
-        val comic_status: String? = null,
-        val genres: List<GenreDto> = emptyList(),
-        val units: List<ChapterUnitDto> = emptyList(),
-    )
-
-    @Serializable
-    data class GenreDto(
-        val name: String,
-    )
-
-    @Serializable
-    data class ChapterUnitDto(
-        val title: String,
-        val slug: String,
-        val number: String,
-        val created_at: String? = null,
-    )
-
-    @Serializable
-    data class PageListDto(
-        val chapter: ChapterDetailDto,
-    )
-
-    @Serializable
-    data class ChapterDetailDto(
-        val pages: List<PageDto>,
-    )
-
-    @Serializable
-    data class PageDto(
-        val page_number: Int,
-        val image_url: String,
     )
 
     companion object {
