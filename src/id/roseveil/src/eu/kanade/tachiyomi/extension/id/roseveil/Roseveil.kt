@@ -99,6 +99,9 @@ class Roseveil : HttpSource() {
                     is SortFilter -> {
                         addQueryParameter("sort", filter.toUriPart())
                     }
+                    is OrderFilter -> {
+                        addQueryParameter("order", filter.toUriPart())
+                    }
                     is TypeFilter -> {
                         if (filter.toUriPart().isNotBlank()) {
                             addQueryParameter("subtype", filter.toUriPart())
@@ -193,6 +196,7 @@ class Roseveil : HttpSource() {
     // =============================== Filters ======================================
     override fun getFilterList(): FilterList = FilterList(
         SortFilter(),
+        OrderFilter(),
         StatusFilter(),
         TypeFilter(),
         GenreFilter(),

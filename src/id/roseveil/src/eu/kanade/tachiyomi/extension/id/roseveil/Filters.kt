@@ -9,7 +9,16 @@ class SortFilter :
             Pair("Paling Baru", "new"),
             Pair("Paling Banyak Dilihat", "views"),
             Pair("Rating Terbaik", "rating"),
-            Pair("A-Z", "title"),
+            Pair("Judul", "title"),
+        ),
+    )
+
+class OrderFilter :
+    UriPartFilter(
+        "Urutan",
+        arrayOf(
+            Pair("Menurun (Z-A / Terbaru)", "desc"),
+            Pair("Meningkat (A-Z / Terlama)", "asc"),
         ),
     )
 
