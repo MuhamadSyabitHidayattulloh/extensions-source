@@ -80,9 +80,9 @@ class Roseveil : HttpSource() {
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(SLUG_PREFIX)) {
             val slug = query.substringAfter(SLUG_PREFIX)
-            val manga = SManga.create().apply { url = "/comic/$slug" }
+            val manga = SManga.create().apply { url = slug }
             return fetchMangaDetails(manga).map {
-                MangasPage(listOf(it.apply { url = "/comic/$slug" }), false)
+                MangasPage(listOf(it.apply { url = slug }), false)
             }
         }
         return super.fetchSearchManga(page, query, filters)
@@ -132,6 +132,8 @@ class Roseveil : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage = parseMangaPage(response)
 
     // =============================== Manga Details ================================
+    override fun getMangaUrl(manga: SManga): String = "$baseUrl/comic/${manga.url}"
+
     override fun mangaDetailsRequest(manga: SManga): Request {
         val slug = manga.url.substringAfterLast("/")
         return GET("$apiUrl/series/comic/$slug", headers)
@@ -156,6 +158,8 @@ class Roseveil : HttpSource() {
     }
 
     // =============================== Chapters =====================================
+    override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/comic/${chapter.url}"
+
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -163,8 +167,8 @@ class Roseveil : HttpSource() {
         val seriesSlug = data.slug
         return data.units.map { unit ->
             SChapter.create().apply {
-                url = "/comic/$seriesSlug/${unit.slug}"
-                name = "Chapter ${unit.number.substringBefore(".00")}"
+                url = "$seriesSlug/${unit.slug}"
+                name = if (unit.title.isNullOrBlank()) "Chapter ${unit.number.substringBefore(".00")}" else unit.title
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(unit.date)
             }
@@ -173,8 +177,9 @@ class Roseveil : HttpSource() {
 
     // =============================== Page List ====================================
     override fun pageListRequest(chapter: SChapter): Request {
-        val seriesSlug = chapter.url.split("/")[2]
-        val chapterSlug = chapter.url.split("/")[3]
+        val parts = chapter.url.split("/")
+        val seriesSlug = parts[0]
+        val chapterSlug = parts[1]
         return GET("$apiUrl/series/comic/$seriesSlug/chapter/$chapterSlug", headers)
     }
 
@@ -192,7 +197,7 @@ class Roseveil : HttpSource() {
         val data = response.parseAs<SearchResponseDto>(apiJson)
         val mangas = data.data.map { item ->
             SManga.create().apply {
-                url = "/comic/${item.slug}"
+                url = item.slug
                 title = item.title
                 thumbnail_url = item.thumbnail
             }
