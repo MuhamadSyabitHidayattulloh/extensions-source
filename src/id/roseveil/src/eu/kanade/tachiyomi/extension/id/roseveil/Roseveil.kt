@@ -31,13 +31,12 @@ class Roseveil : HttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .build()
 
     override fun headersBuilder() = Headers.Builder()
         .add("Referer", "$baseUrl/")
-        .add("Origin", baseUrl)
 
     // ============================== Popular & Latest ==============================
     override fun popularMangaRequest(page: Int): Request {
@@ -136,7 +135,10 @@ class Roseveil : HttpSource() {
     }
 
     // =============================== Chapters =====================================
-    override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/comic/${chapter.url}"
+    override fun getChapterUrl(chapter: SChapter): String {
+        val parts = chapter.url.split("/")
+        return "$baseUrl/comic/${parts[0]}/chapter/${parts[2]}"
+    }
 
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
