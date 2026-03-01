@@ -134,10 +134,7 @@ class Roseveil : HttpSource() {
     // =============================== Manga Details ================================
     override fun getMangaUrl(manga: SManga): String = "$baseUrl/comic/${manga.url}"
 
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        val slug = manga.url.substringAfterLast("/")
-        return GET("$apiUrl/series/comic/$slug", headers)
-    }
+    override fun mangaDetailsRequest(manga: SManga): Request = GET("$apiUrl/series/comic/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
         val data = response.parseAs<MangaDetailDto>(apiJson)
@@ -167,8 +164,8 @@ class Roseveil : HttpSource() {
         val seriesSlug = data.slug
         return data.units.map { unit ->
             SChapter.create().apply {
-                url = "$seriesSlug/${unit.slug}"
-                name = if (unit.title.isNullOrBlank()) "Chapter ${unit.number.substringBefore(".00")}" else unit.title
+                url = "$seriesSlug/chapter/${unit.slug}"
+                name = "Chapter ${unit.number.removeSuffix(".00")}"
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(unit.date)
             }
@@ -179,7 +176,7 @@ class Roseveil : HttpSource() {
     override fun pageListRequest(chapter: SChapter): Request {
         val parts = chapter.url.split("/")
         val seriesSlug = parts[0]
-        val chapterSlug = parts[1]
+        val chapterSlug = parts[2]
         return GET("$apiUrl/series/comic/$seriesSlug/chapter/$chapterSlug", headers)
     }
 
