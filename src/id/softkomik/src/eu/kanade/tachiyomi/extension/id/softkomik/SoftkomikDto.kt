@@ -11,17 +11,17 @@ data class LibDataDto(
 
 @Serializable
 data class MangaDto(
-    val gambar: String? = "",
-    val title: String? = "",
-    val title_slug: String? = "",
+    val gambar: String = "",
+    val title: String = "",
+    val title_slug: String = "",
     val status: String? = null,
     val type: String? = null,
 )
 
 @Serializable
 data class MangaDetailsDto(
-    val gambar: String? = "",
-    val title: String? = "",
+    val gambar: String = "",
+    val title: String = "",
     val author: String? = null,
     val Genre: List<String>? = emptyList(),
     val sinopsis: String? = null,
@@ -31,18 +31,18 @@ data class MangaDetailsDto(
 
 @Serializable
 data class ChapterDto(
-    val chapter: String? = "",
+    val chapter: String = "",
 )
 
 @Serializable
 data class ChapterPageImagesDto(
-    val imageSrc: List<String>? = emptyList(),
+    val imageSrc: List<String> = emptyList(),
 )
 
 @Serializable
 data class ChapterPageDataDto(
-    val _id: String? = "",
-    val imageSrc: List<String>? = emptyList(),
+    val _id: String = "",
+    val imageSrc: List<String> = emptyList(),
     val storageInter2: Boolean? = false,
 )
 
