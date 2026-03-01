@@ -31,12 +31,16 @@ class Roseveil : HttpSource() {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
+    // Perubahan id dikarenakan perubahan struktur path url manga dari /manga ke /comic
+    override val id = 5440703554476602330
+
+    override val client = network.client.newBuilder()
         .rateLimit(2)
         .build()
 
     override fun headersBuilder() = Headers.Builder()
         .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
 
     // ============================== Popular & Latest ==============================
     override fun popularMangaRequest(page: Int): Request {
