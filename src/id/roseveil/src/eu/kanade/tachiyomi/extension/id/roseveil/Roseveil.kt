@@ -18,6 +18,7 @@ import okhttp3.Response
 import uy.kohesive.injekt.injectLazy
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Roseveil : HttpSource() {
@@ -39,7 +40,7 @@ class Roseveil : HttpSource() {
         coerceInputValues = true
     }
 
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .build()
 
@@ -156,7 +157,7 @@ class Roseveil : HttpSource() {
                 url = "$seriesSlug/chapter/${unit.slug}"
                 name = "Chapter ${formatChapterNumber(unit.number)}"
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
-                date_upload = tryParse(unit.date)
+                date_upload = dateFormat.tryParse(unit.date)
             }
         }
     }
@@ -191,24 +192,13 @@ class Roseveil : HttpSource() {
         return MangasPage(mangas, data.page < data.totalPages)
     }
 
-    private fun formatChapterNumber(number: String): String {
-        return number.toFloatOrNull()?.let {
-            chapterNumberFormatter.format(it)
-        } ?: number
-    }
+    private fun formatChapterNumber(number: String): String = number.toFloatOrNull()?.let {
+        chapterNumberFormatter.format(it)
+    } ?: number
 
     private val chapterNumberFormatter = DecimalFormat("#.##", DecimalFormatSymbols(Locale.US))
 
-    private fun tryParse(date: String?): Long {
-        if (date == null) return 0
-        return try {
-            dateFormat.parse(date)?.time ?: 0
-        } catch (_: Exception) {
-            0
-        }
-    }
-
-    private val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 
     // =============================== Filters ======================================
     override fun getFilterList(): FilterList = FilterList(
@@ -218,4 +208,8 @@ class Roseveil : HttpSource() {
         TypeFilter(),
         GenreFilter(),
     )
+
+    companion object {
+        const val SLUG_PREFIX = "slug:"
+    }
 }
