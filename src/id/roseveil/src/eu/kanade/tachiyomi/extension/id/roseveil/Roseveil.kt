@@ -131,18 +131,18 @@ class Roseveil : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
         val data = response.parseAs<MangaDetailDto>()
         title = data.title
-        author = data.author_name
-        artist = data.artist_name
+        author = data.author
+        artist = data.artist
         description = data.synopsis
         genre = data.genres.joinToString { it.name }
-        status = when (data.comic_status?.uppercase()) {
+        status = when (data.status?.uppercase()) {
             "ONGOING" -> SManga.ONGOING
             "COMPLETED" -> SManga.COMPLETED
             "HIATUS" -> SManga.ON_HIATUS
             "CANCELED" -> SManga.CANCELLED
             else -> SManga.UNKNOWN
         }
-        thumbnail_url = data.poster_image_url
+        thumbnail_url = data.thumbnail
         initialized = true
     }
 
@@ -157,9 +157,9 @@ class Roseveil : HttpSource() {
                 url = "/comic/$seriesSlug/${unit.slug}"
                 name = unit.title
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
-                date_upload = dateFormat.tryParse(unit.created_at)
+                date_upload = dateFormat.tryParse(unit.date)
             }
-        }.reversed()
+        }
     }
 
     // =============================== Page List ====================================
@@ -172,7 +172,7 @@ class Roseveil : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val data = response.parseAs<PageListDto>()
         return data.chapter.pages.map { page ->
-            Page(page.page_number - 1, "", page.image_url)
+            Page(page.index - 1, "", page.url)
         }
     }
 
@@ -185,10 +185,10 @@ class Roseveil : HttpSource() {
             SManga.create().apply {
                 url = "/comic/${item.slug}"
                 title = item.title
-                thumbnail_url = item.poster_image_url
+                thumbnail_url = item.thumbnail
             }
         }
-        return MangasPage(mangas, data.page < data.total_pages)
+        return MangasPage(mangas, data.page < data.totalPages)
     }
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
