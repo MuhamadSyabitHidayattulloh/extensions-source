@@ -10,12 +10,10 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
-import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
@@ -33,14 +31,7 @@ class Roseveil : HttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
-
-    private val apiJson = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-    }
-
-    override val client = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .rateLimit(2)
         .build()
 
@@ -127,7 +118,7 @@ class Roseveil : HttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET("$apiUrl/series/comic/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val data = response.parseAs<MangaDetailDto>(apiJson)
+        val data = response.parseAs<MangaDetailDto>()
         title = data.title
         author = data.author
         artist = data.artist
@@ -150,7 +141,7 @@ class Roseveil : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = response.parseAs<MangaDetailDto>(apiJson)
+        val data = response.parseAs<MangaDetailDto>()
         val seriesSlug = data.slug
         return data.units.map { unit ->
             SChapter.create().apply {
@@ -171,7 +162,7 @@ class Roseveil : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.parseAs<PageListDto>(apiJson)
+        val data = response.parseAs<PageListDto>()
         return data.chapter.pages.map { page ->
             Page(page.index - 1, "", page.url)
         }
@@ -179,9 +170,17 @@ class Roseveil : HttpSource() {
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
+    override fun imageRequest(page: Page): Request {
+        val newHeaders = headersBuilder()
+            .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+            .build()
+
+        return GET(page.imageUrl!!, newHeaders)
+    }
+
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
-        val data = response.parseAs<SearchResponseDto>(apiJson)
+        val data = response.parseAs<SearchResponseDto>()
         val mangas = data.data.map { item ->
             SManga.create().apply {
                 url = item.slug
@@ -208,8 +207,4 @@ class Roseveil : HttpSource() {
         TypeFilter(),
         GenreFilter(),
     )
-
-    companion object {
-        const val SLUG_PREFIX = "slug:"
-    }
 }

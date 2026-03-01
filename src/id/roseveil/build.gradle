@@ -2,6 +2,7 @@ ext {
     extName = 'Roseveil'
     extClass = '.Roseveil'
     extVersionCode = 46
+    baseUrl = 'https://roseveil.org'
     isNsfw = true
 }
 
