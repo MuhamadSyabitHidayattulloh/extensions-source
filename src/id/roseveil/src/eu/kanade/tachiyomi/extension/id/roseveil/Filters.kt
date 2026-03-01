@@ -17,8 +17,8 @@ class OrderFilter :
     UriPartFilter(
         "Urutan",
         arrayOf(
-            Pair("Menurun (Z-A / Terbaru)", "desc"),
-            Pair("Meningkat (A-Z / Terlama)", "asc"),
+            Pair("Menurun", "desc"),
+            Pair("Meningkat", "asc"),
         ),
     )
 

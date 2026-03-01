@@ -10,13 +10,10 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
-import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
-import rx.Observable
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -32,20 +29,12 @@ class Roseveil : HttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
-
-    private val apiJson = Json {
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-    }
-
-    override val client = network.client.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .rateLimit(2)
         .build()
 
     override fun headersBuilder() = Headers.Builder()
         .add("Referer", "$baseUrl/")
-        .add("Origin", baseUrl)
 
     // ============================== Popular & Latest ==============================
     override fun popularMangaRequest(page: Int): Request {
@@ -77,17 +66,6 @@ class Roseveil : HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage = parseMangaPage(response)
 
     // =============================== Search =======================================
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(SLUG_PREFIX)) {
-            val slug = query.substringAfter(SLUG_PREFIX)
-            val manga = SManga.create().apply { url = slug }
-            return fetchMangaDetails(manga).map {
-                MangasPage(listOf(it.apply { url = slug }), false)
-            }
-        }
-        return super.fetchSearchManga(page, query, filters)
-    }
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$apiUrl/search".toHttpUrl().newBuilder().apply {
             addQueryParameter("type", "COMIC")
@@ -137,7 +115,7 @@ class Roseveil : HttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET("$apiUrl/series/comic/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga = SManga.create().apply {
-        val data = response.parseAs<MangaDetailDto>(apiJson)
+        val data = response.parseAs<MangaDetailDto>()
         title = data.title
         author = data.author
         artist = data.artist
@@ -160,7 +138,7 @@ class Roseveil : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val data = response.parseAs<MangaDetailDto>(apiJson)
+        val data = response.parseAs<MangaDetailDto>()
         val seriesSlug = data.slug
         return data.units.map { unit ->
             SChapter.create().apply {
@@ -181,7 +159,7 @@ class Roseveil : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.parseAs<PageListDto>(apiJson)
+        val data = response.parseAs<PageListDto>()
         return data.chapter.pages.map { page ->
             Page(page.index - 1, "", page.url)
         }
@@ -191,7 +169,7 @@ class Roseveil : HttpSource() {
 
     // =============================== Utilities ====================================
     private fun parseMangaPage(response: Response): MangasPage {
-        val data = response.parseAs<SearchResponseDto>(apiJson)
+        val data = response.parseAs<SearchResponseDto>()
         val mangas = data.data.map { item ->
             SManga.create().apply {
                 url = item.slug
@@ -212,8 +190,4 @@ class Roseveil : HttpSource() {
         TypeFilter(),
         GenreFilter(),
     )
-
-    companion object {
-        const val SLUG_PREFIX = "slug:"
-    }
 }
