@@ -164,7 +164,7 @@ class Roseveil : HttpSource() {
         return data.units.map { unit ->
             SChapter.create().apply {
                 url = "/comic/$seriesSlug/${unit.slug}"
-                name = if (unit.title.isNullOrBlank()) "Chapter ${unit.number}" else unit.title
+                name = "Chapter ${unit.number.substringBefore(".00")}"
                 chapter_number = unit.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(unit.date)
             }
