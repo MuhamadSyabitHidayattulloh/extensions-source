@@ -4,22 +4,22 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SearchResponseDto(
-    val data: List<MangaItemDto>,
-    val page: Int,
-    val total_pages: Int,
+    val data: List<MangaItemDto> = emptyList(),
+    val page: Int = 0,
+    val total_pages: Int = 0,
 )
 
 @Serializable
 data class MangaItemDto(
-    val title: String,
-    val slug: String,
+    val title: String = "",
+    val slug: String = "",
     val poster_image_url: String? = null,
 )
 
 @Serializable
 data class MangaDetailDto(
-    val title: String,
-    val slug: String,
+    val title: String = "",
+    val slug: String = "",
     val synopsis: String? = null,
     val poster_image_url: String? = null,
     val author_name: String? = null,
@@ -31,29 +31,29 @@ data class MangaDetailDto(
 
 @Serializable
 data class GenreDto(
-    val name: String,
+    val name: String = "",
 )
 
 @Serializable
 data class ChapterUnitDto(
-    val title: String,
-    val slug: String,
-    val number: String,
+    val title: String = "",
+    val slug: String = "",
+    val number: String = "",
     val created_at: String? = null,
 )
 
 @Serializable
 data class PageListDto(
-    val chapter: ChapterDetailDto,
+    val chapter: ChapterDetailDto = ChapterDetailDto(),
 )
 
 @Serializable
 data class ChapterDetailDto(
-    val pages: List<PageDto>,
+    val pages: List<PageDto> = emptyList(),
 )
 
 @Serializable
 data class PageDto(
-    val page_number: Int,
-    val image_url: String,
+    val page_number: Int = 0,
+    val image_url: String = "",
 )

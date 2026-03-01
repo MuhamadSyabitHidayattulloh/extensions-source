@@ -28,9 +28,10 @@ class TypeFilter :
         "Tipe",
         arrayOf(
             Pair("Semua", ""),
-            Pair("Manga", "manga"),
-            Pair("Manhwa", "manhwa"),
-            Pair("Manhua", "manhua"),
+            Pair("Manga", "MANGA"),
+            Pair("Manhwa", "MANHWA"),
+            Pair("Manhua", "MANHUA"),
+            Pair("Comic", "COMIC"),
         ),
     )
 
@@ -58,6 +59,7 @@ class GenreFilter :
             Pair("Isekai", "isekai"),
             Pair("Josei", "josei"),
             Pair("Magic", "magic"),
+            Pair("Manhwa", "manhwa"),
             Pair("Martial Arts", "martial-arts"),
             Pair("Mature", "mature"),
             Pair("Medical", "medical"),

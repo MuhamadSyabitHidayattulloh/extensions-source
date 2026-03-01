@@ -101,7 +101,7 @@ class Roseveil : HttpSource() {
                     }
                     is TypeFilter -> {
                         if (filter.toUriPart().isNotBlank()) {
-                            addQueryParameter("genre", filter.toUriPart())
+                            addQueryParameter("subtype", filter.toUriPart())
                         }
                     }
                     is GenreFilter -> {
