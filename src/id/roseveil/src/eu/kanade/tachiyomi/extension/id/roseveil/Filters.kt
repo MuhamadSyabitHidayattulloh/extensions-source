@@ -20,6 +20,7 @@ class StatusFilter :
             Pair("Semua", ""),
             Pair("Ongoing", "ONGOING"),
             Pair("Completed", "COMPLETED"),
+            Pair("Hiatus", "HIATUS"),
         ),
     )
 
@@ -31,7 +32,6 @@ class TypeFilter :
             Pair("Manga", "MANGA"),
             Pair("Manhwa", "MANHWA"),
             Pair("Manhua", "MANHUA"),
-            Pair("Comic", "COMIC"),
         ),
     )
 

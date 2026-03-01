@@ -135,7 +135,7 @@ class Roseveil : HttpSource() {
         status = when (data.comic_status?.uppercase()) {
             "ONGOING" -> SManga.ONGOING
             "COMPLETED" -> SManga.COMPLETED
-            "ONHOLD" -> SManga.ON_HIATUS
+            "HIATUS" -> SManga.ON_HIATUS
             "CANCELED" -> SManga.CANCELLED
             else -> SManga.UNKNOWN
         }
