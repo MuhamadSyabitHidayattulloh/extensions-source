@@ -68,8 +68,13 @@ class Buttsmithy : HttpSource() {
         pageNr: Float = 0f,
         allChapters: MutableList<SChapter> = mutableListOf(),
     ): MutableList<SChapter> {
-        val currentDoc = client.newCall(GET(currentPageUrl, headers)).execute().asJsoup()
-        val currentPageComicPage = currentDoc.select("#comic img").first()!!
+        val response = client.newCall(GET(currentPageUrl, headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            return allChapters
+        }
+        val currentDoc = response.asJsoup()
+        val currentPageComicPage = currentDoc.select("#comic img").first() ?: return allChapters
         val chapterTitle = currentPageComicPage.attr("alt")
 
         val chapter = SChapter.create().apply {
@@ -120,7 +125,12 @@ class Buttsmithy : HttpSource() {
     ): MutableList<SChapter> {
         val pageNrRegex = "p*[0-9]+".toRegex()
 
-        val currentDoc = client.newCall(GET(currentPageUrl, headers)).execute().asJsoup()
+        val response = client.newCall(GET(currentPageUrl, headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            return allChapters
+        }
+        val currentDoc = response.asJsoup()
         val pagesAsChapters = currentDoc.select("article.has-post-thumbnail .post-content")
             .mapIndexed { index, postElement ->
                 val postTitleElement = postElement.select(".post-info .post-title a")
@@ -218,7 +228,9 @@ class Buttsmithy : HttpSource() {
         SManga.COMPLETED
     }
 
-    private fun extractChapterTitleFromPageDoc(doc: Document): String = doc.select(".comic-chapter a").first()!!.text().lowercase()
+    private fun extractChapterTitleFromPageDoc(doc: Document): String = doc.select(".comic-chapter a").firstOrNull()?.text()?.lowercase()
+        ?: doc.select("#chapter option.level-0").firstOrNull()?.text()?.lowercase()
+        ?: ""
 
     private fun chapterTitleToChapterUrlName(chapTitle: String): String = when (chapTitle.lowercase()) {
         "chapter 1" -> "chapter-1v2"
@@ -258,7 +270,7 @@ class Buttsmithy : HttpSource() {
 
     override fun imageUrlParse(response: Response): String {
         val pageDoc = response.asJsoup()
-        return pageDoc.select("#comic").select("img[src]").attr("href")
+        return pageDoc.select("#comic img[src]").attr("abs:src")
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
@@ -290,8 +302,13 @@ class Buttsmithy : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga = throw UnsupportedOperationException()
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        val comicPageDoc = client.newCall(GET(chapter.url, headers)).execute().asJsoup()
-        val imageUrl = comicPageDoc.select("#comic img").attr("src")
+        val response = client.newCall(GET(chapter.url, headers)).execute()
+        if (!response.isSuccessful) {
+            response.close()
+            return Observable.just(emptyList())
+        }
+        val comicPageDoc = response.asJsoup()
+        val imageUrl = comicPageDoc.select("#comic img").attr("abs:src")
         val comicPage = Page(0, "", imageUrl)
 
         return Observable.just(listOf(comicPage))
