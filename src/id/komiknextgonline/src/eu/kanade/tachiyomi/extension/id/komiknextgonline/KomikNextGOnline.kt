@@ -113,7 +113,8 @@ class KomikNextGOnline : ParsedHttpSource() {
         status = SManga.COMPLETED
         update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
 
-        thumbnail_url = transformThumbnailUrl(document.selectFirst("#comic img, .entry-content img")?.attr("abs:src") ?: "")
+        // og:image contains the color cover/featured image consistent with the list
+        thumbnail_url = document.selectFirst("meta[property=og:image]")?.attr("content")
     }
 
     // Chapters
