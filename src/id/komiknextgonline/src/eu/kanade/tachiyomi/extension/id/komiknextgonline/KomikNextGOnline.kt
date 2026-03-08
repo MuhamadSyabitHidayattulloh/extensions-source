@@ -113,7 +113,7 @@ class KomikNextGOnline : ParsedHttpSource() {
         status = SManga.COMPLETED
         update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
 
-        thumbnail_url = transformThumbnailUrl(document.selectFirst(".entry-content img")?.attr("abs:src") ?: "")
+        thumbnail_url = transformThumbnailUrl(document.selectFirst("#comic img, .entry-content img")?.attr("abs:src") ?: "")
     }
 
     // Chapters
@@ -135,9 +135,9 @@ class KomikNextGOnline : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException()
 
     // Pages
-    override fun pageListParse(document: Document): List<Page> = document.select(".entry-content img.size-full").mapIndexed { i, element ->
+    override fun pageListParse(document: Document): List<Page> = document.select("#spliced-comic img, #comic img.size-full").mapIndexed { i, element ->
         Page(i, "", element.attr("abs:src"))
-    }
+    }.distinctBy { it.imageUrl }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
