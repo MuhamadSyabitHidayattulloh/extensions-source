@@ -40,13 +40,13 @@ class KomikNextGOnline : ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun popularMangaSelector() = "div#left-content ul#comic-list li.comic"
+    override fun popularMangaSelector() = "div#left-content .comic"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst("a")!!
-        title = element.select(".comic-title").text().substringAfter(". ")
+        val link = element.selectFirst(".comic-title a, .entry-title a, a")!!
+        title = element.select(".comic-title, .entry-title").text().substringAfter(". ")
         setUrlWithoutDomain(link.attr("abs:href"))
-        thumbnail_url = transformThumbnailUrl(element.select(".thmb img").attr("abs:src"))
+        thumbnail_url = transformThumbnailUrl(element.select(".thmb img, .post-thumbnail img, img").attr("abs:src"))
     }
 
     override fun popularMangaNextPageSelector() = ".next.page-numbers"
@@ -120,7 +120,7 @@ class KomikNextGOnline : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> = document.select("#spliced-comic img, #comic img.size-full").mapIndexed { i, element ->
-        Page(i, "", element.attr("abs:src")!!)
+        Page(i, "", element.attr("abs:src"))
     }.distinctBy { it.imageUrl }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
