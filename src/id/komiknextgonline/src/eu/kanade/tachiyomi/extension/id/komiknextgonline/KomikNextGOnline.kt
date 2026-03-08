@@ -43,11 +43,10 @@ class KomikNextGOnline : ParsedHttpSource() {
     override fun popularMangaSelector() = "div#left-content ul#comic-list li.comic"
 
     override fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst("a")
-        title = element.select(".comic-title").text()
-        setUrlWithoutDomain(link?.attr("abs:href") ?: "")
+        val link = element.selectFirst("a")!!
+        title = element.select(".comic-title").text().substringAfter(". ")
+        setUrlWithoutDomain(link.attr("abs:href"))
         thumbnail_url = transformThumbnailUrl(element.select(".thmb img").attr("abs:src"))
-        update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
     }
 
     override fun popularMangaNextPageSelector() = ".next.page-numbers"
@@ -95,26 +94,10 @@ class KomikNextGOnline : ParsedHttpSource() {
 
     // Details
     override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
-        title = document.selectFirst(".entry-title")?.text() ?: ""
-        description = document.select(".entry-content p").not(":has(img, a, script)").text()
-
-        val genres = mutableListOf<String>()
-        val bodyClasses = document.selectFirst("body")?.classNames() ?: emptySet()
-        bodyClasses.forEach { className ->
-            if (className.startsWith("comic_tags-")) {
-                genres.add(className.removePrefix("comic_tags-").replace("-", " ").capitalizeWords())
-            }
-            if (className.startsWith("collections-")) {
-                genres.add(className.removePrefix("collections-").replace("-", " ").capitalizeWords())
-            }
-        }
-        genre = genres.distinct().joinToString()
-
+        title = document.selectFirst(".entry-title")!!.text().substringAfter(". ")
+        thumbnail_url = document.selectFirst("meta[property=og:image]")?.attr("content")
         status = SManga.COMPLETED
         update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
-
-        // og:image contains the color cover/featured image consistent with the list
-        thumbnail_url = document.selectFirst("meta[property=og:image]")?.attr("content")
     }
 
     // Chapters
@@ -137,18 +120,16 @@ class KomikNextGOnline : ParsedHttpSource() {
 
     // Pages
     override fun pageListParse(document: Document): List<Page> = document.select("#spliced-comic img, #comic img.size-full").mapIndexed { i, element ->
-        Page(i, "", element.attr("abs:src"))
+        Page(i, "", element.attr("abs:src")!!)
     }.distinctBy { it.imageUrl }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
-    private fun transformThumbnailUrl(url: String): String = url.replace(Regex("""-\d+x\d+\.(jpe?g|png)$""")) { result ->
+    private fun transformThumbnailUrl(url: String): String = url.replace(thumbnailRegex) { result ->
         "." + result.groupValues[1]
     }
 
-    private fun String.capitalizeWords() = split(" ").joinToString(" ") { word ->
-        word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
-    }
+    private val thumbnailRegex = Regex("""-\d+x\d+\.(jpe?g|png)$""")
 
     private val dateFormat by lazy {
         SimpleDateFormat("yyyy-MM-dd", Locale.US)
