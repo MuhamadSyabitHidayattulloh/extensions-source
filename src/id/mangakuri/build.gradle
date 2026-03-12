@@ -1,7 +1,9 @@
 ext {
     extName = 'Mangakuri'
     extClass = '.Mangakuri'
-    extVersionCode = 31
+    themePkg = 'mangathemesia'
+    baseUrl = 'https://mangakuri.org'
+    overrideVersionCode = 0
     isNsfw = true
 }
 
