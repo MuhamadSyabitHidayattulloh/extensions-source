@@ -1,28 +1,49 @@
 package eu.kanade.tachiyomi.multisrc.comicaso
 
+import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.Serializable
 
 @Serializable
-class MangaListResponse(
-    val items: List<MangaDto>,
-)
-
-@Serializable
 class MangaDto(
-    private val slug: String,
-    private val title: String,
-    private val thumb: String,
-    private val status: String? = null,
+    val slug: String,
+    val title: String,
+    val thumbnail: String,
+    val status: String? = null,
+    val type: String? = null,
+    val updated_at: Long? = null,
+    val manga_date: Long? = null,
+    val genres: List<String> = emptyList(),
+    val synopsis: String? = null,
+    val author: String? = null,
+    val artist: String? = null,
+    val chapters: List<ChapterDto> = emptyList(),
 ) {
     fun toSManga() = SManga.create().apply {
-        url = "/v2/manga/$slug/"
+        url = "/komik/$slug/"
         title = this@MangaDto.title
-        thumbnail_url = thumb
+        thumbnail_url = thumbnail
+        description = synopsis
+        author = this@MangaDto.author
+        artist = this@MangaDto.artist
         status = when (this@MangaDto.status) {
             "on-going" -> SManga.ONGOING
             "completed" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
+        genre = genres.joinToString()
+    }
+}
+
+@Serializable
+class ChapterDto(
+    val slug: String,
+    val title: String,
+    val date: Long? = null,
+) {
+    fun toSChapter(mangaSlug: String) = SChapter.create().apply {
+        url = "/komik/$mangaSlug/$slug/"
+        name = title
+        date_upload = date?.let { it * 1000 } ?: 0L
     }
 }
