@@ -27,6 +27,8 @@ class Mangakuri : HttpSource() {
 
     override val client = network.cloudflareClient
 
+    override val versionId = 2
+
     private val apiUrl = "https://api.mangakuri.org/api"
 
     override fun headersBuilder() = super.headersBuilder()
