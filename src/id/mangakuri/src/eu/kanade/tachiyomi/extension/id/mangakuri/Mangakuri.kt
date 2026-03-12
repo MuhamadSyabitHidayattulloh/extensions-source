@@ -79,7 +79,7 @@ class Mangakuri : HttpSource() {
             .addQueryParameter("page", page.toString())
 
         if (query.isNotEmpty()) {
-            url.addQueryParameter("name", query)
+            url.addQueryParameter("q", query)
         }
 
         filters.forEach { filter ->
@@ -155,11 +155,17 @@ class Mangakuri : HttpSource() {
         return dto.units.map { chapter ->
             SChapter.create().apply {
                 url = "/comic/$comicSlug/chapter/${chapter.slug}"
-                name = chapter.title
+                name = chapter.title ?: "Chapter ${formatChapterNumber(chapter.number)}"
                 chapter_number = chapter.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(chapter.created_at)
             }
         }
+    }
+
+    private fun formatChapterNumber(number: String): String = if (number.endsWith(".00")) {
+        number.substringBefore(".00")
+    } else {
+        number
     }
 
     override fun getChapterUrl(chapter: SChapter): String = "$baseUrl${chapter.url}"
