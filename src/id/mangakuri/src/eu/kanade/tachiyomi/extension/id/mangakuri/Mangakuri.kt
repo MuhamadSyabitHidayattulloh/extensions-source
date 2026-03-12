@@ -155,7 +155,7 @@ class Mangakuri : HttpSource() {
         return dto.units.map { chapter ->
             SChapter.create().apply {
                 url = "/comic/$comicSlug/chapter/${chapter.slug}"
-                name = chapter.title ?: "Chapter ${formatChapterNumber(chapter.number)}"
+                name = "Chapter ${formatChapterNumber(chapter.number)}"
                 chapter_number = chapter.number.toFloatOrNull() ?: -1f
                 date_upload = dateFormat.tryParse(chapter.created_at)
             }

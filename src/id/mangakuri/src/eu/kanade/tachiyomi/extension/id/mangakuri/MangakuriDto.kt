@@ -36,7 +36,6 @@ data class GenreDto(
 @Serializable
 data class ChapterDto(
     val slug: String,
-    val title: String? = null,
     val number: String,
     val created_at: String? = null,
 )
