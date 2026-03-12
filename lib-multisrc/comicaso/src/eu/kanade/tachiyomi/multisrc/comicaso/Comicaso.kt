@@ -88,7 +88,7 @@ abstract class Comicaso(
                             val status = filter.values[filter.state].lowercase()
                             result = result.filter {
                                 when (status) {
-                                    "completed" -> it.status == "completed" || it.status == "end"
+                                    "completed" -> it.status == "completed" || it.status == "end" || it.status == "complete"
                                     else -> it.status == status
                                 }
                             }

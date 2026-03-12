@@ -12,6 +12,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import org.jsoup.Jsoup
 
 @Serializable
 class MangaDto(
@@ -33,7 +34,7 @@ class MangaDto(
         url = "/komik/$slug/"
         title = this@MangaDto.title
         thumbnail_url = thumbnail
-        description = synopsis
+        description = synopsis?.let { Jsoup.parse(it).text() }
         author = this@MangaDto.author
         artist = this@MangaDto.artist
         status = when (this@MangaDto.status?.lowercase()) {
