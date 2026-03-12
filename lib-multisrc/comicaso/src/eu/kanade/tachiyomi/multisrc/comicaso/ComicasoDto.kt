@@ -2,13 +2,23 @@ package eu.kanade.tachiyomi.multisrc.comicaso
 
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 
 @Serializable
 class MangaDto(
     val slug: String,
     val title: String,
-    val thumbnail: String,
+    @Serializable(with = StringOrBooleanSerializer::class)
+    val thumbnail: String = "",
     val status: String? = null,
     val type: String? = null,
     val updated_at: Long? = null,
@@ -32,6 +42,25 @@ class MangaDto(
             else -> SManga.UNKNOWN
         }
         genre = genres.joinToString()
+    }
+}
+
+object StringOrBooleanSerializer : KSerializer<String> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("StringOrBoolean", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String = if (decoder is JsonDecoder) {
+        val element = decoder.decodeJsonElement()
+        if (element is JsonPrimitive) {
+            element.content.takeUnless { element.booleanOrNull != null } ?: ""
+        } else {
+            ""
+        }
+    } else {
+        decoder.decodeString()
+    }
+
+    override fun serialize(encoder: Encoder, value: String) {
+        encoder.encodeString(value)
     }
 }
 

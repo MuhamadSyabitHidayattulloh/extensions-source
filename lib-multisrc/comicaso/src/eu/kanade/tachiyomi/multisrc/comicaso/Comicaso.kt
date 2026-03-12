@@ -35,14 +35,8 @@ abstract class Comicaso(
     override fun popularMangaParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> = client.newCall(popularMangaRequest(page)).asObservableSuccess().map { response ->
-        val result = response.parseAs<List<MangaDto>>()
-            .sortedByDescending { it.manga_date }
-        val mangas = result.chunked(pageSize)
-        if (mangas.isEmpty() || page > mangas.size) {
-            MangasPage(emptyList(), false)
-        } else {
-            MangasPage(mangas[page - 1].map { it.toSManga() }, page < mangas.size)
-        }
+        response.parseAs<List<MangaDto>>()
+            .toMangasPage(page) { it.manga_date }
     }
 
     // Latest
@@ -51,14 +45,8 @@ abstract class Comicaso(
     override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     override fun fetchLatestUpdates(page: Int): Observable<MangasPage> = client.newCall(latestUpdatesRequest(page)).asObservableSuccess().map { response ->
-        val result = response.parseAs<List<MangaDto>>()
-            .sortedByDescending { it.updated_at }
-        val mangas = result.chunked(pageSize)
-        if (mangas.isEmpty() || page > mangas.size) {
-            MangasPage(emptyList(), false)
-        } else {
-            MangasPage(mangas[page - 1].map { it.toSManga() }, page < mangas.size)
-        }
+        response.parseAs<List<MangaDto>>()
+            .toMangasPage(page) { it.updated_at }
     }
 
     // Search
@@ -105,12 +93,19 @@ abstract class Comicaso(
                 }
             }
 
-            val mangas = result.sortedByDescending { it.updated_at }.chunked(pageSize)
-            if (mangas.isEmpty() || page > mangas.size) {
-                MangasPage(emptyList(), false)
-            } else {
-                MangasPage(mangas[page - 1].map { it.toSManga() }, page < mangas.size)
-            }
+            result.toMangasPage(page) { it.updated_at }
+        }
+    }
+
+    private fun List<MangaDto>.toMangasPage(page: Int, sortSelector: ((MangaDto) -> Long?)? = null): MangasPage {
+        val filtered = this.filter { it.slug.isNotEmpty() }
+        val sorted = if (sortSelector != null) filtered.sortedByDescending(sortSelector) else filtered
+        val chunked = sorted.chunked(pageSize)
+
+        return if (chunked.isEmpty() || page > chunked.size) {
+            MangasPage(emptyList(), false)
+        } else {
+            MangasPage(chunked[page - 1].map { it.toSManga() }, page < chunked.size)
         }
     }
 
