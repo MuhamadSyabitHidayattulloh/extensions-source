@@ -36,9 +36,9 @@ class MangaDto(
         description = synopsis
         author = this@MangaDto.author
         artist = this@MangaDto.artist
-        status = when (this@MangaDto.status) {
+        status = when (this@MangaDto.status?.lowercase()) {
             "on-going" -> SManga.ONGOING
-            "completed" -> SManga.COMPLETED
+            "completed", "end" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
         genre = genres.joinToString()
