@@ -46,7 +46,8 @@ abstract class Comicaso(
             }
     }
 
-    // Popular
+    // ============================== Popular ===============================
+
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         return getMangaList().map { mangas ->
             val start = (page - 1) * pageSize
@@ -59,7 +60,8 @@ abstract class Comicaso(
     override fun popularMangaRequest(page: Int): Request = throw UnsupportedOperationException()
     override fun popularMangaParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
-    // Latest
+    // =============================== Latest ===============================
+
     override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
         return getMangaList().map { mangas ->
             val sortedMangas = mangas.sortedByDescending { it.updatedAt ?: it.mangaDate ?: 0L }
@@ -73,7 +75,8 @@ abstract class Comicaso(
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
     override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
-    // Search
+    // =============================== Search ===============================
+
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.isNotEmpty()) {
             if (query.startsWith(URL_SEARCH_PREFIX)) {
@@ -131,7 +134,8 @@ abstract class Comicaso(
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException()
     override fun searchMangaParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
-    // Details
+    // =========================== Manga Details ============================
+
     override fun getMangaUrl(manga: SManga): String = "$baseUrl${manga.url}"
 
     override fun mangaDetailsRequest(manga: SManga): Request {
@@ -163,7 +167,8 @@ abstract class Comicaso(
         }
     }
 
-    // Chapters
+    // ============================== Chapters ==============================
+
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
@@ -172,7 +177,8 @@ abstract class Comicaso(
         return result.chapters?.map { it.toSChapter(mangaUrl) }?.reversed() ?: emptyList()
     }
 
-    // Pages
+    // =============================== Pages ================================
+
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
         return document.select("img.mjv2-page-image").mapIndexed { index, img ->
@@ -183,7 +189,8 @@ abstract class Comicaso(
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
-    // Filter
+    // =============================== Filters ==============================
+
     override fun getFilterList(): FilterList {
         val filters = mutableListOf<Filter<*>>()
         filters.add(Filter.Header("Filter ini dapat dikombinasikan dengan pencarian teks."))
