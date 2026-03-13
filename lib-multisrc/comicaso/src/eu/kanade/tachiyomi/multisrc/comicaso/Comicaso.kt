@@ -20,7 +20,7 @@ abstract class Comicaso(
     override val name: String,
     override val baseUrl: String,
     override val lang: String,
-    private val pageSize: Int = 12,
+    private val pageSize: Int = 20,
 ) : HttpSource() {
 
     override val supportsLatest = true
@@ -79,16 +79,17 @@ abstract class Comicaso(
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.isNotEmpty()) {
-            if (query.startsWith(URL_SEARCH_PREFIX)) {
-                val path = query.removePrefix(URL_SEARCH_PREFIX).trim().removePrefix(baseUrl)
-                val mangaUrl = if (path.startsWith("/")) path else "/$path"
-                return fetchMangaDetails(SManga.create().apply { url = mangaUrl })
-                    .map { MangasPage(listOf(it), false) }
+            val url = when {
+                query.startsWith(URL_SEARCH_PREFIX) ->
+                    query.removePrefix(URL_SEARCH_PREFIX).trim()
+                query.startsWith("http") ->
+                    query.trim()
+                else -> null
             }
 
-            if (query.startsWith(baseUrl)) {
-                val mangaUrl = "/" + query.removePrefix(baseUrl).removePrefix("/")
-                return fetchMangaDetails(SManga.create().apply { url = mangaUrl })
+            if (url != null) {
+                val mangaUrl = "/" + url.removePrefix(baseUrl).removePrefix("/")
+                return fetchMangaDetails(SManga.create().apply { this.url = mangaUrl })
                     .map { MangasPage(listOf(it), false) }
             }
         }
@@ -197,19 +198,15 @@ abstract class Comicaso(
         filters.add(Filter.Separator())
         filters.add(StatusFilter())
         filters.add(TypeFilter())
-        filters.add(Filter.Header("Jika genre tidak muncul, tekan 'Reset' untuk memuat ulang filter."))
 
         val genres = cachedMangaList?.flatMap { it.genres ?: emptyList() }
             ?.distinct()
             ?.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
 
-        if (!genres.isNullOrEmpty()) {
-            filters.add(GenreFilter(arrayOf("All") + genres.toTypedArray()))
-        } else {
-            filters.add(GenreFilter(arrayOf("All")))
-        }
-
         filters.add(Filter.Separator())
+        filters.add(GenreFilter(if (genres.isNullOrEmpty()) arrayOf("All") else arrayOf("All") + genres.toTypedArray()))
+        filters.add(Filter.Separator())
+        filters.add(Filter.Header("Jika daftar genre tidak muncul, silakan tekan 'Reset' untuk memuat ulang filter."))
 
         return FilterList(filters)
     }
