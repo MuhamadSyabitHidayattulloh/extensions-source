@@ -66,8 +66,8 @@ abstract class Comicaso(
         return getMangaList().map { mangas ->
             val sortedMangas = mangas.sortedByDescending { it.updatedAt ?: it.mangaDate ?: 0L }
             val start = (page - 1) * pageSize
-            if (start >= sortedMangas.size) return@map MangasPage(emptyList(), false)
-            val end = minOf(start + pageSize, sortedMangas.size)
+            if (start >= mangas.size) return@map MangasPage(emptyList(), false)
+            val end = minOf(start + pageSize, mangas.size)
             MangasPage(sortedMangas.subList(start, end).map { it.toSManga() }, end < sortedMangas.size)
         }
     }
@@ -82,13 +82,13 @@ abstract class Comicaso(
             val url = when {
                 query.startsWith(URL_SEARCH_PREFIX) ->
                     query.removePrefix(URL_SEARCH_PREFIX).trim()
-                query.startsWith("http") ->
+                query.contains("://") ->
                     query.trim()
                 else -> null
             }
 
             if (url != null) {
-                val mangaUrl = "/" + url.removePrefix(baseUrl).removePrefix("/")
+                val mangaUrl = "/" + url.substringAfter(baseUrl).removePrefix("/")
                 return fetchMangaDetails(SManga.create().apply { this.url = mangaUrl })
                     .map { MangasPage(listOf(it), false) }
             }
@@ -156,7 +156,7 @@ abstract class Comicaso(
                     if (isNotEmpty()) append("\n\n")
                     append("Alternative: $it")
                 }
-            }
+            }.trim()
             author = result.author
             artist = result.artist
             genre = result.genres?.joinToString()
@@ -203,8 +203,8 @@ abstract class Comicaso(
             ?.distinct()
             ?.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
 
-        filters.add(Filter.Separator())
         filters.add(GenreFilter(if (genres.isNullOrEmpty()) arrayOf("All") else arrayOf("All") + genres.toTypedArray()))
+
         filters.add(Filter.Separator())
         filters.add(Filter.Header("Jika daftar genre tidak muncul, silakan tekan 'Reset' untuk memuat ulang filter."))
 
