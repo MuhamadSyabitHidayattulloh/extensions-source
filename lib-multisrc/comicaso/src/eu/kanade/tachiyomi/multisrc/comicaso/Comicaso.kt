@@ -188,17 +188,21 @@ abstract class Comicaso(
         val filters = mutableListOf<Filter<*>>()
         filters.add(Filter.Header("Filter ini dapat dikombinasikan dengan pencarian teks."))
         filters.add(Filter.Separator())
-
-        cachedMangaList?.let { mangas ->
-            val genres = mangas.flatMap { it.genres ?: emptyList() }
-                .distinct()
-                .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
-
-            if (genres.isNotEmpty()) filters.add(GenreFilter(arrayOf("All") + genres.toTypedArray()))
-        } ?: filters.add(Filter.Header("Jika genre tidak muncul, tekan 'Reset' untuk memuat ulang filter."))
-
         filters.add(StatusFilter())
         filters.add(TypeFilter())
+        filters.add(Filter.Header("Jika genre tidak muncul, tekan 'Reset' untuk memuat ulang filter."))
+
+        val genres = cachedMangaList?.flatMap { it.genres ?: emptyList() }
+            ?.distinct()
+            ?.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
+
+        if (!genres.isNullOrEmpty()) {
+            filters.add(GenreFilter(arrayOf("All") + genres.toTypedArray()))
+        } else {
+            filters.add(GenreFilter(arrayOf("All")))
+        }
+
+        filters.add(Filter.Separator())
 
         return FilterList(filters)
     }
