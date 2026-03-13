@@ -75,18 +75,19 @@ abstract class Comicaso(
 
     // Search
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(URL_SEARCH_PREFIX)) {
-            val url = query.removePrefix(URL_SEARCH_PREFIX).trim().replace(baseUrl, "")
-            val mangaUrl = if (url.startsWith("/")) url else "/$url"
-            return fetchMangaDetails(SManga.create().apply { this.url = mangaUrl })
-                .map { MangasPage(listOf(it), false) }
-        }
+        if (query.isNotEmpty()) {
+            val mangaUrl = when {
+                query.startsWith(URL_SEARCH_PREFIX) ->
+                    query.removePrefix(URL_SEARCH_PREFIX).trim().removePrefix(baseUrl)
+                query.startsWith("http://") || query.startsWith("https://") ->
+                    query.trim().removePrefix(baseUrl)
+                else -> null
+            }
 
-        if (query.startsWith("http://") || query.startsWith("https://")) {
-            val url = query.trim().replace(baseUrl, "")
-            val mangaUrl = if (url.startsWith("/")) url else "/$url"
-            return fetchMangaDetails(SManga.create().apply { this.url = mangaUrl })
-                .map { MangasPage(listOf(it), false) }
+            if (mangaUrl != null) {
+                return fetchMangaDetails(SManga.create().apply { url = mangaUrl })
+                    .map { MangasPage(listOf(it), false) }
+            }
         }
 
         return getMangaList().map { mangas ->
@@ -131,6 +132,8 @@ abstract class Comicaso(
     override fun searchMangaParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     // Details
+    override fun getMangaUrl(manga: SManga): String = "$baseUrl${manga.url}"
+
     override fun mangaDetailsRequest(manga: SManga): Request {
         val slug = manga.url.removeSuffix("/").substringAfterLast("/")
         return GET("$baseUrl/wp-content/static/manga/$slug.json", headers)
