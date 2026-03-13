@@ -76,15 +76,15 @@ abstract class Comicaso(
     // Search
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.isNotEmpty()) {
-            val mangaUrl = when {
-                query.startsWith(URL_SEARCH_PREFIX) ->
-                    query.removePrefix(URL_SEARCH_PREFIX).trim().removePrefix(baseUrl)
-                query.startsWith("http://") || query.startsWith("https://") ->
-                    query.trim().removePrefix(baseUrl)
-                else -> null
+            if (query.startsWith(URL_SEARCH_PREFIX)) {
+                val path = query.removePrefix(URL_SEARCH_PREFIX).trim().removePrefix(baseUrl)
+                val mangaUrl = if (path.startsWith("/")) path else "/$path"
+                return fetchMangaDetails(SManga.create().apply { url = mangaUrl })
+                    .map { MangasPage(listOf(it), false) }
             }
 
-            if (mangaUrl != null) {
+            if (query.startsWith(baseUrl)) {
+                val mangaUrl = "/" + query.removePrefix(baseUrl).removePrefix("/")
                 return fetchMangaDetails(SManga.create().apply { url = mangaUrl })
                     .map { MangasPage(listOf(it), false) }
             }
@@ -108,7 +108,7 @@ abstract class Comicaso(
                     is StatusFilter -> {
                         if (filter.state > 0) {
                             val status = filter.values[filter.state].lowercase()
-                            filteredMangas = filteredMangas.filter { it.status == status || (status == "completed" && it.status == "end") }
+                            filteredMangas = filteredMangas.filter { it.status == status }
                         }
                     }
                     is TypeFilter -> {
@@ -157,8 +157,7 @@ abstract class Comicaso(
             genre = result.genres?.joinToString()
             status = when (result.status) {
                 "on-going" -> SManga.ONGOING
-                "completed", "end" -> SManga.COMPLETED
-                "canceled" -> SManga.CANCELLED
+                "end" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
             }
         }
@@ -187,25 +186,26 @@ abstract class Comicaso(
     // Filter
     override fun getFilterList(): FilterList {
         val filters = mutableListOf<Filter<*>>()
-        filters.add(Filter.Header("Pencarian teks, genre, status, dan tipe dapat dikombinasikan."))
+        filters.add(Filter.Header("Filter ini dapat dikombinasikan dengan pencarian teks."))
         filters.add(Filter.Separator())
 
         cachedMangaList?.let { mangas ->
-            val genres = mangas.flatMap { it.genres ?: emptyList() }.distinct().sorted()
-            val statuses = mangas.mapNotNull { it.status }.distinct().map { it.replaceFirstChar { c -> c.uppercase() } }.sorted()
-            val types = mangas.mapNotNull { it.type }.distinct().map { it.replaceFirstChar { c -> c.uppercase() } }.sorted()
+            val genres = mangas.flatMap { it.genres ?: emptyList() }
+                .distinct()
+                .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
 
             if (genres.isNotEmpty()) filters.add(GenreFilter(arrayOf("All") + genres.toTypedArray()))
-            if (statuses.isNotEmpty()) filters.add(StatusFilter(arrayOf("All") + statuses.toTypedArray()))
-            if (types.isNotEmpty()) filters.add(TypeFilter(arrayOf("All") + types.toTypedArray()))
-        } ?: filters.add(Filter.Header("Tekan 'Reset' untuk memuat filter"))
+        } ?: filters.add(Filter.Header("Jika genre tidak muncul, tekan 'Reset' untuk memuat ulang filter."))
+
+        filters.add(StatusFilter())
+        filters.add(TypeFilter())
 
         return FilterList(filters)
     }
 
     protected class GenreFilter(genres: Array<String>) : Filter.Select<String>("Genre", genres)
-    protected class StatusFilter(statuses: Array<String>) : Filter.Select<String>("Status", statuses)
-    protected class TypeFilter(types: Array<String>) : Filter.Select<String>("Type", types)
+    protected class StatusFilter : Filter.Select<String>("Status", arrayOf("All", "On-going", "End"))
+    protected class TypeFilter : Filter.Select<String>("Type", arrayOf("All", "Manga", "Manhua", "Manhwa"))
 
     companion object {
         const val URL_SEARCH_PREFIX = "url:"

@@ -23,8 +23,7 @@ class MangaDto(
         genre = genres?.joinToString()
         status = when (this@MangaDto.status) {
             "on-going" -> SManga.ONGOING
-            "completed", "end" -> SManga.COMPLETED
-            "canceled" -> SManga.CANCELLED
+            "end" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
     }
