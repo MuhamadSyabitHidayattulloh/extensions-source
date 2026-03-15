@@ -38,5 +38,13 @@ class Komikindo :
             ?.toString()
     }
 
+    override fun pageListParse(document: Document): List<Page> = super.pageListParse(document).onEach { page ->
+        page.imageUrl = page.imageUrl?.replace(LINKSAYA_CDN_REGEX, "https://linksaya.com")
+    }
+
     override val hasProjectPage = true
+
+    companion object {
+        private val LINKSAYA_CDN_REGEX = """https://.*\.linksaya\.com""".toRegex()
+    }
 }
