@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.extension.all.lunaranime
 
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import keiyoushi.utils.parseAs
 import keiyoushi.utils.tryParse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -33,7 +33,7 @@ class LunarMangaDto(
     val author: String? = null,
     val artist: String? = null,
 ) {
-    fun toSManga(json: Json): SManga = SManga.create().apply {
+    fun toSManga(): SManga = SManga.create().apply {
         title = this@LunarMangaDto.title
         thumbnail_url = coverUrl
         url = "/manga/$slug"
@@ -50,7 +50,7 @@ class LunarMangaDto(
         }
         genre = genres?.let { g ->
             try {
-                json.decodeFromString<List<String>>(g).joinToString()
+                g.parseAs<List<String>>().joinToString()
             } catch (e: Exception) {
                 g
             }
@@ -76,14 +76,16 @@ class LunarChapterDto(
         url = "/manga/$mangaSlug/$chapter?lang=$language"
         name = chapterTitle?.takeIf { it.isNotBlank() } ?: "Chapter $chapter"
         chapter_number = this@LunarChapterDto.chapterNumber
-        date_upload = uploadedAt?.let { DATE_FORMAT.tryParse(it) } ?: 0L
+        date_upload = uploadedAt?.let { parseChapterDate(it) } ?: 0L
         scanlator = language.uppercase(Locale.ROOT)
     }
 
-    companion object {
-        private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+    private fun parseChapterDate(date: String): Long = try {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
             timeZone = TimeZone.getTimeZone("UTC")
-        }
+        }.tryParse(date)
+    } catch (e: Exception) {
+        0L
     }
 }
 
