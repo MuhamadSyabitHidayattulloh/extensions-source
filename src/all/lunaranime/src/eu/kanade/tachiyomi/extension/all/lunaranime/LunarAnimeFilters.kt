@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.lunaranime
 
 import eu.kanade.tachiyomi.source.model.Filter
-import java.util.Calendar
 
 class StatusFilter : Filter.Select<String>("Status", STATUS_OPTIONS.map { it.first }.toTypedArray()) {
     fun toValue(): String? = STATUS_OPTIONS[state].second
@@ -11,9 +10,7 @@ class TypeFilter : Filter.Select<String>("Type", TYPE_OPTIONS.map { it.first }.t
     fun toValue(): String? = TYPE_OPTIONS[state].second
 }
 
-class YearFilter : Filter.Select<String>("Year", YEAR_LABELS) {
-    fun toValue(): String? = YEAR_VALUES[state]
-}
+class YearFilter : Filter.Text("Year")
 
 class GenreFilter : Filter.Group<GenreOption>("Genres", GENRE_OPTIONS.map { GenreOption(it) }) {
     fun toGenres(): List<String> = state.filter { it.state }.map { it.name }
@@ -61,21 +58,3 @@ private val GENRE_OPTIONS = listOf(
     "Shoujo",
     "Shounen",
 )
-
-private val YEAR_VALUES: Array<String?> = run {
-    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    val years = (0..30).map { (currentYear - it).toString() }
-    val list = mutableListOf<String?>()
-    list.add(null)
-    list.addAll(years)
-    list.toTypedArray()
-}
-
-private val YEAR_LABELS: Array<String> = run {
-    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    val years = (0..30).map { (currentYear - it).toString() }
-    val list = mutableListOf<String>()
-    list.add("Any")
-    list.addAll(years)
-    list.toTypedArray()
-}

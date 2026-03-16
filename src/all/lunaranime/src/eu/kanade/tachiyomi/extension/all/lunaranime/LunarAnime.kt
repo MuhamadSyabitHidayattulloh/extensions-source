@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
+import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,6 +33,11 @@ class LunarAnime : HttpSource() {
 
     private val apiHttpUrl = API_URL.toHttpUrl()
 
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
     override fun popularMangaRequest(page: Int): Request = searchMangaRequest(page, "", FilterList())
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
@@ -40,7 +46,7 @@ class LunarAnime : HttpSource() {
         val url = apiHttpUrl.newBuilder()
             .addPathSegments("api/manga/recent")
             .addQueryParameter("page", page.toString())
-            .addQueryParameter("limit", "20")
+            .addQueryParameter("limit", "30")
             .build()
         return GET(url.toString(), headers)
     }
@@ -48,7 +54,7 @@ class LunarAnime : HttpSource() {
     override fun latestUpdatesParse(response: Response): MangasPage {
         val result = response.parseAs<LunarRecentResponse>()
         return MangasPage(
-            mangas = result.mangas.map { it.toSManga() },
+            mangas = result.mangas.map { it.toSManga(json) },
             hasNextPage = result.mangas.isNotEmpty(),
         )
     }
@@ -57,16 +63,16 @@ class LunarAnime : HttpSource() {
         val url = apiHttpUrl.newBuilder().apply {
             addPathSegments("api/manga/search")
             addQueryParameter("page", page.toString())
-            addQueryParameter("limit", "20")
+            addQueryParameter("limit", "30")
             if (query.isNotBlank()) {
-                addQueryParameter("search", query)
+                addQueryParameter("query", query)
             }
 
             filters.forEach { filter ->
                 when (filter) {
                     is StatusFilter -> filter.toValue()?.let { addQueryParameter("status", it) }
                     is TypeFilter -> filter.toValue()?.let { addQueryParameter("country", it) }
-                    is YearFilter -> filter.toValue()?.let { addQueryParameter("publication_year", it) }
+                    is YearFilter -> if (filter.state.isNotBlank()) addQueryParameter("year", filter.state)
                     is GenreFilter -> {
                         val genres = filter.toGenres()
                         if (genres.isNotEmpty()) {
@@ -76,6 +82,7 @@ class LunarAnime : HttpSource() {
                     else -> {}
                 }
             }
+            addQueryParameter("sort", "relevance")
         }.build()
         return GET(url.toString(), headers)
     }
@@ -83,7 +90,7 @@ class LunarAnime : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val result = response.parseAs<LunarSearchResponse>()
         return MangasPage(
-            mangas = result.manga.map { it.toSManga() },
+            mangas = result.manga.map { it.toSManga(json) },
             hasNextPage = result.page < result.totalPages,
         )
     }
@@ -99,7 +106,7 @@ class LunarAnime : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga {
         val result = response.parseAs<LunarMangaResponse>()
-        return result.manga.toSManga()
+        return result.manga.toSManga(json)
     }
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {

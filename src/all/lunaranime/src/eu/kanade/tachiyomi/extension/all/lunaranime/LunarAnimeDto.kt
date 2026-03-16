@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import keiyoushi.utils.tryParse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -32,7 +33,7 @@ class LunarMangaDto(
     val author: String? = null,
     val artist: String? = null,
 ) {
-    fun toSManga(): SManga = SManga.create().apply {
+    fun toSManga(json: Json): SManga = SManga.create().apply {
         title = this@LunarMangaDto.title
         thumbnail_url = coverUrl
         url = "/manga/$slug"
@@ -49,16 +50,9 @@ class LunarMangaDto(
         }
         genre = genres?.let { g ->
             try {
-                if (g.startsWith("[")) {
-                    val list = g.removePrefix("[").removeSuffix("]")
-                        .split(",")
-                        .map { it.trim().removePrefix("\"").removeSuffix("\"") }
-                    list.joinToString()
-                } else {
-                    g
-                }
+                json.decodeFromString<List<String>>(g).joinToString()
             } catch (e: Exception) {
-                null
+                g
             }
         }
         initialized = true
