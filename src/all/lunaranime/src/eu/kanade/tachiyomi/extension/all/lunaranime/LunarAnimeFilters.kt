@@ -3,10 +3,6 @@ package eu.kanade.tachiyomi.extension.all.lunaranime
 import eu.kanade.tachiyomi.source.model.Filter
 import java.util.Calendar
 
-class SortFilter : Filter.Select<String>("Sort", SORT_OPTIONS.map { it.first }.toTypedArray()) {
-    fun toValue(): String = SORT_OPTIONS[state].second
-}
-
 class StatusFilter : Filter.Select<String>("Status", STATUS_OPTIONS.map { it.first }.toTypedArray()) {
     fun toValue(): String? = STATUS_OPTIONS[state].second
 }
@@ -24,12 +20,6 @@ class GenreFilter : Filter.Group<GenreOption>("Genres", GENRE_OPTIONS.map { Genr
 }
 
 class GenreOption(name: String) : Filter.CheckBox(name)
-
-private val SORT_OPTIONS = arrayOf(
-    "Latest" to "latest",
-    "Popular" to "popularity",
-    "Relevance" to "relevance",
-)
 
 private val STATUS_OPTIONS = arrayOf(
     "Any" to null,

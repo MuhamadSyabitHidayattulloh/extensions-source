@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.lunaranime
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimitHost
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -33,13 +32,26 @@ class LunarAnime : HttpSource() {
 
     private val apiHttpUrl = API_URL.toHttpUrl()
 
-    override fun popularMangaRequest(page: Int): Request = searchMangaRequest(page, "", FilterList(SortFilter().apply { state = 1 }))
+    override fun popularMangaRequest(page: Int): Request = searchMangaRequest(page, "", FilterList())
 
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int): Request = searchMangaRequest(page, "", FilterList(SortFilter().apply { state = 0 }))
+    override fun latestUpdatesRequest(page: Int): Request {
+        val url = apiHttpUrl.newBuilder()
+            .addPathSegments("api/manga/recent")
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("limit", "20")
+            .build()
+        return GET(url.toString(), headers)
+    }
 
-    override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val result = response.parseAs<LunarRecentResponse>()
+        return MangasPage(
+            mangas = result.mangas.map { it.toSManga() },
+            hasNextPage = result.mangas.isNotEmpty(),
+        )
+    }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = apiHttpUrl.newBuilder().apply {
@@ -47,12 +59,11 @@ class LunarAnime : HttpSource() {
             addQueryParameter("page", page.toString())
             addQueryParameter("limit", "20")
             if (query.isNotBlank()) {
-                addQueryParameter("q", query)
+                addQueryParameter("search", query)
             }
 
             filters.forEach { filter ->
                 when (filter) {
-                    is SortFilter -> addQueryParameter("sort", filter.toValue())
                     is StatusFilter -> filter.toValue()?.let { addQueryParameter("status", it) }
                     is TypeFilter -> filter.toValue()?.let { addQueryParameter("country", it) }
                     is YearFilter -> filter.toValue()?.let { addQueryParameter("publication_year", it) }
@@ -123,9 +134,9 @@ class LunarAnime : HttpSource() {
             response.parseAs<LunarPageListResponse>()
         }
 
-        result.data.images.mapIndexed { index, imageUrl ->
+        result.data?.images?.mapIndexed { index, imageUrl ->
             Page(index, imageUrl = imageUrl)
-        }
+        } ?: emptyList()
     }
 
     override fun pageListRequest(chapter: SChapter): Request = throw UnsupportedOperationException("Not used.")
@@ -135,8 +146,6 @@ class LunarAnime : HttpSource() {
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used.")
 
     override fun getFilterList(): FilterList = FilterList(
-        SortFilter(),
-        Filter.Separator(),
         StatusFilter(),
         TypeFilter(),
         YearFilter(),

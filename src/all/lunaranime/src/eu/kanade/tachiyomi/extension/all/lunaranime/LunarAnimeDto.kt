@@ -67,7 +67,7 @@ class LunarMangaDto(
 
 @Serializable
 class LunarChapterListResponse(
-    val data: List<LunarChapterDto>,
+    val data: List<LunarChapterDto> = emptyList(),
 )
 
 @Serializable
@@ -95,10 +95,15 @@ class LunarChapterDto(
 
 @Serializable
 class LunarPageListResponse(
-    val data: LunarPageListData,
+    val data: LunarPageListData? = null,
 )
 
 @Serializable
 class LunarPageListData(
-    val images: List<String>,
+    val images: List<String> = emptyList(),
+)
+
+@Serializable
+class LunarRecentResponse(
+    @SerialName("our_mangas") val mangas: List<LunarMangaDto> = emptyList(),
 )
