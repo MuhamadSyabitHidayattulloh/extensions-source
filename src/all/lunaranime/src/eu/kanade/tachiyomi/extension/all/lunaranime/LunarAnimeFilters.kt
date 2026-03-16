@@ -10,6 +10,10 @@ class TypeFilter : Filter.Select<String>("Type", TYPE_OPTIONS.map { it.first }.t
     fun toValue(): String? = TYPE_OPTIONS[state].second
 }
 
+class LanguageFilter : Filter.Select<String>("Language", LANG_OPTIONS.map { it.first }.toTypedArray()) {
+    fun toValue(): String? = LANG_OPTIONS[state].second
+}
+
 class YearFilter : Filter.Text("Year")
 
 class GenreFilter : Filter.Group<GenreOption>("Genres", GENRE_OPTIONS.map { GenreOption(it) }) {
@@ -32,6 +36,41 @@ private val TYPE_OPTIONS = arrayOf(
     "Manga" to "JP",
     "Manhwa" to "KR",
     "Manhua" to "CN",
+)
+
+private val LANG_OPTIONS = arrayOf(
+    "Any" to null,
+    "English" to "en",
+    "Arabic" to "ar",
+    "Spanish" to "es",
+    "Spanish (Latin America)" to "es-419",
+    "French" to "fr",
+    "Italian" to "it",
+    "Polish" to "pl",
+    "Portuguese (Brazil)" to "pt-br",
+    "German" to "de",
+    "Japanese" to "ja",
+    "Korean" to "ko",
+    "Chinese" to "zh",
+    "Russian" to "ru",
+    "Turkish" to "tr",
+    "Thai" to "th",
+    "Vietnamese" to "vi",
+    "Indonesian" to "id",
+    "Malay" to "ms",
+    "Tagalog" to "tl",
+    "Hindi" to "hi",
+    "Bengali" to "bn",
+    "Urdu" to "ur",
+    "Persian" to "fa",
+    "Hebrew" to "he",
+    "Dutch" to "nl",
+    "Swedish" to "sv",
+    "Norwegian" to "no",
+    "Danish" to "da",
+    "Finnish" to "fi",
+    "Portuguese (Portugal)" to "pt",
+    "Bulgarian" to "bg",
 )
 
 private val GENRE_OPTIONS = listOf(

@@ -86,6 +86,7 @@ class LunarAnime : HttpSource() {
                 when (filter) {
                     is StatusFilter -> filter.toValue()?.let { addQueryParameter("status", it) }
                     is TypeFilter -> filter.toValue()?.let { addQueryParameter("country", it) }
+                    is LanguageFilter -> filter.toValue()?.let { addQueryParameter("language", it) }
                     is YearFilter -> {
                         val year = filter.state
                         if (year.isNotBlank() && year.toIntOrNull() != null) {
@@ -168,6 +169,7 @@ class LunarAnime : HttpSource() {
     override fun getFilterList(): FilterList = FilterList(
         StatusFilter(),
         TypeFilter(),
+        LanguageFilter(),
         YearFilter(),
         GenreFilter(),
     )
