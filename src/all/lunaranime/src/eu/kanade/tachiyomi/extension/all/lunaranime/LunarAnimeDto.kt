@@ -100,4 +100,7 @@ class LunarPageListData(
 @Serializable
 class LunarRecentResponse(
     @SerialName("our_mangas") val mangas: List<LunarMangaDto> = emptyList(),
+    val page: Int = 0,
+    val limit: Int = 0,
+    @SerialName("total_count") val totalCount: Int = 0,
 )

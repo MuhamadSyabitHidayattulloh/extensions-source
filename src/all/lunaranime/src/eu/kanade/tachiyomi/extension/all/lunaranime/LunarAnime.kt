@@ -30,6 +30,18 @@ class LunarAnime : HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimitHost(API_URL.toHttpUrl(), 2)
         .rateLimitHost(CDN_URL.toHttpUrl(), 2)
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            if (url.contains("storage.lunaranime.ru")) {
+                val newRequest = request.newBuilder()
+                    .header("Referer", "$baseUrl/")
+                    .build()
+                chain.proceed(newRequest)
+            } else {
+                chain.proceed(request)
+            }
+        }
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -57,7 +69,7 @@ class LunarAnime : HttpSource() {
         val result = response.parseAs<LunarRecentResponse>()
         return MangasPage(
             mangas = result.mangas.map { it.toSManga(json) },
-            hasNextPage = result.mangas.isNotEmpty(),
+            hasNextPage = (result.page * result.limit) < result.totalCount,
         )
     }
 
