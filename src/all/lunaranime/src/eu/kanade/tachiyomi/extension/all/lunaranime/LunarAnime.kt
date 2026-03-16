@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.all.lunaranime
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -10,8 +9,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,7 +21,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import rx.Observable
 import java.io.IOException
-import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -78,25 +74,33 @@ class LunarAnime : HttpSource() {
         encodeDefaults = true
     }
 
+    // ============================== Popular ==============================
+
     override fun popularMangaRequest(page: Int): Request = buildSearchRequest(
         page = page,
         query = "",
-        filters = SearchFilters(sort = SORT_POPULAR, format = FORMAT_MANGA),
+        filters = SearchFilters(sort = SORT_POPULAR, format = "manga"),
     )
 
     override fun popularMangaParse(response: Response): MangasPage = parseAniSearchPage(response)
 
+    // ============================== Latest ==============================
+
     override fun latestUpdatesRequest(page: Int): Request = buildSearchRequest(
         page = page,
         query = "",
-        filters = SearchFilters(sort = SORT_LATEST, format = FORMAT_MANGA),
+        filters = SearchFilters(sort = SORT_LATEST, format = "manga"),
     )
 
     override fun latestUpdatesParse(response: Response): MangasPage = parseAniSearchPage(response)
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = buildSearchRequest(page, query, filters.toSearchFilters(format = FORMAT_MANGA))
+    // ============================== Search ==============================
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = buildSearchRequest(page, query, filters.toSearchFilters())
 
     override fun searchMangaParse(response: Response): MangasPage = parseAniSearchPage(response)
+
+    // ============================== Details ==============================
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         val id = mangaIdFromUrl(manga.url)
@@ -111,6 +115,8 @@ class LunarAnime : HttpSource() {
 
     override fun mangaDetailsParse(response: Response): SManga = parseAniDetails(response)
 
+    // ============================== Chapters ==============================
+
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         val mangaId = mangaIdFromUrl(manga.url)
         fetchVermillionChapters(mangaId)
@@ -120,6 +126,8 @@ class LunarAnime : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("Not used.")
 
     override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException("Not used.")
+
+    // ============================== Pages ==============================
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
         val info = parseChapterUrl(chapter.url)
@@ -132,25 +140,39 @@ class LunarAnime : HttpSource() {
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used.")
 
+    // ============================== Filters ==============================
+
     override fun getFilterList(): FilterList = FilterList(
-        Filter.Header("Sort"),
         SortFilter(),
-        Filter.Separator(),
-        Filter.Header("Status"),
         StatusFilter(),
-        Filter.Separator(),
-        Filter.Header("Year"),
+        FormatFilter(),
+        CountryFilter(),
         YearFilter(),
-        Filter.Separator(),
-        Filter.Header("Genres"),
+        ScanGroupFilter(),
+        AuthorFilter(),
+        ArtistFilter(),
+        LanguageFilter(),
         GenreFilter(),
     )
 
+    // ============================== Helpers ==============================
+
     private fun parseAniSearch(response: Response): AniSearchResult {
         val result = response.parseAs<AniSearchResponse>()
+
+        val data = if (result.fallback == true && result.query != null && result.variables != null) {
+            val body = json.encodeToString(
+                AniListRequest(result.query, result.variables),
+            ).toRequestBody(JSON_MEDIA_TYPE)
+            val request = POST("https://graphql.anilist.co", headers, body)
+            client.newCall(request).execute().parseAs<AniSearchResponse>().data!!
+        } else {
+            result.data!!
+        }
+
         return AniSearchResult(
-            mangas = result.data.page.media.map { it.toSManga(buildMangaRelativeUrl(it.id)) },
-            pageInfo = result.data.page.pageInfo,
+            mangas = data.page.media.map { it.toSManga(buildMangaRelativeUrl(it.id)) },
+            pageInfo = data.page.pageInfo,
         )
     }
 
@@ -162,7 +184,7 @@ class LunarAnime : HttpSource() {
         )
     }
 
-    private data class AniSearchResult(val mangas: List<SManga>, val pageInfo: PageInfo)
+    private class AniSearchResult(val mangas: List<SManga>, val pageInfo: PageInfo)
 
     private fun buildSearchRequest(page: Int, query: String, filters: SearchFilters): Request {
         val payload = SearchPayload(
@@ -218,7 +240,7 @@ class LunarAnime : HttpSource() {
                 SChapter.create().apply {
                     url = buildChapterUrl(mangaId, chapterNumber, DEFAULT_LANGUAGE, ChapterSource.VERMILLION)
                     name = buildChapterName(chapterNumber, chapter.title, DEFAULT_LANGUAGE)
-                    chapter_number = chapter.number.toFloat()
+                    chapter_number = chapter.number
                     scanlator = source.providerId
                 }
             }
@@ -370,12 +392,12 @@ class LunarAnime : HttpSource() {
         return candidates
     }
 
-    private fun String?.toMangaStatus(): Int = when (this?.uppercase(Locale.ROOT)) {
-        "RELEASING", "ONGOING" -> SManga.ONGOING
-        "FINISHED", "COMPLETED" -> SManga.COMPLETED
-        "NOT_YET_RELEASED" -> SManga.UNKNOWN
-        "CANCELLED" -> SManga.CANCELLED
-        "HIATUS" -> SManga.ON_HIATUS
+    private fun String?.toMangaStatus(): Int = when (this?.lowercase(Locale.ROOT)) {
+        "releasing", "ongoing" -> SManga.ONGOING
+        "finished", "completed" -> SManga.COMPLETED
+        "not_yet_released" -> SManga.UNKNOWN
+        "cancelled" -> SManga.CANCELLED
+        "hiatus" -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
 
@@ -389,142 +411,6 @@ class LunarAnime : HttpSource() {
         thumbnail_url = coverImage.large ?: coverImage.medium
         this.url = url
     }
-
-    private fun FilterList.toSearchFilters(format: String): SearchFilters {
-        val sort = filterIsInstance<SortFilter>().firstOrNull()?.toValue()
-        val status = filterIsInstance<StatusFilter>().firstOrNull()?.toValue()
-        val year = filterIsInstance<YearFilter>().firstOrNull()?.toValue()
-        val genres = filterIsInstance<GenreFilter>().firstOrNull()?.toGenres()
-
-        return SearchFilters(
-            genres = genres?.ifEmpty { null },
-            year = year,
-            sort = sort,
-            status = status,
-            format = format,
-        )
-    }
-
-    private class SortFilter : Filter.Select<String>("Sort", SORT_OPTIONS.map { it.first }.toTypedArray()) {
-        fun toValue(): String? = SORT_OPTIONS.getOrNull(state)?.second
-    }
-
-    private class StatusFilter : Filter.Select<String>("Status", STATUS_OPTIONS.map { it.first }.toTypedArray()) {
-        fun toValue(): String? = STATUS_OPTIONS.getOrNull(state)?.second
-    }
-
-    private class YearFilter : Filter.Select<String>("Year", YEAR_LABELS) {
-        fun toValue(): Int? = YEAR_VALUES.getOrNull(state)?.toIntOrNull()
-    }
-
-    private class GenreFilter :
-        Filter.Group<GenreOption>(
-            "Genres",
-            GENRE_OPTIONS.map { GenreOption(it) },
-        ) {
-        fun toGenres(): List<String> = state.filter { it.state }.map { it.name }
-    }
-
-    private class GenreOption(name: String) : Filter.CheckBox(name)
-
-    @Serializable
-    private data class SearchPayload(
-        val query: String,
-        val page: Int,
-        val filters: SearchFilters = SearchFilters(),
-    )
-
-    @Serializable
-    private data class SearchFilters(
-        val genres: List<String>? = null,
-        val year: Int? = null,
-        val sort: String? = null,
-        val status: String? = null,
-        val format: String? = null,
-    )
-
-    @Serializable
-    private data class AniSearchResponse(val data: AniSearchData)
-
-    @Serializable
-    private data class AniSearchData(@SerialName("Page") val page: AniPage)
-
-    @Serializable
-    private data class AniPage(
-        val pageInfo: PageInfo,
-        val media: List<AniMedia>,
-    )
-
-    @Serializable
-    private data class PageInfo(
-        val total: Int,
-        val currentPage: Int,
-        val lastPage: Int,
-        val hasNextPage: Boolean,
-    )
-
-    @Serializable
-    private data class AniMedia(
-        val id: Int,
-        val title: AniTitle,
-        val description: String? = null,
-        val coverImage: AniCoverImage,
-        val genres: List<String> = emptyList(),
-        val status: String? = null,
-    )
-
-    @Serializable
-    private data class AniInfoResponse(val data: AniInfo)
-
-    @Serializable
-    private data class AniInfo(
-        val title: AniTitle,
-        val description: String? = null,
-        val genres: List<String> = emptyList(),
-        val status: String? = null,
-        val coverImage: AniCoverImage,
-        val author: String? = null,
-        val artist: String? = null,
-    )
-
-    @Serializable
-    private data class AniTitle(
-        val romaji: String? = null,
-        val english: String? = null,
-        val native: String? = null,
-    )
-
-    @Serializable
-    private data class AniCoverImage(
-        val extraLarge: String? = null,
-        val large: String? = null,
-        val medium: String? = null,
-    )
-
-    @Serializable
-    private data class VermillionChapterRequest(val id: String, val refresh: Boolean)
-
-    @Serializable
-    private data class VermillionSource(
-        val providerId: String,
-        val chapters: List<VermillionChapter> = emptyList(),
-    )
-
-    @Serializable
-    private data class VermillionChapter(
-        val id: String? = null,
-        val title: String? = null,
-        val number: Float,
-    )
-
-    @Serializable
-    private data class VermillionImagesRequest(val id: String, val chapter: String)
-
-    @Serializable
-    private data class VermillionImagesResponse(val images: List<VermillionImage> = emptyList())
-
-    @Serializable
-    private data class VermillionImage(val index: Int, val url: String)
 
     private data class ChapterInfo(
         val mangaId: String,
@@ -543,7 +429,6 @@ class LunarAnime : HttpSource() {
     }
 
     companion object {
-        private const val FORMAT_MANGA = "MANGA"
         private const val DEFAULT_LANGUAGE = "en"
         private val HOST_PREFIX_REGEX = Regex("^s\\d{2}\\..+")
         private val IMAGE_HOST_RANGE = 0..10
@@ -554,57 +439,5 @@ class LunarAnime : HttpSource() {
         private const val IMAGE_WRITE_TIMEOUT_SEC = 10
 
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
-
-        private const val SORT_POPULAR = "POPULARITY_DESC"
-        private const val SORT_LATEST = "START_DATE_DESC"
-
-        private val SORT_OPTIONS = arrayOf(
-            "Popular" to SORT_POPULAR,
-            "Top Rated" to "SCORE_DESC",
-            "Latest" to SORT_LATEST,
-            "A-Z" to "TITLE_ROMAJI",
-        )
-
-        private val STATUS_OPTIONS = arrayOf(
-            "Any" to null,
-            "Ongoing" to "RELEASING",
-            "Completed" to "FINISHED",
-            "Upcoming" to "NOT_YET_RELEASED",
-            "Cancelled" to "CANCELLED",
-            "On Hiatus" to "HIATUS",
-        )
-
-        private val GENRE_OPTIONS = listOf(
-            "Action",
-            "Adventure",
-            "Comedy",
-            "Drama",
-            "Ecchi",
-            "Fantasy",
-            "Horror",
-            "Romance",
-            "Sci-Fi",
-            "Slice of Life",
-            "Supernatural",
-            "Thriller",
-            "Mystery",
-            "Psychological",
-            "Sports",
-            "Music",
-            "School",
-            "Military",
-        )
-
-        private val YEAR_VALUES: Array<String> = run {
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            val years = (0..24).map { (currentYear - it).toString() }
-            arrayOf("") + years
-        }
-
-        private val YEAR_LABELS: Array<String> = run {
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            val years = (0..24).map { (currentYear - it).toString() }
-            arrayOf("Any") + years
-        }
     }
 }
