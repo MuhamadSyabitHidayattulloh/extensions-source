@@ -30,18 +30,6 @@ class LunarAnime : HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimitHost(API_URL.toHttpUrl(), 2)
         .rateLimitHost(CDN_URL.toHttpUrl(), 2)
-        .addInterceptor { chain ->
-            val request = chain.request()
-            val url = request.url.toString()
-            if (url.contains("storage.lunaranime.ru")) {
-                val newRequest = request.newBuilder()
-                    .header("Referer", "$baseUrl/")
-                    .build()
-                chain.proceed(newRequest)
-            } else {
-                chain.proceed(request)
-            }
-        }
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -156,7 +144,7 @@ class LunarAnime : HttpSource() {
         }
 
         result.data?.images?.mapIndexed { index, imageUrl ->
-            Page(index, imageUrl = imageUrl)
+            Page(index, chapter.url, imageUrl)
         } ?: emptyList()
     }
 
@@ -165,6 +153,14 @@ class LunarAnime : HttpSource() {
     override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("Not used.")
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used.")
+
+    override fun imageRequest(page: Page): Request {
+        val imageHeaders = headersBuilder()
+            .set("Referer", baseUrl + page.url)
+            .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+            .build()
+        return GET(page.imageUrl!!, imageHeaders)
+    }
 
     override fun getFilterList(): FilterList = FilterList(
         StatusFilter(),
