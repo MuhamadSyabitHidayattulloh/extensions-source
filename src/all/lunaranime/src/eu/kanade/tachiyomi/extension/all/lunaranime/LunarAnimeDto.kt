@@ -73,7 +73,7 @@ class LunarChapterDto(
     @SerialName("uploaded_at") val uploadedAt: String? = null,
 ) {
     fun toSChapter(mangaSlug: String): SChapter = SChapter.create().apply {
-        url = "/manga/$mangaSlug/$chapter"
+        url = "/manga/$mangaSlug/$chapter?lang=$language"
         name = chapterTitle?.takeIf { it.isNotBlank() } ?: "Chapter $chapter"
         chapter_number = this@LunarChapterDto.chapterNumber
         date_upload = uploadedAt?.let { DATE_FORMAT.tryParse(it) } ?: 0L

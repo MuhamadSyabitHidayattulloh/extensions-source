@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,9 +30,22 @@ class LunarAnime : HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .rateLimitHost(API_URL.toHttpUrl(), 2)
         .rateLimitHost(CDN_URL.toHttpUrl(), 2)
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            if (url.contains("storage.lunaranime.ru")) {
+                val newRequest = request.newBuilder()
+                    .header("Referer", "$baseUrl/")
+                    .build()
+                chain.proceed(newRequest)
+            } else {
+                chain.proceed(request)
+            }
+        }
         .build()
 
-    private val apiHttpUrl = API_URL.toHttpUrl()
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -43,7 +57,7 @@ class LunarAnime : HttpSource() {
     override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val url = apiHttpUrl.newBuilder()
+        val url = API_URL.toHttpUrl().newBuilder()
             .addPathSegments("api/manga/recent")
             .addQueryParameter("page", page.toString())
             .addQueryParameter("limit", "30")
@@ -60,7 +74,7 @@ class LunarAnime : HttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = apiHttpUrl.newBuilder().apply {
+        val url = API_URL.toHttpUrl().newBuilder().apply {
             addPathSegments("api/manga/search")
             addQueryParameter("page", page.toString())
             addQueryParameter("limit", "30")
@@ -72,7 +86,12 @@ class LunarAnime : HttpSource() {
                 when (filter) {
                     is StatusFilter -> filter.toValue()?.let { addQueryParameter("status", it) }
                     is TypeFilter -> filter.toValue()?.let { addQueryParameter("country", it) }
-                    is YearFilter -> if (filter.state.isNotBlank()) addQueryParameter("year", filter.state)
+                    is YearFilter -> {
+                        val year = filter.state
+                        if (year.isNotBlank() && year.toIntOrNull() != null) {
+                            addQueryParameter("year", year)
+                        }
+                    }
                     is GenreFilter -> {
                         val genres = filter.toGenres()
                         if (genres.isNotEmpty()) {
@@ -97,7 +116,7 @@ class LunarAnime : HttpSource() {
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         val slug = manga.url.substringAfterLast("/")
-        val url = apiHttpUrl.newBuilder()
+        val url = API_URL.toHttpUrl().newBuilder()
             .addPathSegments("api/manga/title")
             .addPathSegment(slug)
             .build()
@@ -111,7 +130,7 @@ class LunarAnime : HttpSource() {
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
         val slug = manga.url.substringAfterLast("/")
-        val requestUrl = apiHttpUrl.newBuilder()
+        val requestUrl = API_URL.toHttpUrl().newBuilder()
             .addPathSegments("api/manga")
             .addPathSegment(slug)
             .build()
@@ -129,13 +148,7 @@ class LunarAnime : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException("Not used.")
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
-        val slug = chapter.url.split("/")[2]
-        val chapterNumber = chapter.url.split("/")[3]
-        val url = apiHttpUrl.newBuilder()
-            .addPathSegments("api/manga")
-            .addPathSegment(slug)
-            .addPathSegment(chapterNumber)
-            .build()
+        val url = (API_URL + "/api" + chapter.url).toHttpUrl()
         val request = GET(url.toString(), headers)
         val result = client.newCall(request).execute().use { response ->
             response.parseAs<LunarPageListResponse>()
@@ -161,7 +174,10 @@ class LunarAnime : HttpSource() {
 
     override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
-    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
+    override fun getChapterUrl(chapter: SChapter): String {
+        val url = chapter.url.substringBefore("?")
+        return baseUrl + url
+    }
 
     companion object {
         private const val API_URL = "https://api.lunaranime.ru"
