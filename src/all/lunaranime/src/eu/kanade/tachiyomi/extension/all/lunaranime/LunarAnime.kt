@@ -207,8 +207,8 @@ class LunarAnime : HttpSource() {
         val data = result.data
         return SManga.create().apply {
             title = data.title.displayTitle()
-            author = data.author
-            artist = data.artist
+            author = data.staff.filter { it.role.contains("Story") }.joinToString { it.name }.takeIf { it.isNotBlank() }
+            artist = data.staff.filter { it.role.contains("Art") }.joinToString { it.name }.takeIf { it.isNotBlank() }
             description = data.description?.let { Jsoup.parse(it).text() }
             genre = data.genres.joinToString()
             status = data.status.toMangaStatus()
@@ -392,12 +392,12 @@ class LunarAnime : HttpSource() {
         return candidates
     }
 
-    private fun String?.toMangaStatus(): Int = when (this?.lowercase(Locale.ROOT)) {
-        "releasing", "ongoing" -> SManga.ONGOING
-        "finished", "completed" -> SManga.COMPLETED
-        "not_yet_released" -> SManga.UNKNOWN
-        "cancelled" -> SManga.CANCELLED
-        "hiatus" -> SManga.ON_HIATUS
+    private fun String?.toMangaStatus(): Int = when (this?.uppercase(Locale.ROOT)) {
+        "RELEASING", "ONGOING" -> SManga.ONGOING
+        "FINISHED", "COMPLETED" -> SManga.COMPLETED
+        "NOT_YET_RELEASED" -> SManga.UNKNOWN
+        "CANCELLED" -> SManga.CANCELLED
+        "HIATUS" -> SManga.ON_HIATUS
         else -> SManga.UNKNOWN
     }
 

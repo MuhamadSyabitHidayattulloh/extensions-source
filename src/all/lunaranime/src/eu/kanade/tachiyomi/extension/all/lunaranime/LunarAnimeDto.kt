@@ -71,8 +71,13 @@ class AniInfo(
     val genres: List<String> = emptyList(),
     val status: String? = null,
     val coverImage: AniCoverImage,
-    val author: String? = null,
-    val artist: String? = null,
+    val staff: List<AniStaff> = emptyList(),
+)
+
+@Serializable
+class AniStaff(
+    val name: String,
+    val role: String,
 )
 
 @Serializable
