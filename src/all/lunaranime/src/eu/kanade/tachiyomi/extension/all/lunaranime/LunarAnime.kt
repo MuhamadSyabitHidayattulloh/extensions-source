@@ -150,10 +150,23 @@ class LunarAnime : HttpSource() {
             .addPathSegment(slug)
             .build()
         val request = GET(requestUrl.toString(), headers)
-
         val result = client.newCall(request).execute().parseAs<LunarChapterListResponse>()
 
-        result.data.map { it.toSChapter(slug) }.reversed()
+        val passwordUrl = API_URL.toHttpUrl().newBuilder()
+            .addPathSegments("api/manga/password/info")
+            .addPathSegment(slug)
+            .build()
+        val passwordRequest = GET(passwordUrl.toString(), headers)
+        val passwordInfo = runCatching {
+            client.newCall(passwordRequest).execute().parseAs<LunarPasswordInfoResponse>()
+        }.getOrDefault(LunarPasswordInfoResponse())
+
+        val lockedChapters = passwordInfo.chapterPasswords.map { it.chapterNumber }.toSet()
+
+        result.data.map {
+            val isLocked = passwordInfo.hasSeriesPassword || lockedChapters.contains(it.chapter)
+            it.toSChapter(slug, isLocked)
+        }.reversed()
     }
 
     override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("Not used.")
@@ -171,7 +184,18 @@ class LunarAnime : HttpSource() {
 
         val url = (API_URL + "/api" + chapter.url).toHttpUrl()
         val request = GET(url.toString(), headers)
-        val result = client.newCall(request).execute().parseAs<LunarPageListResponse>()
+        val response = client.newCall(request).execute()
+
+        if (!response.isSuccessful) {
+            val error = runCatching { response.parseAs<LunarChapterErrorResponse>() }.getOrNull()
+            if (error?.isPasswordProtected == true) {
+                throw Exception(error.lockDescription ?: error.message ?: "Chapter is password protected")
+            }
+            response.close()
+            throw Exception("HTTP error ${response.code}")
+        }
+
+        val result = response.parseAs<LunarPageListResponse>()
 
         val images = result.data?.let { data ->
             val sessionData = data.sessionData
