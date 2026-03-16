@@ -95,6 +95,17 @@ class LunarPageListResponse(
 @Serializable
 class LunarPageListData(
     val images: List<String> = emptyList(),
+    @SerialName("session_data") val sessionData: String? = null,
+)
+
+@Serializable
+class LunarPageListDecrypted(
+    val data: LunarPageListData,
+)
+
+@Serializable
+class SecretKeyDto(
+    val secretKey: String,
 )
 
 @Serializable

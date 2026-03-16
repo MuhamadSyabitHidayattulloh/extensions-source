@@ -8,6 +8,8 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import keiyoushi.lib.cryptoaes.CryptoAES
+import keiyoushi.utils.extractNextJs
 import keiyoushi.utils.parseAs
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -16,6 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import java.security.MessageDigest
 
 class LunarAnime : HttpSource() {
 
@@ -149,15 +152,30 @@ class LunarAnime : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException("Not used.")
 
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
+        val pageUrl = baseUrl + chapter.url.substringBefore("?")
+        val pageRequest = GET(pageUrl, headers)
+        val secretKey = client.newCall(pageRequest).execute().use { response ->
+            response.extractNextJs<SecretKeyDto>()?.secretKey
+        } ?: return@fromCallable emptyList()
+
         val url = (API_URL + "/api" + chapter.url).toHttpUrl()
         val request = GET(url.toString(), headers)
         val result = client.newCall(request).execute().use { response ->
             response.parseAs<LunarPageListResponse>()
         }
 
-        result.data?.images?.mapIndexed { index, imageUrl ->
+        val images = if (!result.data?.sessionData.isNullOrBlank()) {
+            val key = secretKey.sha256()
+            val iv = ByteArray(16) { 0 }
+            val decrypted = CryptoAES.decrypt(result.data!!.sessionData!!, key, iv)
+            json.decodeFromString<LunarPageListDecrypted>(decrypted).data.images
+        } else {
+            result.data?.images ?: emptyList()
+        }
+
+        images.mapIndexed { index, imageUrl ->
             Page(index, chapter.url, imageUrl)
-        } ?: emptyList()
+        }
     }
 
     override fun pageListRequest(chapter: SChapter): Request = throw UnsupportedOperationException("Not used.")
@@ -188,6 +206,8 @@ class LunarAnime : HttpSource() {
         val url = chapter.url.substringBefore("?")
         return baseUrl + url
     }
+
+    private fun String.sha256(): ByteArray = MessageDigest.getInstance("SHA-256").digest(toByteArray())
 
     companion object {
         private const val API_URL = "https://api.lunaranime.ru"
