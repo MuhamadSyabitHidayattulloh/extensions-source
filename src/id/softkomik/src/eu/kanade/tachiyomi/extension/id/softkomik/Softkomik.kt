@@ -214,6 +214,12 @@ class Softkomik : HttpSource() {
 
     private fun imageInterceptor(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        val url = request.url.toString()
+        val currentHost = cdnUrls.firstOrNull { url.startsWith(it) }
+
+        if (currentHost == null) {
+            return chain.proceed(request)
+        }
 
         val response = try {
             chain.proceed(request)
@@ -224,10 +230,7 @@ class Softkomik : HttpSource() {
         if (response?.isSuccessful == true) return response
         response?.close()
 
-        val currentHost = cdnUrls.firstOrNull { request.url.toString().startsWith(it) }
-            ?: return throw java.net.UnknownHostException("Unknown CDN host: ${request.url.host}")
-
-        val imagePath = request.url.toString().removePrefix(currentHost).removePrefix("/")
+        val imagePath = url.removePrefix(currentHost).removePrefix("/")
         val otherHosts = cdnUrls.filter { it != currentHost }
 
         var latestResponse: Response? = null
