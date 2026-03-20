@@ -192,7 +192,11 @@ class Softkomik : HttpSource() {
             throw Exception("No pages found")
         }
 
-        val imageBaseUrl = if (data.storageInter2 == true) cdnUrls[2] else cdnUrls[0]
+        val imageBaseUrl = if (data.storageInter2 == true) {
+            cdnUrls.firstOrNull { it.contains("image.softdevices.my.id") } ?: cdnUrls[0]
+        } else {
+            cdnUrls[0]
+        }
 
         return imageSrc.mapIndexed { i, img ->
             Page(i, imageUrl = "$imageBaseUrl/${img.removePrefix("/")}")
@@ -214,21 +218,24 @@ class Softkomik : HttpSource() {
 
     private fun imageInterceptor(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        val urlString = request.url.toString()
+        val currentHost = cdnUrls.firstOrNull { urlString.startsWith(it) }
+
+        if (currentHost == null) {
+            return chain.proceed(request)
+        }
 
         val response = try {
             chain.proceed(request)
-        } catch (e: java.net.UnknownHostException) {
+        } catch (e: java.io.IOException) {
             null
         }
 
         if (response?.isSuccessful == true) return response
         response?.close()
 
-        val currentHost = cdnUrls.firstOrNull { request.url.toString().startsWith(it) }
-            ?: return throw java.net.UnknownHostException("Unknown CDN host: ${request.url.host}")
-
-        val imagePath = request.url.toString().removePrefix(currentHost).removePrefix("/")
-        val otherHosts = cdnUrls.filter { it != currentHost }
+        val imagePath = urlString.removePrefix(currentHost).removePrefix("/")
+        val otherHosts = cdnUrls.filter { it != currentHost && it != apiUrl }
 
         var latestResponse: Response? = null
         for (newHost in otherHosts) {
@@ -236,7 +243,7 @@ class Softkomik : HttpSource() {
             val newUrl = "$newHost/$imagePath".toHttpUrl()
             latestResponse = try {
                 chain.proceed(request.newBuilder().url(newUrl).build())
-            } catch (e: java.net.UnknownHostException) {
+            } catch (e: java.io.IOException) {
                 null
             }
             if (latestResponse?.isSuccessful == true) return latestResponse
@@ -320,5 +327,10 @@ class Softkomik : HttpSource() {
         "https://f1.softkomik.com/file/softkomik-image",
         "https://img.softdevices.my.id/softkomik-image",
         "https://image.softkomik.com/softkomik",
+        "https://cdn1.softkomik.online/softkomik",
+        "https://image.softdevices.my.id/softkomik-image",
+        "https://cover.softdevices.my.id/softkomik-cover",
+        "https://v2.softdevices.my.id",
+        "https://psy1.komik.im",
     )
 }
