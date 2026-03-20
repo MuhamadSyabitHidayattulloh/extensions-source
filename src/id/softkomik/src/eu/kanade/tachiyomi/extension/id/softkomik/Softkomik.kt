@@ -24,10 +24,6 @@ class Softkomik : HttpSource() {
 
     private var session: SessionDto? = null
 
-    private val rscHeaders = headersBuilder()
-        .add("rsc", "1")
-        .build()
-
     override val client = network.cloudflareClient.newBuilder()
         .addInterceptor(::imageInterceptor)
         .addInterceptor(::apiAuthInterceptor)
@@ -43,7 +39,7 @@ class Softkomik : HttpSource() {
             .addQueryParameter("sortBy", "popular")
             .addQueryParameter("page", page.toString())
             .build()
-        return GET(url, rscHeaders)
+        return GET(url, headers)
     }
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
@@ -54,7 +50,7 @@ class Softkomik : HttpSource() {
             .addQueryParameter("sortBy", "newKomik")
             .addQueryParameter("page", page.toString())
             .build()
-        return GET(url, rscHeaders)
+        return GET(url, headers)
     }
 
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
@@ -89,7 +85,7 @@ class Softkomik : HttpSource() {
             }
         }
 
-        return GET(url.build(), rscHeaders)
+        return GET(url.build(), headers)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -110,7 +106,7 @@ class Softkomik : HttpSource() {
     }
 
     // ======================== Details ========================
-    override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/${manga.url}", rscHeaders)
+    override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/${manga.url}", headers)
 
     override fun mangaDetailsParse(response: Response): SManga {
         val manga = response.extractNextJs<MangaDetailsDto>()
@@ -171,17 +167,19 @@ class Softkomik : HttpSource() {
     }
 
     // ======================== Pages ========================
-    override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl${chapter.url}", rscHeaders)
+    override fun pageListRequest(chapter: SChapter): Request = GET("$baseUrl${chapter.url}", headers)
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.extractNextJs<ChapterPageDataDto>()
+        val nextData = response.extractNextJs<ChapterPagePropsDto>()
             ?: throw Exception("Could not find chapter data")
+        val data = nextData.data.data
 
         val imageSrc = if (data.imageSrc.isEmpty()) {
             val slug = response.request.url.pathSegments[0]
             val chapter = response.request.url.pathSegments[2]
-            val url = "$apiUrl/komik/$slug/chapter/$chapter/img/${data._id}"
+            val url = "$apiUrl/komik/${nextData.data.komik.link}/chapter/$chapter/imgs/${data._id}"
             client.newCall(GET(url, headers)).execute().use {
+                if (!it.isSuccessful) throw Exception("Gagal memuat daftar gambar (HTTP ${it.code})")
                 it.parseAs<ChapterPageImagesDto>().imageSrc
             }
         } else {
@@ -193,9 +191,9 @@ class Softkomik : HttpSource() {
         }
 
         val imageBaseUrl = if (data.storageInter2 == true) {
-            cdnUrls.firstOrNull { it.contains("image.softdevices.my.id") } ?: cdnUrls[0]
+            "https://cdn1.softkomik.online/softkomik"
         } else {
-            cdnUrls[0]
+            "https://psy1.komik.im"
         }
 
         return imageSrc.mapIndexed { i, img ->
@@ -235,7 +233,11 @@ class Softkomik : HttpSource() {
         response?.close()
 
         val imagePath = urlString.removePrefix(currentHost).removePrefix("/")
-        val otherHosts = cdnUrls.filter { it != currentHost && it != apiUrl }
+        val otherHosts = cdnUrls.filter {
+            it != currentHost &&
+                !it.contains("softdevices.my.id") &&
+                !it.contains("softkomik.co")
+        }
 
         var latestResponse: Response? = null
         for (newHost in otherHosts) {
@@ -254,16 +256,24 @@ class Softkomik : HttpSource() {
 
     private fun apiAuthInterceptor(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        val host = request.url.host
 
-        if (!request.url.host.endsWith("softdevices.my.id")) {
+        if (!host.endsWith("softdevices.my.id")) {
             return chain.proceed(request)
         }
 
         val session = getSession()
 
         val newRequest = request.newBuilder()
+            .addHeader("Accept", "application/json")
             .addHeader("X-Token", session.token)
             .addHeader("X-Sign", session.sign)
+            .addHeader("X-Requested-With", "XMLHttpRequest")
+            .apply {
+                if (host.contains("v2")) {
+                    addHeader("Authorization", "Bearer ${session.token}")
+                }
+            }
             .build()
 
         return chain.proceed(newRequest)
@@ -323,14 +333,22 @@ class Softkomik : HttpSource() {
     private val apiUrl = "https://v2.softdevices.my.id"
     private val coverUrl = "https://cover.softdevices.my.id/softkomik-cover"
     private val cdnUrls = listOf(
-        "https://cd1.softkomik.online/softkomik",
-        "https://f1.softkomik.com/file/softkomik-image",
-        "https://img.softdevices.my.id/softkomik-image",
-        "https://image.softkomik.com/softkomik",
         "https://cdn1.softkomik.online/softkomik",
-        "https://image.softdevices.my.id/softkomik-image",
-        "https://cover.softdevices.my.id/softkomik-cover",
-        "https://v2.softdevices.my.id",
         "https://psy1.komik.im",
+        "https://cd1.softkomik.online/softkomik",
+        "https://cd2.softkomik.online/softkomik",
+        "https://cd3.softkomik.online/softkomik",
+        "https://f1.softkomik.com/file/softkomik-image",
+        "https://f2.softkomik.com/file/softkomik-image",
+        "https://f3.softkomik.com/file/softkomik-image",
+        "https://image.softkomik.com/softkomik",
+        "https://image2.softkomik.com/softkomik",
+        "https://image3.softkomik.com/softkomik",
+        "https://image.softdevices.my.id/softkomik-image",
+        "https://img.softdevices.my.id/softkomik-image",
+        "https://image.softkomik.online/softkomik",
+        "https://v1.softdevices.my.id",
+        "https://v2.softdevices.my.id",
+        "https://cover.softdevices.my.id/softkomik-cover",
     )
 }

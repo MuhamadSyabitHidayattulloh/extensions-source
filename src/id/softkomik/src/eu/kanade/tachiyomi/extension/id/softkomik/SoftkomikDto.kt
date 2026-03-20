@@ -40,7 +40,23 @@ data class ChapterPageImagesDto(
 )
 
 @Serializable
+data class ChapterPagePropsDto(
+    val data: ChapterPageDataDto,
+)
+
+@Serializable
 data class ChapterPageDataDto(
+    val komik: ChapterKomikDto,
+    val data: ChapterImagesDto,
+)
+
+@Serializable
+data class ChapterKomikDto(
+    val link: String,
+)
+
+@Serializable
+data class ChapterImagesDto(
     val _id: String,
     val imageSrc: List<String>,
     val storageInter2: Boolean? = false,
