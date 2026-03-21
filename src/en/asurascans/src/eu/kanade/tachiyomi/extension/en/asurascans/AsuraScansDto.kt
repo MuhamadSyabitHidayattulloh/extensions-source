@@ -72,6 +72,11 @@ val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ROOT).apply
 }
 
 @Serializable
+class ChapterListDto(
+    val chapters: List<ChapterDto> = emptyList(),
+)
+
+@Serializable
 class ChapterWrapperDto(
     val chapter: ChapterDto,
 )
@@ -99,5 +104,17 @@ class ChapterDto(
 
 @Serializable
 class PageDto(
-    val url: String = "",
+    val url: String,
+    val tiles: List<Int>? = null,
+    @SerialName("tile_cols")
+    val tileCols: Int? = null,
+    @SerialName("tile_rows")
+    val tileRows: Int? = null,
+)
+
+@Serializable
+class PageData(
+    val tiles: List<Int>,
+    val tileCols: Int,
+    val tileRows: Int,
 )
