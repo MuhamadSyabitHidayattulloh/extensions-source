@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import keiyoushi.utils.tryParse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -324,11 +325,11 @@ class Komiku : ParsedHttpSource() {
         date_upload = if (timeStamp.text().contains("lalu")) {
             parseRelativeDate(timeStamp.text())
         } else {
-            parseDate(timeStamp.last()!!)
+            dateFormat.tryParse(timeStamp.last()?.text())
         }
     }
 
-    private fun parseDate(element: Element): Long = SimpleDateFormat("dd/MM/yyyy", Locale.US).parse(element.text())?.time ?: 0
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.US)
 
     // Used Google translate here
     private fun parseRelativeDate(date: String): Long {
