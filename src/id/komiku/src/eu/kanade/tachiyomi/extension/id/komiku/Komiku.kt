@@ -91,11 +91,7 @@ class Komiku : ParsedHttpSource() {
                     is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
                     is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
                     is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is StatusList -> {
-                        val status = filter.values[filter.state].key
-                        addQueryParameter("status", status)
-                        addQueryParameter("statusmanga", status)
-                    }
+                    is StatusList -> url.addQueryParameter("status", filter.values[filter.state].key)
                     else -> {}
                 }
             }
@@ -122,19 +118,11 @@ class Komiku : ParsedHttpSource() {
         genre = document.select("ul.genre li.genre a span").joinToString { it.text() }
         status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
         thumbnail_url = document.select("div.ims > img").attr("abs:src")
-
-        // add series type(manga/manhwa/manhua/other) thinggy to genre
-        val seriesTypeSelector = "table.inftable tr:contains(Jenis) a, table.inftable tr:has(a[href*=category\\/]) a, a[href*=category\\/]"
-        document.select(seriesTypeSelector).text().let {
-            if (it.isNotEmpty() && genre!!.contains(it, true).not()) {
-                genre += if (genre!!.isEmpty()) it else ", $it"
-            }
-        }
     }
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing", true) || status.contains("On Going", true) -> SManga.ONGOING
-        status.contains("End", true) || status.contains("Completed", true) -> SManga.COMPLETED
+        status.contains("End", true) -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
