@@ -30,7 +30,7 @@ class Komiku : ParsedHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    // popular
+    // ============================== Popular ===============================
     override fun popularMangaSelector() = "div.bge"
 
     override fun popularMangaRequest(page: Int): Request = if (page == 1) {
@@ -38,9 +38,6 @@ class Komiku : ParsedHttpSource() {
     } else {
         GET("$baseUrlApi/other/hot/page/$page/?orderby=meta_value_num", headers)
     }
-
-    private val coverRegex = Regex("""(/Manga-|/Manhua-|/Manhwa-)""")
-    private val coverUploadRegex = Regex("""/uploads/\d\d\d\d/\d\d/""")
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -61,7 +58,7 @@ class Komiku : ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector() = "span[hx-get]"
 
-    // latest
+    // =============================== Latest ===============================
     override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesRequest(page: Int): Request = if (page == 1) {
@@ -74,7 +71,7 @@ class Komiku : ParsedHttpSource() {
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
-    // search
+    // =============================== Search ===============================
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -94,7 +91,11 @@ class Komiku : ParsedHttpSource() {
                     is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
                     is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
                     is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is StatusList -> addQueryParameter("statusmanga", filter.values[filter.state].key)
+                    is StatusList -> {
+                        val status = filter.values[filter.state].key
+                        addQueryParameter("status", status)
+                        addQueryParameter("statusmanga", status)
+                    }
                     else -> {}
                 }
             }
@@ -107,6 +108,75 @@ class Komiku : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
+    // =========================== Manga Details ============================
+    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        description = document.select("#Sinopsis > p").text()
+
+        document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
+            if (it.isNotEmpty()) {
+                description = (if (description!!.isEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
+            }
+        }
+
+        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text()
+        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }
+        status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
+        thumbnail_url = document.select("div.ims > img").attr("abs:src")
+
+        // add series type(manga/manhwa/manhua/other) thinggy to genre
+        val seriesTypeSelector = "table.inftable tr:contains(Jenis) a, table.inftable tr:has(a[href*=category\\/]) a, a[href*=category\\/]"
+        document.select(seriesTypeSelector).text().let {
+            if (it.isNotEmpty() && genre!!.contains(it, true).not()) {
+                genre += if (genre!!.isEmpty()) it else ", $it"
+            }
+        }
+    }
+
+    private fun parseStatus(status: String) = when {
+        status.contains("Ongoing", true) || status.contains("On Going", true) -> SManga.ONGOING
+        status.contains("End", true) || status.contains("Completed", true) -> SManga.COMPLETED
+        else -> SManga.UNKNOWN
+    }
+
+    // ============================= Chapters ===============================
+    override fun chapterListSelector() = "#Daftar_Chapter tr:has(td.judulseries)"
+
+    override fun chapterFromElement(element: Element) = SChapter.create().apply {
+        setUrlWithoutDomain(element.select("a").attr("href"))
+        name = element.select("a").text()
+
+        val timeStamp = element.select("td.tanggalseries")
+        date_upload = if (timeStamp.text().contains("lalu")) {
+            parseRelativeDate(timeStamp.text())
+        } else {
+            dateFormat.tryParse(timeStamp.last()?.text())
+        }
+    }
+
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.US)
+
+    // Used Google translate here
+    private fun parseRelativeDate(date: String): Long {
+        val trimmedDate = date.substringBefore(" lalu").removeSuffix("s").split(" ")
+
+        val calendar = Calendar.getInstance()
+        when (trimmedDate[1]) {
+            "jam" -> calendar.apply { add(Calendar.HOUR_OF_DAY, -trimmedDate[0].toInt()) }
+            "menit" -> calendar.apply { add(Calendar.MINUTE, -trimmedDate[0].toInt()) }
+            "detik" -> calendar.apply { add(Calendar.SECOND, 0) }
+        }
+
+        return calendar.timeInMillis
+    }
+
+    // =============================== Pages ================================
+    override fun pageListParse(document: Document): List<Page> = document.select("#Baca_Komik img").mapIndexed { i, element ->
+        Page(i, "", element.attr("abs:src"))
+    }
+
+    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
+
+    // ============================== Filters ===============================
     private class Category(title: String, val key: String) : Filter.TriState(title) {
         override fun toString(): String = name
     }
@@ -259,71 +329,8 @@ class Komiku : ParsedHttpSource() {
         Status("Tamat", "end"),
     )
 
-    // manga details
-    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        description = document.select("#Sinopsis > p").text()
-
-        document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
-            if (it.isNotEmpty()) {
-                description = (if (description!!.isEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
-            }
-        }
-
-        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text()
-        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }
-        status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
-        thumbnail_url = document.select("div.ims > img").attr("abs:src")
-
-        // add series type(manga/manhwa/manhua/other) thinggy to genre
-        val seriesTypeSelector = "table.inftable tr:contains(Jenis) a, table.inftable tr:has(a[href*=category\\/]) a, a[href*=category\\/]"
-        document.select(seriesTypeSelector).text().let {
-            if (it.isNotEmpty() && genre!!.contains(it, true).not()) {
-                genre += if (genre!!.isEmpty()) it else ", $it"
-            }
-        }
+    companion object {
+        private val coverRegex = Regex("""(/Manga-|/Manhua-|/Manhwa-)""")
+        private val coverUploadRegex = Regex("""/uploads/\d\d\d\d/\d\d/""")
     }
-
-    private fun parseStatus(status: String) = when {
-        status.contains("Ongoing", true) || status.contains("On Going", true) -> SManga.ONGOING
-        status.contains("End", true) || status.contains("Completed", true) -> SManga.COMPLETED
-        else -> SManga.UNKNOWN
-    }
-
-    // chapters
-    override fun chapterListSelector() = "#Daftar_Chapter tr:has(td.judulseries)"
-
-    override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").attr("href"))
-        name = element.select("a").text()
-
-        val timeStamp = element.select("td.tanggalseries")
-        date_upload = if (timeStamp.text().contains("lalu")) {
-            parseRelativeDate(timeStamp.text())
-        } else {
-            dateFormat.tryParse(timeStamp.last()?.text())
-        }
-    }
-
-    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.US)
-
-    // Used Google translate here
-    private fun parseRelativeDate(date: String): Long {
-        val trimmedDate = date.substringBefore(" lalu").removeSuffix("s").split(" ")
-
-        val calendar = Calendar.getInstance()
-        when (trimmedDate[1]) {
-            "jam" -> calendar.apply { add(Calendar.HOUR_OF_DAY, -trimmedDate[0].toInt()) }
-            "menit" -> calendar.apply { add(Calendar.MINUTE, -trimmedDate[0].toInt()) }
-            "detik" -> calendar.apply { add(Calendar.SECOND, 0) }
-        }
-
-        return calendar.timeInMillis
-    }
-
-    // pages
-    override fun pageListParse(document: Document): List<Page> = document.select("#Baca_Komik img").mapIndexed { i, element ->
-        Page(i, "", element.attr("abs:src"))
-    }
-
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 }
