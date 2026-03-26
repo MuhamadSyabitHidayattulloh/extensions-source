@@ -59,7 +59,7 @@ class Komiku : ParsedHttpSource() {
         return manga
     }
 
-    override fun popularMangaNextPageSelector() = "#hxloading + [hx-trigger=revealed]"
+    override fun popularMangaNextPageSelector() = "span[hx-get]"
 
     // latest
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -79,52 +79,42 @@ class Komiku : ParsedHttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrlApi.toHttpUrl().newBuilder().apply {
-            addPathSegment("manga")
-            if (page > 1) {
-                addPathSegment("page")
-                addPathSegment(page.toString())
-            }
             if (query.isNotEmpty()) {
+                if (page > 1) {
+                    addPathSegment("page")
+                    addPathSegment(page.toString())
+                }
                 addQueryParameter("s", query)
+                addQueryParameter("post_type", "manga")
+            } else {
+                addPathSegment("manga")
+                if (page > 1) {
+                    addPathSegment("page")
+                    addPathSegment(page.toString())
+                }
             }
-        }
 
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is CategoryNames -> {
-                    val category = filter.values[filter.state]
-                    url.addQueryParameter("tipe", category.key)
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is CategoryNames -> addQueryParameter("tipe", filter.values[filter.state].key)
+                    is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
+                    is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
+                    is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
+                    is StatusList -> {
+                        val status = filter.values[filter.state].key
+                        addQueryParameter("status", status)
+                        addQueryParameter("statusmanga", status)
+                    }
+                    else -> {}
                 }
-
-                is OrderBy -> {
-                    val order = filter.values[filter.state]
-                    url.addQueryParameter("orderby", order.key)
-                }
-
-                is GenreList1 -> {
-                    val genre = filter.values[filter.state]
-                    url.addQueryParameter("genre", genre.key)
-                }
-
-                is GenreList2 -> {
-                    val genre = filter.values[filter.state]
-                    url.addQueryParameter("genre2", genre.key)
-                }
-
-                is StatusList -> {
-                    val status = filter.values[filter.state]
-                    url.addQueryParameter("statusmanga", status.key)
-                }
-
-                else -> {}
             }
-        }
-        return GET(url.build(), headers)
+        }.build()
+        return GET(url, headers)
     }
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
 
-    override fun searchMangaNextPageSelector() = "a.next"
+    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     private class Category(title: String, val key: String) : Filter.TriState(title) {
         override fun toString(): String = name
@@ -304,7 +294,7 @@ class Komiku : ParsedHttpSource() {
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("End") -> SManga.COMPLETED
+        status.contains("End") || status.contains("Completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
