@@ -64,9 +64,9 @@ class Komiku : ParsedHttpSource() {
     override fun latestUpdatesSelector() = popularMangaSelector()
 
     override fun latestUpdatesRequest(page: Int): Request = if (page == 1) {
-        GET("$baseUrlApi/other/hot/?orderby=modified&category_name=", headers)
+        GET("$baseUrlApi/other/hot/?orderby=modified", headers)
     } else {
-        GET("$baseUrlApi/other/hot/page/$page/?orderby=modified&category_name=", headers)
+        GET("$baseUrlApi/other/hot/page/$page/?orderby=modified", headers)
     }
 
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
@@ -77,9 +77,13 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrlApi/page/$page/".toHttpUrl().newBuilder()
-            .addQueryParameter("s", query)
-            .addQueryParameter("post_type", "manga")
+        var url = "$baseUrlApi/manga/".toHttpUrl().newBuilder()
+        if (page > 1) {
+            url.addPathSegment("page")
+            url.addPathSegment(page.toString())
+        }
+        url.addQueryParameter("s", query)
+        url.addQueryParameter("post_type", "manga")
 
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
