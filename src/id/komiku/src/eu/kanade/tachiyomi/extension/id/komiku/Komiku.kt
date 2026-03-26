@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.id.komiku
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -11,6 +12,7 @@ import keiyoushi.utils.tryParse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -42,8 +44,8 @@ class Komiku : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        manga.title = element.select("h3").text()
-        manga.setUrlWithoutDomain(element.select("a:has(h3)").attr("href"))
+        manga.title = element.selectFirst("h3")!!.text()
+        manga.setUrlWithoutDomain(element.selectFirst("a:has(h3)")!!.attr("href"))
 
         // scraped image doesn't make for a good cover; so try to transform it
         // make it take bad cover instead of null if it contains upload date as those URLs aren't very useful
@@ -75,29 +77,36 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = baseUrlApi.toHttpUrl().newBuilder()
-
-        url.addPathSegment("manga")
-        if (page > 1) {
-            url.addPathSegments("page/$page")
-        }
-
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("s", query)
-        }
-
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is CategoryNames -> url.addQueryParameter("tipe", filter.values[filter.state].key)
-                is OrderBy -> url.addQueryParameter("orderby", filter.values[filter.state].key)
-                is GenreParameter -> url.addQueryParameter("genre", filter.values[filter.state].key)
-                is Genre2Parameter -> url.addQueryParameter("genre2", filter.values[filter.state].key)
-                is StatusParameter -> url.addQueryParameter("status", filter.values[filter.state].key)
-                else -> {}
+        val url = baseUrlApi.toHttpUrl().newBuilder().apply {
+            addPathSegment("manga")
+            if (page > 1) {
+                addPathSegments("page/$page")
             }
-        }
 
-        return GET(url.build(), headers)
+            if (query.isNotEmpty()) {
+                addQueryParameter("s", query)
+            }
+
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is CategoryNames -> addQueryParameter("tipe", filter.values[filter.state].key)
+                    is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
+                    is GenreParameter -> addQueryParameter("genre", filter.values[filter.state].key)
+                    is Genre2Parameter -> addQueryParameter("genre2", filter.values[filter.state].key)
+                    is StatusParameter -> addQueryParameter("status", filter.values[filter.state].key)
+                    else -> {}
+                }
+            }
+        }.build()
+
+        return GET(url, headers)
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        if (response.code == 404) return MangasPage(emptyList(), false)
+        val mangasPage = super.searchMangaParse(response)
+        // The URL supports pagination, but the source UI does not display pagination buttons.
+        return MangasPage(mangasPage.mangas, mangasPage.hasNextPage || mangasPage.mangas.size >= 20)
     }
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
@@ -110,14 +119,14 @@ class Komiku : ParsedHttpSource() {
 
         document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
             if (it.isNotEmpty()) {
-                description = (if (description!!.isEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
+                description = (if (description.isNullOrEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
             }
         }
 
-        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text()
-        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }
+        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text().takeIf { it.isNotEmpty() }
+        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }.takeIf { it.isNotEmpty() }
         status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
-        thumbnail_url = document.select("div.ims > img").attr("abs:src")
+        thumbnail_url = document.selectFirst("div.ims > img")?.attr("abs:src")
     }
 
     private fun parseStatus(status: String) = when {
@@ -130,8 +139,8 @@ class Komiku : ParsedHttpSource() {
     override fun chapterListSelector() = "#Daftar_Chapter tr:has(td.judulseries)"
 
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("a").attr("href"))
-        name = element.select("a").text()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        name = element.selectFirst("a")!!.text()
 
         val timeStamp = element.select("td.tanggalseries")
         date_upload = if (timeStamp.text().contains("lalu")) {
@@ -149,9 +158,8 @@ class Komiku : ParsedHttpSource() {
 
         val calendar = Calendar.getInstance()
         when (trimmedDate[1]) {
-            "jam" -> calendar.apply { add(Calendar.HOUR_OF_DAY, -trimmedDate[0].toInt()) }
-            "menit" -> calendar.apply { add(Calendar.MINUTE, -trimmedDate[0].toInt()) }
-            "detik" -> calendar.apply { add(Calendar.SECOND, 0) }
+            "jam" -> calendar.add(Calendar.HOUR_OF_DAY, -trimmedDate[0].toInt())
+            "menit" -> calendar.add(Calendar.MINUTE, -trimmedDate[0].toInt())
         }
 
         return calendar.timeInMillis
