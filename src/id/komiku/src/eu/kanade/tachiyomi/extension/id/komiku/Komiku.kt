@@ -44,7 +44,7 @@ class Komiku : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
 
-        manga.title = element.select("h3").text().trim()
+        manga.title = element.select("h3").text()
         manga.setUrlWithoutDomain(element.select("a:has(h3)").attr("href"))
 
         // scraped image doesn't make for a good cover; so try to transform it
@@ -272,16 +272,23 @@ class Komiku : ParsedHttpSource() {
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        description = document.select("#Sinopsis > p").text().trim()
-        author = document.select("table.inftable td:contains(Komikus)+td").text()
-        genre = document.select("li[itemprop=genre] > a").joinToString { it.text() }
+        description = document.select("#Sinopsis > p").text()
+
+        document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
+            if (it.isNotEmpty()) {
+                description = (if (description!!.isEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
+            }
+        }
+
+        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text()
+        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }
         status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
         thumbnail_url = document.select("div.ims > img").attr("abs:src")
 
         // add series type(manga/manhwa/manhua/other) thinggy to genre
         val seriesTypeSelector = "table.inftable tr:contains(Jenis) a, table.inftable tr:has(a[href*=category\\/]) a, a[href*=category\\/]"
-        document.select(seriesTypeSelector).firstOrNull()?.text()?.let {
-            if (it.isEmpty().not() && genre!!.contains(it, true).not()) {
+        document.select(seriesTypeSelector).text().let {
+            if (it.isNotEmpty() && genre!!.contains(it, true).not()) {
                 genre += if (genre!!.isEmpty()) it else ", $it"
             }
         }
@@ -302,7 +309,7 @@ class Komiku : ParsedHttpSource() {
 
         val timeStamp = element.select("td.tanggalseries")
         date_upload = if (timeStamp.text().contains("lalu")) {
-            parseRelativeDate(timeStamp.text().trim())
+            parseRelativeDate(timeStamp.text())
         } else {
             parseDate(timeStamp.last()!!)
         }
