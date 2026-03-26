@@ -78,29 +78,29 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = baseUrlApi.toHttpUrl().newBuilder()
-
-        url.addPathSegment("manga")
-        if (page > 1) {
-            url.addPathSegments("page/$page")
-        }
-
-        if (query.isNotEmpty()) {
-            url.addQueryParameter("s", query)
-        }
-
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is CategoryNames -> url.addQueryParameter("tipe", filter.values[filter.state].key)
-                is OrderBy -> url.addQueryParameter("orderby", filter.values[filter.state].key)
-                is GenreList1 -> url.addQueryParameter("genre", filter.values[filter.state].key)
-                is GenreList2 -> url.addQueryParameter("genre2", filter.values[filter.state].key)
-                is StatusList -> url.addQueryParameter("status", filter.values[filter.state].key)
-                else -> {}
+        val url = baseUrlApi.toHttpUrl().newBuilder().apply {
+            addPathSegment("manga")
+            if (page > 1) {
+                addPathSegments("page/$page")
             }
-        }
 
-        return GET(url.build(), headers)
+            if (query.isNotEmpty()) {
+                addQueryParameter("s", query)
+            }
+
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is CategoryNames -> addQueryParameter("tipe", filter.values[filter.state].key)
+                    is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
+                    is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
+                    is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
+                    is StatusList -> addQueryParameter("statusmanga", filter.values[filter.state].key)
+                    else -> {}
+                }
+            }
+        }.build()
+
+        return GET(url, headers)
     }
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
@@ -284,8 +284,8 @@ class Komiku : ParsedHttpSource() {
     }
 
     private fun parseStatus(status: String) = when {
-        status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("End") -> SManga.COMPLETED
+        status.contains("Ongoing", true) || status.contains("On Going", true) -> SManga.ONGOING
+        status.contains("End", true) || status.contains("Completed", true) -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
