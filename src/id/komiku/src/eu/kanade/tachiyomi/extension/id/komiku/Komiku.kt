@@ -79,20 +79,13 @@ class Komiku : ParsedHttpSource() {
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrlApi.toHttpUrl().newBuilder().apply {
-            if (query.isNotEmpty()) {
-                if (page > 1) {
-                    addPathSegment("page")
-                    addPathSegment(page.toString())
-                }
-                addQueryParameter("s", query)
-                addQueryParameter("post_type", "manga")
-            } else {
-                addPathSegment("manga")
-                if (page > 1) {
-                    addPathSegment("page")
-                    addPathSegment(page.toString())
-                }
+            addPathSegment("manga")
+            if (page > 1) {
+                addPathSegment("page")
+                addPathSegment(page.toString())
             }
+
+            addQueryParameter("s", query)
 
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
@@ -100,11 +93,7 @@ class Komiku : ParsedHttpSource() {
                     is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
                     is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
                     is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is StatusList -> {
-                        val status = filter.values[filter.state].key
-                        addQueryParameter("status", status)
-                        addQueryParameter("statusmanga", status)
-                    }
+                    is StatusList -> addQueryParameter("statusmanga", filter.values[filter.state].key)
                     else -> {}
                 }
             }
@@ -294,7 +283,7 @@ class Komiku : ParsedHttpSource() {
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("End") || status.contains("Completed") -> SManga.COMPLETED
+        status.contains("End") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
