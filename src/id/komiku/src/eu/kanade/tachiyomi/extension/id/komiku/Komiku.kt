@@ -78,27 +78,29 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = baseUrlApi.toHttpUrl().newBuilder().apply {
-            addPathSegment("manga")
-            if (page > 1) {
-                addPathSegment("page")
-                addPathSegment(page.toString())
-            }
+        val url = baseUrlApi.toHttpUrl().newBuilder()
 
-            addQueryParameter("s", query)
+        url.addPathSegment("manga")
+        if (page > 1) {
+            url.addPathSegments("page/$page")
+        }
 
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is CategoryNames -> addQueryParameter("tipe", filter.values[filter.state].key)
-                    is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
-                    is GenreList1 -> addQueryParameter("genre", filter.values[filter.state].key)
-                    is GenreList2 -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is StatusList -> addQueryParameter("statusmanga", filter.values[filter.state].key)
-                    else -> {}
-                }
+        if (query.isNotEmpty()) {
+            url.addQueryParameter("s", query)
+        }
+
+        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+            when (filter) {
+                is CategoryNames -> url.addQueryParameter("tipe", filter.values[filter.state].key)
+                is OrderBy -> url.addQueryParameter("orderby", filter.values[filter.state].key)
+                is GenreList1 -> url.addQueryParameter("genre", filter.values[filter.state].key)
+                is GenreList2 -> url.addQueryParameter("genre2", filter.values[filter.state].key)
+                is StatusList -> url.addQueryParameter("status", filter.values[filter.state].key)
+                else -> {}
             }
-        }.build()
-        return GET(url, headers)
+        }
+
+        return GET(url.build(), headers)
     }
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
