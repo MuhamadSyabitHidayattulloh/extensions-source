@@ -108,13 +108,6 @@ class Komiku : ParsedHttpSource() {
                     url.addQueryParameter("status", status.key)
                 }
 
-                is ProjectList -> {
-                    val project = filter.values[filter.state]
-                    if (project.key == "project-filter-on") {
-                        url = ("$baseUrl/pustaka" + if (page > 1) "/page/$page/" else "" + "?tipe=projek").toHttpUrl().newBuilder()
-                    }
-                }
-
                 else -> {}
             }
         }
@@ -146,7 +139,6 @@ class Komiku : ParsedHttpSource() {
     private class GenreList1(genres: Array<Genre>) : Filter.Select<Genre>("Genre 1", genres, 0)
     private class GenreList2(genres: Array<Genre>) : Filter.Select<Genre>("Genre 2", genres, 0)
     private class StatusList(statuses: Array<Status>) : Filter.Select<Status>("Status", statuses, 0)
-    private class ProjectList(project: Array<Status>) : Filter.Select<Status>("Filter Project", project, 0)
 
     override fun getFilterList() = FilterList(
         CategoryNames(categoryNames),
@@ -154,15 +146,6 @@ class Komiku : ParsedHttpSource() {
         GenreList1(genreList),
         GenreList2(genreList),
         StatusList(statusList),
-        Filter.Separator(),
-        Filter.Header("NOTE: cant be used with other filter!"),
-        Filter.Header("$name Project List page"),
-        ProjectList(projectFilter),
-    )
-
-    private val projectFilter = arrayOf(
-        Status("Show all manga", ""),
-        Status("Show only project manga", "project-filter-on"),
     )
 
     private val categoryNames = arrayOf(
