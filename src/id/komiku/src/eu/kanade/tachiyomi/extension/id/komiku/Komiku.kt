@@ -21,7 +21,7 @@ class Komiku : ParsedHttpSource() {
 
     override val baseUrl = "https://komiku.org"
 
-    private val baseUrlApi = "https://api.komiku.id"
+    private val baseUrlApi = "https://api.komiku.org"
 
     override val lang = "id"
 
@@ -77,12 +77,15 @@ class Komiku : ParsedHttpSource() {
     override fun searchMangaSelector() = popularMangaSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var url = "$baseUrlApi/page/$page/?post_type=manga".toHttpUrl().newBuilder().addQueryParameter("s", query)
+        var url = "$baseUrlApi/page/$page/".toHttpUrl().newBuilder()
+            .addQueryParameter("s", query)
+            .addQueryParameter("post_type", "manga")
+
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is CategoryNames -> {
                     val category = filter.values[filter.state]
-                    url.addQueryParameter("category_name", category.key)
+                    url.addQueryParameter("tipe", category.key)
                 }
 
                 is OrderBy -> {
@@ -138,7 +141,7 @@ class Komiku : ParsedHttpSource() {
         override fun toString(): String = name
     }
 
-    private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Category", categories, 0)
+    private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Tipe", categories, 0)
     private class OrderBy(orders: Array<Order>) : Filter.Select<Order>("Order", orders, 0)
     private class GenreList1(genres: Array<Genre>) : Filter.Select<Genre>("Genre 1", genres, 0)
     private class GenreList2(genres: Array<Genre>) : Filter.Select<Genre>("Genre 2", genres, 0)
@@ -163,78 +166,125 @@ class Komiku : ParsedHttpSource() {
     )
 
     private val categoryNames = arrayOf(
-        Category("All", ""),
+        Category("Semua", ""),
         Category("Manga", "manga"),
         Category("Manhua", "manhua"),
         Category("Manhwa", "manhwa"),
     )
 
     private val orderBy = arrayOf(
-        Order("Ranking", "meta_value_num"),
-        Order("New Title", "date"),
-        Order("Updates", "modified"),
-        Order("Random", "rand"),
+        Order("Chapter Terbaru", "modified"),
+        Order("Komik Terbaru", "date"),
+        Order("Peringkat", "meta_value_num"),
+        Order("Acak", "rand"),
     )
 
     private val genreList = arrayOf(
-        Genre("All", ""),
+        Genre("Semua", ""),
+        Genre("Academy", "academy"),
         Genre("Action", "action"),
+        Genre("Adaptation", "adaptation"),
+        Genre("Adult", "adult"),
         Genre("Adventure", "adventure"),
+        Genre("apocalypse", "apocalypse"),
+        Genre("Beasts", "beasts"),
+        Genre("Blacksmith", "blacksmith"),
         Genre("Comedy", "comedy"),
+        Genre("Comic", "comic"),
         Genre("Cooking", "cooking"),
         Genre("Crime", "crime"),
+        Genre("Crossdressing", "crossdressing"),
+        Genre("Dark Fantasy", "dark-fantasy"),
         Genre("Demons", "demons"),
+        Genre("Doujinshi", "doujinshi"),
         Genre("Drama", "drama"),
         Genre("Ecchi", "ecchi"),
+        Genre("Entertainment", "entertainment"),
         Genre("Fantasy", "fantasy"),
         Genre("Game", "game"),
         Genre("Gender Bender", "gender-bender"),
+        Genre("Genderswap", "genderswap"),
+        Genre("Genius", "genius"),
+        Genre("Ghosts", "ghosts"),
+        Genre("Gore", "gore"),
+        Genre("Gyaru", "gyaru"),
         Genre("Harem", "harem"),
+        Genre("Hentai", "hentai"),
         Genre("Historical", "historical"),
         Genre("Horror", "horror"),
         Genre("Isekai", "isekai"),
         Genre("Josei", "josei"),
+        Genre("Knight", "knight"),
+        Genre("Long Strip", "long-strip"),
         Genre("Magic", "magic"),
+        Genre("Magical Girls", "magical-girls"),
+        Genre("Manga", "manga"),
+        Genre("Mangatoon", "mangatoon"),
+        Genre("Manhwa", "manhwa"),
+        Genre("Martial Art", "martial-art"),
         Genre("Martial Arts", "martial-arts"),
         Genre("Mature", "mature"),
+        Genre("MC Rebirth", "mc-rebirth"),
         Genre("Mecha", "mecha"),
         Genre("Medical", "medical"),
         Genre("Military", "military"),
+        Genre("Monster", "monster"),
+        Genre("Monster girls", "monster-girls"),
+        Genre("Monsters", "monsters"),
+        Genre("Murim", "murim"),
         Genre("Music", "music"),
         Genre("Mystery", "mystery"),
+        Genre("Office Workers", "office-workers"),
         Genre("One Shot", "one-shot"),
-        Genre("Overpower", "overpower"),
-        Genre("Parodi", "parodi"),
+        Genre("Oneshot", "oneshot"),
         Genre("Police", "police"),
         Genre("Psychological", "psychological"),
+        Genre("Regression", "regression"),
         Genre("Reincarnation", "reincarnation"),
+        Genre("Revenge", "revenge"),
         Genre("Romance", "romance"),
         Genre("School", "school"),
         Genre("School life", "school-life"),
         Genre("Sci-fi", "sci-fi"),
         Genre("Seinen", "seinen"),
+        Genre("Sexual Violence", "sexual-violence"),
         Genre("Shotacon", "shotacon"),
         Genre("Shoujo", "shoujo"),
         Genre("Shoujo Ai", "shoujo-ai"),
+        Genre("Shoujo(G)", "shoujog"),
         Genre("Shounen", "shounen"),
         Genre("Shounen Ai", "shounen-ai"),
         Genre("Slice of Life", "slice-of-life"),
+        Genre("Slow Life", "slow-life"),
+        Genre("Smut", "smut"),
         Genre("Sport", "sport"),
         Genre("Sports", "sports"),
+        Genre("Strategy", "strategy"),
         Genre("Super Power", "super-power"),
         Genre("Supernatural", "supernatural"),
+        Genre("Survival", "survival"),
+        Genre("Sword Fight", "sword-fight"),
+        Genre("Sword Master", "sword-master"),
+        Genre("Swormanship", "swormanship"),
+        Genre("System", "system"),
         Genre("Thriller", "thriller"),
         Genre("Tragedy", "tragedy"),
-        Genre("Urban", "urban"),
+        Genre("Trauma", "trauma"),
         Genre("Vampire", "vampire"),
+        Genre("Villainess", "villainess"),
+        Genre("Violence", "violence"),
+        Genre("Web Comic", "web-comic"),
+        Genre("Webtoon", "webtoon"),
         Genre("Webtoons", "webtoons"),
+        Genre("Xianxia", "xianxia"),
+        Genre("Xuanhuan", "xuanhuan"),
         Genre("Yuri", "yuri"),
     )
 
     private val statusList = arrayOf(
-        Status("All", ""),
+        Status("Semua", ""),
         Status("Ongoing", "ongoing"),
-        Status("End", "end"),
+        Status("Tamat", "end"),
     )
 
     // manga details
