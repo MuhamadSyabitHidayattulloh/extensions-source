@@ -109,7 +109,7 @@ class Komiku : ParsedHttpSource() {
 
                 is StatusList -> {
                     val status = filter.values[filter.state]
-                    url.addQueryParameter("status", status.key)
+                    url.addQueryParameter("statusmanga", status.key)
                 }
 
                 else -> {}
@@ -300,7 +300,7 @@ class Komiku : ParsedHttpSource() {
 
     private fun parseStatus(status: String) = when {
         status.contains("Ongoing") -> SManga.ONGOING
-        status.contains("Completed") -> SManga.COMPLETED
+        status.contains("End") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
