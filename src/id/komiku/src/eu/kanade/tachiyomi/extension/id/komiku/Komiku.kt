@@ -106,7 +106,7 @@ class Komiku : ParsedHttpSource() {
         if (response.code == 404) return MangasPage(emptyList(), false)
         val mangasPage = super.searchMangaParse(response)
         // The URL supports pagination, but the source UI does not display pagination buttons.
-        return MangasPage(mangasPage.mangas, mangasPage.hasNextPage || mangasPage.mangas.size >= 20)
+        return MangasPage(mangasPage.mangas, mangasPage.hasNextPage || mangasPage.mangas.size >= 10)
     }
 
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
