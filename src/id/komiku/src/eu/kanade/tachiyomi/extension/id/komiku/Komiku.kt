@@ -7,19 +7,18 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.tryParse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import org.jsoup.Jsoup
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-class Komiku : ParsedHttpSource() {
+class Komiku : HttpSource() {
     override val name = "Komiku"
 
     override val baseUrl = "https://komiku.org"
@@ -33,49 +32,24 @@ class Komiku : ParsedHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // ============================== Popular ===============================
-    override fun popularMangaSelector() = "div.bge"
-
     override fun popularMangaRequest(page: Int): Request = if (page == 1) {
         GET("$baseUrlApi/other/hot/?orderby=meta_value_num", headers)
     } else {
         GET("$baseUrlApi/other/hot/page/$page/?orderby=meta_value_num", headers)
     }
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-
-        manga.title = element.selectFirst("h3")!!.text()
-        manga.setUrlWithoutDomain(element.selectFirst("a:has(h3)")!!.attr("href"))
-
-        // scraped image doesn't make for a good cover; so try to transform it
-        // make it take bad cover instead of null if it contains upload date as those URLs aren't very useful
-        if (element.select("img").attr("abs:src").contains(coverUploadRegex)) {
-            manga.thumbnail_url = element.select("img").attr("abs:src")
-        } else {
-            manga.thumbnail_url = element.select("img").attr("abs:src").substringBeforeLast("?").replace(coverRegex, "/Komik-")
-        }
-
-        return manga
-    }
-
-    override fun popularMangaNextPageSelector() = "span[hx-get]"
+    override fun popularMangaParse(response: Response): MangasPage = mangaListParse(response)
 
     // =============================== Latest ===============================
-    override fun latestUpdatesSelector() = popularMangaSelector()
-
     override fun latestUpdatesRequest(page: Int): Request = if (page == 1) {
         GET("$baseUrlApi/other/hot/?orderby=modified", headers)
     } else {
         GET("$baseUrlApi/other/hot/page/$page/?orderby=modified", headers)
     }
 
-    override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+    override fun latestUpdatesParse(response: Response): MangasPage = mangaListParse(response)
 
     // =============================== Search ===============================
-    override fun searchMangaSelector() = popularMangaSelector()
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrlApi.toHttpUrl().newBuilder().apply {
             addPathSegment("manga")
@@ -104,29 +78,28 @@ class Komiku : ParsedHttpSource() {
 
     override fun searchMangaParse(response: Response): MangasPage {
         if (response.code == 404) return MangasPage(emptyList(), false)
-        val mangasPage = super.searchMangaParse(response)
-        // The URL supports pagination, but the source UI does not display pagination buttons.
-        return MangasPage(mangasPage.mangas, mangasPage.hasNextPage || mangasPage.mangas.size >= 10)
+        return mangaListParse(response)
     }
 
-    override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
-
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
-
     // =========================== Manga Details ============================
-    override fun mangaDetailsParse(document: Document) = SManga.create().apply {
-        description = document.select("#Sinopsis > p").text()
+    override fun mangaDetailsRequest(manga: SManga): Request = GET(baseUrl + manga.url, headers)
 
-        document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
-            if (it.isNotEmpty()) {
-                description = (if (description.isNullOrEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
+    override fun mangaDetailsParse(response: Response): SManga {
+        val document = Jsoup.parse(response.body.string(), baseUrl)
+        return SManga.create().apply {
+            description = document.select("#Sinopsis > p").text()
+
+            document.select("table.inftable tr:contains(Judul Indonesia) td + td").text().let {
+                if (it.isNotEmpty()) {
+                    description = (if (description.isNullOrEmpty()) "" else "$description\n\n") + "Judul Indonesia: $it"
+                }
             }
-        }
 
-        author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text().takeIf { it.isNotEmpty() }
-        genre = document.select("ul.genre li.genre a span").joinToString { it.text() }.takeIf { it.isNotEmpty() }
-        status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
-        thumbnail_url = document.selectFirst("div.ims > img")?.attr("abs:src")
+            author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text().takeIf { it.isNotEmpty() }
+            genre = document.select("ul.genre li.genre a span").joinToString { it.text() }.takeIf { it.isNotEmpty() }
+            status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
+            thumbnail_url = document.selectFirst("div.ims > img")?.attr("abs:src")
+        }
     }
 
     private fun parseStatus(status: String) = when {
@@ -136,17 +109,22 @@ class Komiku : ParsedHttpSource() {
     }
 
     // ============================= Chapters ===============================
-    override fun chapterListSelector() = "#Daftar_Chapter tr:has(td.judulseries)"
+    override fun chapterListRequest(manga: SManga): Request = GET(baseUrl + manga.url, headers)
 
-    override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        name = element.selectFirst("a")!!.text()
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = Jsoup.parse(response.body.string(), baseUrl)
+        return document.select("#Daftar_Chapter tr:has(td.judulseries)").map { element ->
+            SChapter.create().apply {
+                setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+                name = element.selectFirst("a")!!.text()
 
-        val timeStamp = element.select("td.tanggalseries")
-        date_upload = if (timeStamp.text().contains("lalu")) {
-            parseRelativeDate(timeStamp.text())
-        } else {
-            dateFormat.tryParse(timeStamp.last()?.text())
+                val timeStamp = element.select("td.tanggalseries")
+                date_upload = if (timeStamp.text().contains("lalu")) {
+                    parseRelativeDate(timeStamp.text())
+                } else {
+                    dateFormat.tryParse(timeStamp.last()?.text())
+                }
+            }
         }
     }
 
@@ -166,11 +144,38 @@ class Komiku : ParsedHttpSource() {
     }
 
     // =============================== Pages ================================
-    override fun pageListParse(document: Document): List<Page> = document.select("#Baca_Komik img").mapIndexed { i, element ->
-        Page(i, "", element.attr("abs:src"))
+    override fun pageListRequest(chapter: SChapter): Request = GET(baseUrl + chapter.url, headers)
+
+    override fun pageListParse(response: Response): List<Page> {
+        val document = Jsoup.parse(response.body.string(), baseUrl)
+        return document.select("#Baca_Komik img").mapIndexed { i, element ->
+            Page(i, "", element.attr("abs:src"))
+        }
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
+
+    // ============================= Utilities ==============================
+    private fun mangaListParse(response: Response): MangasPage {
+        val document = Jsoup.parse(response.body.string(), baseUrl)
+        val mangas = document.select("div.bge").map { element ->
+            SManga.create().apply {
+                title = element.selectFirst("h3")!!.text()
+                setUrlWithoutDomain(element.selectFirst("a:has(h3)")!!.attr("href"))
+
+                // scraped image doesn't make for a good cover; so try to transform it
+                // make it take bad cover instead of null if it contains upload date as those URLs aren't very useful
+                val thumbnail = element.select("img").attr("abs:src")
+                if (thumbnail.contains(coverUploadRegex)) {
+                    thumbnail_url = thumbnail
+                } else {
+                    thumbnail_url = thumbnail.substringBeforeLast("?").replace(coverRegex, "/Komik-")
+                }
+            }
+        }
+        val hasNextPage = document.selectFirst("span[hx-get]") != null || mangas.size >= 10
+        return MangasPage(mangas, hasNextPage)
+    }
 
     // ============================== Filters ===============================
     private class Category(title: String, val key: String) : Filter.TriState(title) {
