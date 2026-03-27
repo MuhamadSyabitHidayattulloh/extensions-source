@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.id.komiku
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -63,11 +62,11 @@ class Komiku : HttpSource() {
 
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
-                    is CategoryNames -> addQueryParameter("tipe", filter.values[filter.state].key)
-                    is OrderBy -> addQueryParameter("orderby", filter.values[filter.state].key)
-                    is GenreParameter -> addQueryParameter("genre", filter.values[filter.state].key)
-                    is Genre2Parameter -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is StatusParameter -> addQueryParameter("status", filter.values[filter.state].key)
+                    is Type -> addQueryParameter("tipe", filter.values[filter.state].key)
+                    is Order -> addQueryParameter("orderby", filter.values[filter.state].key)
+                    is Genre1 -> addQueryParameter("genre", filter.values[filter.state].key)
+                    is Genre2 -> addQueryParameter("genre2", filter.values[filter.state].key)
+                    is Status -> addQueryParameter("status", filter.values[filter.state].key)
                     else -> {}
                 }
             }
@@ -138,6 +137,7 @@ class Komiku : HttpSource() {
         when (trimmedDate[1]) {
             "jam" -> calendar.add(Calendar.HOUR_OF_DAY, -trimmedDate[0].toInt())
             "menit" -> calendar.add(Calendar.MINUTE, -trimmedDate[0].toInt())
+            "detik" -> calendar.add(Calendar.SECOND, 0)
         }
 
         return calendar.timeInMillis
@@ -154,6 +154,8 @@ class Komiku : HttpSource() {
     }
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
+
+    override fun getFilterList() = eu.kanade.tachiyomi.extension.id.komiku.getFilterList()
 
     // ============================= Utilities ==============================
     private fun mangaListParse(response: Response): MangasPage {
@@ -176,159 +178,6 @@ class Komiku : HttpSource() {
         val hasNextPage = document.selectFirst("span[hx-get]") != null || mangas.size >= 10
         return MangasPage(mangas, hasNextPage)
     }
-
-    // ============================== Filters ===============================
-    private class Category(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class Genre(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class Order(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class Status(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Tipe", categories, 0)
-    private class OrderBy(orders: Array<Order>) : Filter.Select<Order>("Order", orders, 0)
-    private class GenreParameter(genres: Array<Genre>) : Filter.Select<Genre>("Genre 1", genres, 0)
-    private class Genre2Parameter(genres: Array<Genre>) : Filter.Select<Genre>("Genre 2", genres, 0)
-    private class StatusParameter(statuses: Array<Status>) : Filter.Select<Status>("Status", statuses, 0)
-
-    override fun getFilterList() = FilterList(
-        CategoryNames(categoryNames),
-        OrderBy(orderBy),
-        GenreParameter(genreList),
-        Genre2Parameter(genreList),
-        StatusParameter(statusList),
-    )
-
-    private val categoryNames = arrayOf(
-        Category("Semua", ""),
-        Category("Manga", "manga"),
-        Category("Manhua", "manhua"),
-        Category("Manhwa", "manhwa"),
-    )
-
-    private val orderBy = arrayOf(
-        Order("Chapter Terbaru", "modified"),
-        Order("Komik Terbaru", "date"),
-        Order("Peringkat", "meta_value_num"),
-        Order("Acak", "rand"),
-    )
-
-    private val genreList = arrayOf(
-        Genre("Semua", ""),
-        Genre("Academy", "academy"),
-        Genre("Action", "action"),
-        Genre("Adaptation", "adaptation"),
-        Genre("Adult", "adult"),
-        Genre("Adventure", "adventure"),
-        Genre("apocalypse", "apocalypse"),
-        Genre("Beasts", "beasts"),
-        Genre("Blacksmith", "blacksmith"),
-        Genre("Comedy", "comedy"),
-        Genre("Comic", "comic"),
-        Genre("Cooking", "cooking"),
-        Genre("Crime", "crime"),
-        Genre("Crossdressing", "crossdressing"),
-        Genre("Dark Fantasy", "dark-fantasy"),
-        Genre("Demons", "demons"),
-        Genre("Doujinshi", "doujinshi"),
-        Genre("Drama", "drama"),
-        Genre("Ecchi", "ecchi"),
-        Genre("Entertainment", "entertainment"),
-        Genre("Fantasy", "fantasy"),
-        Genre("Game", "game"),
-        Genre("Gender Bender", "gender-bender"),
-        Genre("Genderswap", "genderswap"),
-        Genre("Genius", "genius"),
-        Genre("Ghosts", "ghosts"),
-        Genre("Gore", "gore"),
-        Genre("Gyaru", "gyaru"),
-        Genre("Harem", "harem"),
-        Genre("Hentai", "hentai"),
-        Genre("Historical", "historical"),
-        Genre("Horror", "horror"),
-        Genre("Isekai", "isekai"),
-        Genre("Josei", "josei"),
-        Genre("Knight", "knight"),
-        Genre("Long Strip", "long-strip"),
-        Genre("Magic", "magic"),
-        Genre("Magical Girls", "magical-girls"),
-        Genre("Manga", "manga"),
-        Genre("Mangatoon", "mangatoon"),
-        Genre("Manhwa", "manhwa"),
-        Genre("Martial Art", "martial-art"),
-        Genre("Martial Arts", "martial-arts"),
-        Genre("Mature", "mature"),
-        Genre("MC Rebirth", "mc-rebirth"),
-        Genre("Mecha", "mecha"),
-        Genre("Medical", "medical"),
-        Genre("Military", "military"),
-        Genre("Monster", "monster"),
-        Genre("Monster girls", "monster-girls"),
-        Genre("Monsters", "monsters"),
-        Genre("Murim", "murim"),
-        Genre("Music", "music"),
-        Genre("Mystery", "mystery"),
-        Genre("Office Workers", "office-workers"),
-        Genre("One Shot", "one-shot"),
-        Genre("Oneshot", "oneshot"),
-        Genre("Police", "police"),
-        Genre("Psychological", "psychological"),
-        Genre("Regression", "regression"),
-        Genre("Reincarnation", "reincarnation"),
-        Genre("Revenge", "revenge"),
-        Genre("Romance", "romance"),
-        Genre("School", "school"),
-        Genre("School life", "school-life"),
-        Genre("Sci-fi", "sci-fi"),
-        Genre("Seinen", "seinen"),
-        Genre("Sexual Violence", "sexual-violence"),
-        Genre("Shotacon", "shotacon"),
-        Genre("Shoujo", "shoujo"),
-        Genre("Shoujo Ai", "shoujo-ai"),
-        Genre("Shoujo(G)", "shoujog"),
-        Genre("Shounen", "shounen"),
-        Genre("Shounen Ai", "shounen-ai"),
-        Genre("Slice of Life", "slice-of-life"),
-        Genre("Slow Life", "slow-life"),
-        Genre("Smut", "smut"),
-        Genre("Sport", "sport"),
-        Genre("Sports", "sports"),
-        Genre("Strategy", "strategy"),
-        Genre("Super Power", "super-power"),
-        Genre("Supernatural", "supernatural"),
-        Genre("Survival", "survival"),
-        Genre("Sword Fight", "sword-fight"),
-        Genre("Sword Master", "sword-master"),
-        Genre("Swormanship", "swormanship"),
-        Genre("System", "system"),
-        Genre("Thriller", "thriller"),
-        Genre("Tragedy", "tragedy"),
-        Genre("Trauma", "trauma"),
-        Genre("Vampire", "vampire"),
-        Genre("Villainess", "villainess"),
-        Genre("Violence", "violence"),
-        Genre("Web Comic", "web-comic"),
-        Genre("Webtoon", "webtoon"),
-        Genre("Webtoons", "webtoons"),
-        Genre("Xianxia", "xianxia"),
-        Genre("Xuanhuan", "xuanhuan"),
-        Genre("Yuri", "yuri"),
-    )
-
-    private val statusList = arrayOf(
-        Status("Semua", ""),
-        Status("Ongoing", "ongoing"),
-        Status("Tamat", "end"),
-    )
 
     companion object {
         private val coverRegex = Regex("""(/Manga-|/Manhua-|/Manhwa-)""")
