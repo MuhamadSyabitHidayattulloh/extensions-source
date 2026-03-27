@@ -60,15 +60,8 @@ class Komiku : HttpSource() {
                 addQueryParameter("s", query)
             }
 
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is Type -> addQueryParameter("tipe", filter.values[filter.state].key)
-                    is Order -> addQueryParameter("orderby", filter.values[filter.state].key)
-                    is Genre1 -> addQueryParameter("genre", filter.values[filter.state].key)
-                    is Genre2 -> addQueryParameter("genre2", filter.values[filter.state].key)
-                    is Status -> addQueryParameter("status", filter.values[filter.state].key)
-                    else -> {}
-                }
+            filters.filterIsInstance<UriFilter>().forEach {
+                it.addToUri(this)
             }
         }.build()
 
@@ -97,7 +90,7 @@ class Komiku : HttpSource() {
             author = document.select("table.inftable td:contains(Pengarang)+td, table.inftable td:contains(Komikus)+td").text().takeIf { it.isNotEmpty() }
             genre = document.select("ul.genre li.genre a span").joinToString { it.text() }.takeIf { it.isNotEmpty() }
             status = parseStatus(document.select("table.inftable tr > td:contains(Status) + td").text())
-            thumbnail_url = document.selectFirst("div.ims > img")?.attr("abs:src")
+            thumbnail_url = document.selectFirst("div.ims > img")?.attr("abs:src")?.substringBefore("?")
         }
     }
 
@@ -155,7 +148,7 @@ class Komiku : HttpSource() {
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
-    override fun getFilterList() = eu.kanade.tachiyomi.extension.id.komiku.getFilterList()
+    override fun getFilterList() = getKomikuFilterList()
 
     // ============================= Utilities ==============================
     private fun mangaListParse(response: Response): MangasPage {
@@ -167,11 +160,11 @@ class Komiku : HttpSource() {
 
                 // scraped image doesn't make for a good cover; so try to transform it
                 // make it take bad cover instead of null if it contains upload date as those URLs aren't very useful
-                val thumbnail = element.select("img").attr("abs:src")
+                val thumbnail = element.select("img").attr("abs:src").substringBefore("?")
                 if (thumbnail.contains(coverUploadRegex)) {
                     thumbnail_url = thumbnail
                 } else {
-                    thumbnail_url = thumbnail.substringBeforeLast("?").replace(coverRegex, "/Komik-")
+                    thumbnail_url = thumbnail.replace(coverRegex, "/Komik-")
                 }
             }
         }

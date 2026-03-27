@@ -2,155 +2,161 @@ package eu.kanade.tachiyomi.extension.id.komiku
 
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
+import okhttp3.HttpUrl
 
-class TypeFilter(title: String, val key: String) : Filter.TriState(title) {
-    override fun toString(): String = name
+interface UriFilter {
+    fun addToUri(builder: HttpUrl.Builder)
 }
 
-class GenreFilter(title: String, val key: String) : Filter.TriState(title) {
-    override fun toString(): String = name
+open class UriPartFilter(
+    name: String,
+    private val param: String,
+    private val vals: Array<Pair<String, String>>,
+) : Filter.Select<String>(
+    name,
+    vals.map { it.first }.toTypedArray(),
+),
+    UriFilter {
+    override fun addToUri(builder: HttpUrl.Builder) {
+        val selected = vals[state].second
+        if (selected.isNotEmpty()) {
+            builder.addQueryParameter(param, selected)
+        }
+    }
 }
 
-class OrderFilter(title: String, val key: String) : Filter.TriState(title) {
-    override fun toString(): String = name
-}
+class Type : UriPartFilter("Tipe", "tipe", typeList)
+class Order : UriPartFilter("Order", "orderby", orderList)
+class Genre1 : UriPartFilter("Genre 1", "genre", genreList)
+class Genre2 : UriPartFilter("Genre 2", "genre2", genreList)
+class Status : UriPartFilter("Status", "status", statusList)
 
-class StatusFilter(title: String, val key: String) : Filter.TriState(title) {
-    override fun toString(): String = name
-}
-
-class Type(types: Array<TypeFilter>) : Filter.Select<TypeFilter>("Tipe", types, 0)
-class Order(orders: Array<OrderFilter>) : Filter.Select<OrderFilter>("Order", orders, 0)
-class Genre1(genres: Array<GenreFilter>) : Filter.Select<GenreFilter>("Genre 1", genres, 0)
-class Genre2(genres: Array<GenreFilter>) : Filter.Select<GenreFilter>("Genre 2", genres, 0)
-class Status(statuses: Array<StatusFilter>) : Filter.Select<StatusFilter>("Status", statuses, 0)
-
-fun getFilterList() = FilterList(
-    Type(categoryNames),
-    Order(orderBy),
-    Genre1(genreList),
-    Genre2(genreList),
-    Status(statusList),
+fun getKomikuFilterList() = FilterList(
+    Type(),
+    Order(),
+    Genre1(),
+    Genre2(),
+    Status(),
 )
 
-private val categoryNames = arrayOf(
-    TypeFilter("Semua", ""),
-    TypeFilter("Manga", "manga"),
-    TypeFilter("Manhua", "manhua"),
-    TypeFilter("Manhwa", "manhwa"),
+private val typeList = arrayOf(
+    Pair("Semua", ""),
+    Pair("Manga", "manga"),
+    Pair("Manhua", "manhua"),
+    Pair("Manhwa", "manhwa"),
 )
 
-private val orderBy = arrayOf(
-    OrderFilter("Chapter Terbaru", "modified"),
-    OrderFilter("Komik Terbaru", "date"),
-    OrderFilter("Peringkat", "meta_value_num"),
-    OrderFilter("Acak", "rand"),
+private val orderList = arrayOf(
+    Pair("Chapter Terbaru", "modified"),
+    Pair("Komik Terbaru", "date"),
+    Pair("Peringkat", "meta_value_num"),
+    Pair("Acak", "rand"),
 )
 
 private val genreList = arrayOf(
-    GenreFilter("Semua", ""),
-    GenreFilter("Academy", "academy"),
-    GenreFilter("Action", "action"),
-    GenreFilter("Adaptation", "adaptation"),
-    GenreFilter("Adult", "adult"),
-    GenreFilter("Adventure", "adventure"),
-    GenreFilter("apocalypse", "apocalypse"),
-    GenreFilter("Beasts", "beasts"),
-    GenreFilter("Blacksmith", "blacksmith"),
-    GenreFilter("Comedy", "comedy"),
-    GenreFilter("Comic", "comic"),
-    GenreFilter("Cooking", "cooking"),
-    GenreFilter("Crime", "crime"),
-    GenreFilter("Crossdressing", "crossdressing"),
-    GenreFilter("Dark Fantasy", "dark-fantasy"),
-    GenreFilter("Demons", "demons"),
-    GenreFilter("Doujinshi", "doujinshi"),
-    GenreFilter("Drama", "drama"),
-    GenreFilter("Ecchi", "ecchi"),
-    GenreFilter("Entertainment", "entertainment"),
-    GenreFilter("Fantasy", "fantasy"),
-    GenreFilter("Game", "game"),
-    GenreFilter("Gender Bender", "gender-bender"),
-    GenreFilter("Genderswap", "genderswap"),
-    GenreFilter("Genius", "genius"),
-    GenreFilter("Ghosts", "ghosts"),
-    GenreFilter("Gore", "gore"),
-    GenreFilter("Gyaru", "gyaru"),
-    GenreFilter("Harem", "harem"),
-    GenreFilter("Hentai", "hentai"),
-    GenreFilter("Historical", "historical"),
-    GenreFilter("Horror", "horror"),
-    GenreFilter("Isekai", "isekai"),
-    GenreFilter("Josei", "josei"),
-    GenreFilter("Knight", "knight"),
-    GenreFilter("Long Strip", "long-strip"),
-    GenreFilter("Magic", "magic"),
-    GenreFilter("Magical Girls", "magical-girls"),
-    GenreFilter("Manga", "manga"),
-    GenreFilter("Mangatoon", "mangatoon"),
-    GenreFilter("Manhwa", "manhwa"),
-    GenreFilter("Martial Art", "martial-art"),
-    GenreFilter("Martial Arts", "martial-arts"),
-    GenreFilter("Mature", "mature"),
-    GenreFilter("MC Rebirth", "mc-rebirth"),
-    GenreFilter("Mecha", "mecha"),
-    GenreFilter("Medical", "medical"),
-    GenreFilter("Military", "military"),
-    GenreFilter("Monster", "monster"),
-    GenreFilter("Monster girls", "monster-girls"),
-    GenreFilter("Monsters", "monsters"),
-    GenreFilter("Murim", "murim"),
-    GenreFilter("Music", "music"),
-    GenreFilter("Mystery", "mystery"),
-    GenreFilter("Office Workers", "office-workers"),
-    GenreFilter("One Shot", "one-shot"),
-    GenreFilter("Oneshot", "oneshot"),
-    GenreFilter("Police", "police"),
-    GenreFilter("Psychological", "psychological"),
-    GenreFilter("Regression", "regression"),
-    GenreFilter("Reincarnation", "reincarnation"),
-    GenreFilter("Revenge", "revenge"),
-    GenreFilter("Romance", "romance"),
-    GenreFilter("School", "school"),
-    GenreFilter("School life", "school-life"),
-    GenreFilter("Sci-fi", "sci-fi"),
-    GenreFilter("Seinen", "seinen"),
-    GenreFilter("Sexual Violence", "sexual-violence"),
-    GenreFilter("Shotacon", "shotacon"),
-    GenreFilter("Shoujo", "shoujo"),
-    GenreFilter("Shoujo Ai", "shoujo-ai"),
-    GenreFilter("Shoujo(G)", "shoujog"),
-    GenreFilter("Shounen", "shounen"),
-    GenreFilter("Shounen Ai", "shounen-ai"),
-    GenreFilter("Slice of Life", "slice-of-life"),
-    GenreFilter("Slow Life", "slow-life"),
-    GenreFilter("Smut", "smut"),
-    GenreFilter("Sport", "sport"),
-    GenreFilter("Sports", "sports"),
-    GenreFilter("Strategy", "strategy"),
-    GenreFilter("Super Power", "super-power"),
-    GenreFilter("Supernatural", "supernatural"),
-    GenreFilter("Survival", "survival"),
-    GenreFilter("Sword Fight", "sword-fight"),
-    GenreFilter("Sword Master", "sword-master"),
-    GenreFilter("Swormanship", "swormanship"),
-    GenreFilter("System", "system"),
-    GenreFilter("Thriller", "thriller"),
-    GenreFilter("Tragedy", "tragedy"),
-    GenreFilter("Trauma", "trauma"),
-    GenreFilter("Vampire", "vampire"),
-    GenreFilter("Villainess", "villainess"),
-    GenreFilter("Violence", "violence"),
-    GenreFilter("Web Comic", "web-comic"),
-    GenreFilter("Webtoon", "webtoon"),
-    GenreFilter("Webtoons", "webtoons"),
-    GenreFilter("Xianxia", "xianxia"),
-    GenreFilter("Xuanhuan", "xuanhuan"),
-    GenreFilter("Yuri", "yuri"),
+    Pair("Semua", ""),
+    Pair("Academy", "academy"),
+    Pair("Action", "action"),
+    Pair("Adaptation", "adaptation"),
+    Pair("Adult", "adult"),
+    Pair("Adventure", "adventure"),
+    Pair("apocalypse", "apocalypse"),
+    Pair("Beasts", "beasts"),
+    Pair("Blacksmith", "blacksmith"),
+    Pair("Comedy", "comedy"),
+    Pair("Comic", "comic"),
+    Pair("Cooking", "cooking"),
+    Pair("Crime", "crime"),
+    Pair("Crossdressing", "crossdressing"),
+    Pair("Dark Fantasy", "dark-fantasy"),
+    Pair("Demons", "demons"),
+    Pair("Doujinshi", "doujinshi"),
+    Pair("Drama", "drama"),
+    Pair("Ecchi", "ecchi"),
+    Pair("Entertainment", "entertainment"),
+    Pair("Fantasy", "fantasy"),
+    Pair("Game", "game"),
+    Pair("Gender Bender", "gender-bender"),
+    Pair("Genderswap", "genderswap"),
+    Pair("Genius", "genius"),
+    Pair("Ghosts", "ghosts"),
+    Pair("Gore", "gore"),
+    Pair("Gyaru", "gyaru"),
+    Pair("Harem", "harem"),
+    Pair("Hentai", "hentai"),
+    Pair("Historical", "historical"),
+    Pair("Horror", "horror"),
+    Pair("Isekai", "isekai"),
+    Pair("Josei", "josei"),
+    Pair("Knight", "knight"),
+    Pair("Long Strip", "long-strip"),
+    Pair("Magic", "magic"),
+    Pair("Magical Girls", "magical-girls"),
+    Pair("Manga", "manga"),
+    Pair("Mangatoon", "mangatoon"),
+    Pair("Manhwa", "manhwa"),
+    Pair("Martial Art", "martial-art"),
+    Pair("Martial Arts", "martial-arts"),
+    Pair("Mature", "mature"),
+    Pair("MC Rebirth", "mc-rebirth"),
+    Pair("Mecha", "mecha"),
+    Pair("Medical", "medical"),
+    Pair("Military", "military"),
+    Pair("Monster", "monster"),
+    Pair("Monster girls", "monster-girls"),
+    Pair("Monsters", "monsters"),
+    Pair("Murim", "murim"),
+    Pair("Music", "music"),
+    Pair("Mystery", "mystery"),
+    Pair("Office Workers", "office-workers"),
+    Pair("One Shot", "one-shot"),
+    Pair("Oneshot", "oneshot"),
+    Pair("Police", "police"),
+    Pair("Psychological", "psychological"),
+    Pair("Regression", "regression"),
+    Pair("Reincarnation", "reincarnation"),
+    Pair("Revenge", "revenge"),
+    Pair("Romance", "romance"),
+    Pair("School", "school"),
+    Pair("School life", "school-life"),
+    Pair("Sci-fi", "sci-fi"),
+    Pair("Seinen", "seinen"),
+    Pair("Sexual Violence", "sexual-violence"),
+    Pair("Shotacon", "shotacon"),
+    Pair("Shoujo", "shoujo"),
+    Pair("Shoujo Ai", "shoujo-ai"),
+    Pair("Shoujo(G)", "shoujog"),
+    Pair("Shounen", "shounen"),
+    Pair("Shounen Ai", "shounen-ai"),
+    Pair("Slice of Life", "slice-of-life"),
+    Pair("Slow Life", "slow-life"),
+    Pair("Smut", "smut"),
+    Pair("Sport", "sport"),
+    Pair("Sports", "sports"),
+    Pair("Strategy", "strategy"),
+    Pair("Super Power", "super-power"),
+    Pair("Supernatural", "supernatural"),
+    Pair("Survival", "survival"),
+    Pair("Sword Fight", "sword-fight"),
+    Pair("Sword Master", "sword-master"),
+    Pair("Swormanship", "swormanship"),
+    Pair("System", "system"),
+    Pair("Thriller", "thriller"),
+    Pair("Tragedy", "tragedy"),
+    Pair("Trauma", "trauma"),
+    Pair("Vampire", "vampire"),
+    Pair("Villainess", "villainess"),
+    Pair("Violence", "violence"),
+    Pair("Web Comic", "web-comic"),
+    Pair("Webtoon", "webtoon"),
+    Pair("Webtoons", "webtoons"),
+    Pair("Xianxia", "xianxia"),
+    Pair("Xuanhuan", "xuanhuan"),
+    Pair("Yuri", "yuri"),
 )
 
 private val statusList = arrayOf(
-    StatusFilter("Semua", ""),
-    StatusFilter("Ongoing", "ongoing"),
-    StatusFilter("Tamat", "end"),
+    Pair("Semua", ""),
+    Pair("Ongoing", "ongoing"),
+    Pair("Tamat", "end"),
 )
