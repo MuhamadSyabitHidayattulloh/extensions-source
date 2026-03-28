@@ -22,7 +22,7 @@ class Komiku : HttpSource() {
 
     override val baseUrl = "https://komiku.org"
 
-    private val baseUrlApi = "https://api.komiku.org"
+    private val apiUrl = "https://api.komiku.org"
 
     override val lang = "id"
 
@@ -31,31 +31,18 @@ class Komiku : HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // ============================== Popular ===============================
-    override fun popularMangaRequest(page: Int): Request = if (page == 1) {
-        GET("$baseUrlApi/manga/?orderby=meta_value_num", headers)
-    } else {
-        GET("$baseUrlApi/manga/page/$page/?orderby=meta_value_num", headers)
-    }
+    override fun popularMangaRequest(page: Int): Request = GET(mangaApiUrlBuilder(page).addQueryParameter("orderby", "meta_value_num").build(), headers)
 
     override fun popularMangaParse(response: Response): MangasPage = mangaListParse(response)
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request = if (page == 1) {
-        GET("$baseUrlApi/manga/?orderby=modified", headers)
-    } else {
-        GET("$baseUrlApi/manga/page/$page/?orderby=modified", headers)
-    }
+    override fun latestUpdatesRequest(page: Int): Request = GET(mangaApiUrlBuilder(page).addQueryParameter("orderby", "modified").build(), headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage = mangaListParse(response)
 
     // =============================== Search ===============================
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = baseUrlApi.toHttpUrl().newBuilder().apply {
-            addPathSegment("manga")
-            if (page > 1) {
-                addPathSegments("page/$page")
-            }
-
+        val url = mangaApiUrlBuilder(page).apply {
             if (query.isNotEmpty()) {
                 addQueryParameter("s", query)
             }
@@ -66,6 +53,13 @@ class Komiku : HttpSource() {
         }.build()
 
         return GET(url, headers)
+    }
+
+    private fun mangaApiUrlBuilder(page: Int) = apiUrl.toHttpUrl().newBuilder().apply {
+        addPathSegment("manga")
+        if (page > 1) {
+            addPathSegments("page/$page")
+        }
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
@@ -148,11 +142,17 @@ class Komiku : HttpSource() {
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
-    override fun getFilterList() = getKomikuFilterList()
+    override fun getFilterList() = FilterList(
+        Type(),
+        Order(),
+        Genre1(),
+        Genre2(),
+        Status(),
+    )
 
     // ============================= Utilities ==============================
     private fun mangaListParse(response: Response): MangasPage {
-        val document = response.asJsoup()
+        val document = response.asJsoup().apply { setBaseUri(baseUrl) }
         val mangas = document.select("div.bge").map { element ->
             SManga.create().apply {
                 title = element.selectFirst("h3")!!.text()
