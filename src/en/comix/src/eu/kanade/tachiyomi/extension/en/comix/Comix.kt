@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.en.comix
 
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.network.GET
@@ -46,11 +47,7 @@ class Comix :
             addQueryParameter("limit", "50")
             addQueryParameter("page", page.toString())
 
-            if (preferences.hideNsfw()) {
-                NSFW_GENRE_IDS.forEach {
-                    addQueryParameter("genres[]", "-$it")
-                }
-            }
+            addExcludedGenres(preferences)
         }.build()
 
         return GET(url, headers)
@@ -66,11 +63,7 @@ class Comix :
             addQueryParameter("limit", "50")
             addQueryParameter("page", page.toString())
 
-            if (preferences.hideNsfw()) {
-                NSFW_GENRE_IDS.forEach {
-                    addQueryParameter("genres[]", "-$it")
-                }
-            }
+            addExcludedGenres(preferences)
         }.build()
 
         return GET(url, headers)
@@ -95,11 +88,7 @@ class Comix :
                 setQueryParameter("order[relevance]", "desc")
             }
 
-            if (preferences.hideNsfw()) {
-                NSFW_GENRE_IDS.forEach {
-                    addQueryParameter("genres[]", "-$it")
-                }
-            }
+            addExcludedGenres(preferences)
 
             addQueryParameter("limit", "50")
             addQueryParameter("page", page.toString())
@@ -284,6 +273,26 @@ class Comix :
             setDefaultValue(true)
         }.let(screen::addPreference)
 
+        val genres = ComixFilters.getGenres()
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_EXCLUDED_GENRES
+            title = "Exclude Genres"
+            entries = genres.map { it.first }.toTypedArray()
+            entryValues = genres.map { it.second }.toTypedArray()
+            summary = preferences.excludedGenres().joinToString { genreId ->
+                genres.find { it.second == genreId }?.first ?: genreId
+            }
+            setDefaultValue(emptySet<String>())
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as Set<*>
+                summary = selected.joinToString { genreId ->
+                    genres.find { it.second == genreId }?.first ?: genreId.toString()
+                }
+                true
+            }
+        }.let(screen::addPreference)
+
         SwitchPreferenceCompat(screen.context).apply {
             key = DEDUPLICATE_CHAPTERS
             title = "Deduplicate Chapters"
@@ -321,12 +330,29 @@ class Comix :
 
     private fun SharedPreferences.hideNsfw() = getBoolean(NSFW_PREF, true)
 
+    private fun SharedPreferences.excludedGenres() = getStringSet(PREF_EXCLUDED_GENRES, emptySet()) ?: emptySet()
+
+    private fun HttpUrl.Builder.addExcludedGenres(preferences: SharedPreferences) {
+        val excludedGenres = mutableSetOf<String>()
+
+        if (preferences.hideNsfw()) {
+            excludedGenres.addAll(NSFW_GENRE_IDS)
+        }
+
+        excludedGenres.addAll(preferences.excludedGenres())
+
+        excludedGenres.forEach {
+            addQueryParameter("genres[]", "-$it")
+        }
+    }
+
     companion object {
         private const val PREF_POSTER_QUALITY = "pref_poster_quality"
         private const val NSFW_PREF = "nsfw_pref"
         private const val DEDUPLICATE_CHAPTERS = "pref_deduplicate_chapters"
         private const val ALTERNATIVE_NAMES_IN_DESCRIPTION = "pref_alt_names_in_description"
         private const val PREF_SCORE_POSITION = "pref_score_position"
+        private const val PREF_EXCLUDED_GENRES = "pref_excluded_genres"
 
         private val NSFW_GENRE_IDS = listOf("87264", "8", "87265", "13", "87266", "87268")
     }
