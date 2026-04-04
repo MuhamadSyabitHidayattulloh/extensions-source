@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.id.komikucc
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -54,7 +55,7 @@ class KomikuCC : HttpSource() {
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
         val url = "$baseUrl/list".toHttpUrl().newBuilder().apply {
-            addQueryParameter("order", "latest")
+            addQueryParameter("order", "update")
             if (page > 1) {
                 addQueryParameter("page", page.toString())
             }
@@ -89,7 +90,7 @@ class KomikuCC : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage = mangaListParse(response)
 
     private fun mangaListParse(response: Response): MangasPage {
-        val dto = response.extractNextJs<MangaListResponseDto>() ?: return MangasPage(emptyList(), false)
+        val dto = response.extractNextJs<MangaListResponseDto>()!!
 
         val mangas = dto.manga.data.map {
             SManga.create().apply {
@@ -106,7 +107,7 @@ class KomikuCC : HttpSource() {
     override fun mangaDetailsRequest(manga: SManga): Request = GET(baseUrl + manga.url, apiHeaders)
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val dto = response.extractNextJs<MangaDetailsResponseDto>()?.manga ?: throw Exception("Manga not found")
+        val dto = response.extractNextJs<MangaDto>()!!
 
         return SManga.create().apply {
             title = dto.title
@@ -130,15 +131,15 @@ class KomikuCC : HttpSource() {
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val dto = response.extractNextJs<MangaDetailsResponseDto>() ?: return emptyList()
+        val dto = response.extractNextJs<ChapterListDto>()!!
 
-        return dto.chapters?.map {
+        return dto.chapters.map {
             SChapter.create().apply {
                 name = it.title
                 url = "/${it.link}"
                 date_upload = dateFormat.tryParse(it.createdAt)
             }
-        } ?: emptyList()
+        }
     }
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT)
@@ -147,7 +148,7 @@ class KomikuCC : HttpSource() {
     override fun pageListRequest(chapter: SChapter): Request = GET(baseUrl + chapter.url, apiHeaders)
 
     override fun pageListParse(response: Response): List<Page> {
-        val dto = response.extractNextJs<ChapterResponseDto>() ?: return emptyList()
+        val dto = response.extractNextJs<ChapterResponseDto>()!!
 
         return dto.data.chapter.images?.mapIndexed { i, img ->
             Page(i, "", "$cdnUrl/$img")
@@ -157,6 +158,8 @@ class KomikuCC : HttpSource() {
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
     override fun getFilterList() = FilterList(
+        Filter.Header("Pencarian teks mengabaikan filter di bawah"),
+        Filter.Separator(),
         StatusFilter(),
         TypeFilter(),
         OrderFilter(),

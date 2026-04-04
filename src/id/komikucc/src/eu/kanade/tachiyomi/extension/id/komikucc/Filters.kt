@@ -43,7 +43,7 @@ class GenreCheckBox(name: String, val id: String) : Filter.CheckBox(name)
 private val statusList = arrayOf(
     Pair("Semua", ""),
     Pair("Ongoing", "ongoing"),
-    Pair("Selesai", "completed"),
+    Pair("Completed", "completed"),
     Pair("Hiatus", "hiatus"),
 )
 
@@ -57,9 +57,9 @@ private val typeList = arrayOf(
 private val orderList = arrayOf(
     Pair("Semua", ""),
     Pair("A-Z", "title"),
-    Pair("Z-A", "titlerev"),
-    Pair("Update", "latest"),
-    Pair("New", "new"),
+    Pair("Z-A", "titlereverse"),
+    Pair("Update", "update"),
+    Pair("New", "latest"),
     Pair("Popular", "popular"),
 )
 
