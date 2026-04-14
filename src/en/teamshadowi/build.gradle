@@ -1,0 +1,10 @@
+ext {
+    extName = 'Team Shadowi'
+    extClass = '.TeamShadowi'
+    themePkg = 'iken'
+    baseUrl = 'https://www.team-shadowi.com'
+    overrideVersionCode = 1
+    isNsfw = false
+}
+
+apply from: "$rootDir/common.gradle"
