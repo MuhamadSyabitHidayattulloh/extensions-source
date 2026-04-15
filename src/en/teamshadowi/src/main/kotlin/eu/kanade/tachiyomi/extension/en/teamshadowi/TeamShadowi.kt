@@ -1,14 +1,11 @@
 package eu.kanade.tachiyomi.extension.en.teamshadowi
 
-import eu.kanade.tachiyomi.multisrc.iken.Iken
-import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 
 class TeamShadowi :
-    Iken(
+    MangaThemesia(
         "Team Shadowi",
-        "en",
         "https://www.team-shadowi.com",
-    ) {
-
-    override fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url.replace("/series/", "/read/").substringBeforeLast("#")
-}
+        "en",
+        "/series",
+    )

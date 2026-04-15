@@ -1,9 +1,9 @@
 ext {
     extName = 'Team Shadowi'
     extClass = '.TeamShadowi'
-    themePkg = 'iken'
+    themePkg = 'mangathemesia'
     baseUrl = 'https://www.team-shadowi.com'
-    overrideVersionCode = 1
+    overrideVersionCode = 0
     isNsfw = false
 }
 
