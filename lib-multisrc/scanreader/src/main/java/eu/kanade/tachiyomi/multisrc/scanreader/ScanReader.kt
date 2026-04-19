@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.multisrc.scanreader
 import android.util.Base64
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -26,11 +27,34 @@ abstract class ScanReader(
 
     override val supportsLatest = true
 
+    // ===
+    // ====
+    // =====
     // Popular
-    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/bibliotheque/page/$page/", headers)
+    // =====
+    // ====
+    // ===
+    override fun popularMangaRequest(page: Int): Request {
+        val url = "$baseUrl/bibliotheque/".toHttpUrl().newBuilder().apply {
+            if (page > 1) {
+                addPathSegment("page")
+                addPathSegment(page.toString())
+            }
+            addQueryParameter("sort", "views")
+        }.build()
+        return GET(url, headers)
+    }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
+
+        if (genreList.isEmpty()) {
+            genreList = document.select("#genre-filter option")
+                .filter { it.attr("value").isNotBlank() }
+                .map { it.text() to it.attr("value") }
+                .toTypedArray()
+        }
+
         val mangas = document.select(popularMangaSelector).map { element ->
             SManga.create().apply {
                 val anchor = element.selectFirst(mangaAnchorSelector)!!
@@ -45,27 +69,34 @@ abstract class ScanReader(
         return MangasPage(mangas, hasNextPage)
     }
 
+    // ===
+    // ====
+    // =====
     // Latest
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl, headers)
+    // =====
+    // ====
+    // ===
+    override fun latestUpdatesRequest(page: Int): Request {
+        val url = "$baseUrl/bibliotheque/".toHttpUrl().newBuilder().apply {
+            if (page > 1) {
+                addPathSegment("page")
+                addPathSegment(page.toString())
+            }
+            addQueryParameter("sort", "date")
+        }.build()
+        return GET(url, headers)
+    }
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
+    // ===
+    // ====
+    // =====
     // Search
+    // =====
+    // ====
+    // ===
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.isNotBlank()) {
-            return GET(
-                baseUrl.toHttpUrl().newBuilder().apply {
-                    if (page > 1) {
-                        addPathSegment("page")
-                        addPathSegment(page.toString())
-                    }
-                    addQueryParameter("s", query)
-                    addQueryParameter("post_type", "manga")
-                }.build(),
-                headers,
-            )
-        }
-
         val url = baseUrl.toHttpUrl().newBuilder().apply {
             addPathSegment("bibliotheque")
             if (page > 1) {
@@ -73,11 +104,17 @@ abstract class ScanReader(
                 addPathSegment(page.toString())
             }
 
+            if (query.isNotBlank()) {
+                addQueryParameter("search", query)
+            }
+
             filters.forEach { filter ->
                 when (filter) {
                     is GenreFilter -> {
-                        val genre = filter.genres[filter.state].second
-                        if (genre.isNotBlank()) addQueryParameter("genre", genre)
+                        if (filter.state < filter.genres.size) {
+                            val genre = filter.genres[filter.state].second
+                            if (genre.isNotBlank()) addQueryParameter("genre", genre)
+                        }
                     }
                     is StatusFilter -> {
                         val status = filter.statuses[filter.state].second
@@ -116,6 +153,7 @@ abstract class ScanReader(
         status == null -> SManga.UNKNOWN
         status.contains("En cours", ignoreCase = true) -> SManga.ONGOING
         status.contains("Terminé", ignoreCase = true) -> SManga.COMPLETED
+        status.contains("Hiatus", ignoreCase = true) -> SManga.ON_HIATUS
         status.contains("Licencié", ignoreCase = true) -> SManga.LICENSED
         else -> SManga.UNKNOWN
     }
@@ -174,12 +212,14 @@ abstract class ScanReader(
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
     override fun getFilterList(): FilterList = FilterList(
-        GenreFilter("Genre", genreList),
-        StatusFilter("Statut", getStatusList()),
+        Filter.Header("Note: Filters work with search. Press 'Reset' to refresh genres."),
+        Filter.Separator(),
         SortFilter("Tri", getSortList()),
+        StatusFilter("Statut", getStatusList()),
+        GenreFilter("Genre", genreList),
     )
 
-    protected open val genreList = getGenreList()
+    protected var genreList: Array<Pair<String, String>> = emptyArray()
 
     private val dateFormat by lazy {
         SimpleDateFormat("dd/MM/yyyy", Locale.ROOT)
