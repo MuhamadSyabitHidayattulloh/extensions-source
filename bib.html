@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+<head><script>if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]nowprocket/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?nowprocket=1"}else{document.location.href=href.replace("#","?nowprocket=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&nowprocket=1"}else{document.location.href=href.replace("#","&nowprocket=1#")}}}}</script><script>class RocketLazyLoadScripts{constructor(e){this.v="1.2.3",this.triggerEvents=e,this.userEventHandler=this._triggerListener.bind(this),this.touchStartHandler=this._onTouchStart.bind(this),this.touchMoveHandler=this._onTouchMove.bind(this),this.touchEndHandler=this._onTouchEnd.bind(this),this.clickHandler=this._onClick.bind(this),this.interceptedClicks=[],window.addEventListener("pageshow",t=>{this.persisted=t.persisted}),window.addEventListener("DOMContentLoaded",()=>{this._preconnect3rdParties()}),this.delayedScripts={normal:[],async:[],defer:[]},this.trash=[],this.allJQueries=[]}_addUserInteractionListener(t){if(document.hidden){t._triggerListener();return}this.triggerEvents.forEach(e=>window.addEventListener(e,t.userEventHandler,{passive:!0})),window.addEventListener("touchstart",t.touchStartHandler,{passive:!0}),window.addEventListener("mousedown",t.touchStartHandler),document.addEventListener("visibilitychange",t.userEventHandler)}_removeUserInteractionListener(){this.triggerEvents.forEach(t=>window.removeEventListener(t,this.userEventHandler,{passive:!0})),document.removeEventListener("visibilitychange",this.userEventHandler)}_onTouchStart(t){"HTML"!==t.target.tagName&&(window.addEventListener("touchend",this.touchEndHandler),window.addEventListener("mouseup",this.touchEndHandler),window.addEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.addEventListener("mousemove",this.touchMoveHandler),t.target.addEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"onclick","rocket-onclick"),this._pendingClickStarted())}_onTouchMove(t){window.removeEventListener("touchend",this.touchEndHandler),window.removeEventListener("mouseup",this.touchEndHandler),window.removeEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.removeEventListener("mousemove",this.touchMoveHandler),t.target.removeEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"rocket-onclick","onclick"),this._pendingClickFinished()}_onTouchEnd(t){window.removeEventListener("touchend",this.touchEndHandler),window.removeEventListener("mouseup",this.touchEndHandler),window.removeEventListener("touchmove",this.touchMoveHandler,{passive:!0}),window.removeEventListener("mousemove",this.touchMoveHandler)}_onClick(t){t.target.removeEventListener("click",this.clickHandler),this._renameDOMAttribute(t.target,"rocket-onclick","onclick"),this.interceptedClicks.push(t),t.preventDefault(),t.stopPropagation(),t.stopImmediatePropagation(),this._pendingClickFinished()}_replayClicks(){window.removeEventListener("touchstart",this.touchStartHandler,{passive:!0}),window.removeEventListener("mousedown",this.touchStartHandler),this.interceptedClicks.forEach(t=>{t.target.dispatchEvent(new MouseEvent("click",{view:t.view,bubbles:!0,cancelable:!0}))})}_waitForPendingClicks(){return new Promise(t=>{this._isClickPending?this._pendingClickFinished=t:t()})}_pendingClickStarted(){this._isClickPending=!0}_pendingClickFinished(){this._isClickPending=!1}_renameDOMAttribute(t,e,r){t.hasAttribute&&t.hasAttribute(e)&&(event.target.setAttribute(r,event.target.getAttribute(e)),event.target.removeAttribute(e))}_triggerListener(){this._removeUserInteractionListener(this),"loading"===document.readyState?document.addEventListener("DOMContentLoaded",this._loadEverythingNow.bind(this)):this._loadEverythingNow()}_preconnect3rdParties(){let t=[];document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(e=>{if(e.hasAttribute("src")){let r=new URL(e.src).origin;r!==location.origin&&t.push({src:r,crossOrigin:e.crossOrigin||"module"===e.getAttribute("data-rocket-type")})}}),t=[...new Map(t.map(t=>[JSON.stringify(t),t])).values()],this._batchInjectResourceHints(t,"preconnect")}async _loadEverythingNow(){this.lastBreath=Date.now(),this._delayEventListeners(this),this._delayJQueryReady(this),this._handleDocumentWrite(),this._registerAllDelayedScripts(),this._preloadAllScripts(),await this._loadScriptsFromList(this.delayedScripts.normal),await this._loadScriptsFromList(this.delayedScripts.defer),await this._loadScriptsFromList(this.delayedScripts.async);try{await this._triggerDOMContentLoaded(),await this._triggerWindowLoad()}catch(t){console.error(t)}window.dispatchEvent(new Event("rocket-allScriptsLoaded")),this._waitForPendingClicks().then(()=>{this._replayClicks()}),this._emptyTrash()}_registerAllDelayedScripts(){document.querySelectorAll("script[type=rocketlazyloadscript]").forEach(t=>{t.hasAttribute("data-rocket-src")?t.hasAttribute("async")&&!1!==t.async?this.delayedScripts.async.push(t):t.hasAttribute("defer")&&!1!==t.defer||"module"===t.getAttribute("data-rocket-type")?this.delayedScripts.defer.push(t):this.delayedScripts.normal.push(t):this.delayedScripts.normal.push(t)})}async _transformScript(t){return new Promise((await this._littleBreath(),navigator.userAgent.indexOf("Firefox/")>0||""===navigator.vendor)?e=>{let r=document.createElement("script");[...t.attributes].forEach(t=>{let e=t.nodeName;"type"!==e&&("data-rocket-type"===e&&(e="type"),"data-rocket-src"===e&&(e="src"),r.setAttribute(e,t.nodeValue))}),t.text&&(r.text=t.text),r.hasAttribute("src")?(r.addEventListener("load",e),r.addEventListener("error",e)):(r.text=t.text,e());try{t.parentNode.replaceChild(r,t)}catch(i){e()}}:async e=>{function r(){t.setAttribute("data-rocket-status","failed"),e()}try{let i=t.getAttribute("data-rocket-type"),n=t.getAttribute("data-rocket-src");t.text,i?(t.type=i,t.removeAttribute("data-rocket-type")):t.removeAttribute("type"),t.addEventListener("load",function r(){t.setAttribute("data-rocket-status","executed"),e()}),t.addEventListener("error",r),n?(t.removeAttribute("data-rocket-src"),t.src=n):t.src="data:text/javascript;base64,"+window.btoa(unescape(encodeURIComponent(t.text)))}catch(s){r()}})}async _loadScriptsFromList(t){let e=t.shift();return e&&e.isConnected?(await this._transformScript(e),this._loadScriptsFromList(t)):Promise.resolve()}_preloadAllScripts(){this._batchInjectResourceHints([...this.delayedScripts.normal,...this.delayedScripts.defer,...this.delayedScripts.async],"preload")}_batchInjectResourceHints(t,e){var r=document.createDocumentFragment();t.forEach(t=>{let i=t.getAttribute&&t.getAttribute("data-rocket-src")||t.src;if(i){let n=document.createElement("link");n.href=i,n.rel=e,"preconnect"!==e&&(n.as="script"),t.getAttribute&&"module"===t.getAttribute("data-rocket-type")&&(n.crossOrigin=!0),t.crossOrigin&&(n.crossOrigin=t.crossOrigin),t.integrity&&(n.integrity=t.integrity),r.appendChild(n),this.trash.push(n)}}),document.head.appendChild(r)}_delayEventListeners(t){let e={};function r(t,r){!function t(r){!e[r]&&(e[r]={originalFunctions:{add:r.addEventListener,remove:r.removeEventListener},eventsToRewrite:[]},r.addEventListener=function(){arguments[0]=i(arguments[0]),e[r].originalFunctions.add.apply(r,arguments)},r.removeEventListener=function(){arguments[0]=i(arguments[0]),e[r].originalFunctions.remove.apply(r,arguments)});function i(t){return e[r].eventsToRewrite.indexOf(t)>=0?"rocket-"+t:t}}(t),e[t].eventsToRewrite.push(r)}function i(t,e){let r=t[e];Object.defineProperty(t,e,{get:()=>r||function(){},set(i){t["rocket"+e]=r=i}})}r(document,"DOMContentLoaded"),r(window,"DOMContentLoaded"),r(window,"load"),r(window,"pageshow"),r(document,"readystatechange"),i(document,"onreadystatechange"),i(window,"onload"),i(window,"onpageshow")}_delayJQueryReady(t){let e;function r(r){if(r&&r.fn&&!t.allJQueries.includes(r)){r.fn.ready=r.fn.init.prototype.ready=function(e){return t.domReadyFired?e.bind(document)(r):document.addEventListener("rocket-DOMContentLoaded",()=>e.bind(document)(r)),r([])};let i=r.fn.on;r.fn.on=r.fn.init.prototype.on=function(){if(this[0]===window){function t(t){return t.split(" ").map(t=>"load"===t||0===t.indexOf("load.")?"rocket-jquery-load":t).join(" ")}"string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=t(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach(e=>{let r=arguments[0][e];delete arguments[0][e],arguments[0][t(e)]=r})}return i.apply(this,arguments),this},t.allJQueries.push(r)}e=r}r(window.jQuery),Object.defineProperty(window,"jQuery",{get:()=>e,set(t){r(t)}})}async _triggerDOMContentLoaded(){this.domReadyFired=!0,await this._littleBreath(),document.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._littleBreath(),window.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._littleBreath(),document.dispatchEvent(new Event("rocket-readystatechange")),await this._littleBreath(),document.rocketonreadystatechange&&document.rocketonreadystatechange()}async _triggerWindowLoad(){await this._littleBreath(),window.dispatchEvent(new Event("rocket-load")),await this._littleBreath(),window.rocketonload&&window.rocketonload(),await this._littleBreath(),this.allJQueries.forEach(t=>t(window).trigger("rocket-jquery-load")),await this._littleBreath();let t=new Event("rocket-pageshow");t.persisted=this.persisted,window.dispatchEvent(t),await this._littleBreath(),window.rocketonpageshow&&window.rocketonpageshow({persisted:this.persisted})}_handleDocumentWrite(){let t=new Map;document.write=document.writeln=function(e){let r=document.currentScript;r||console.error("WPRocket unable to document.write this: "+e);let i=document.createRange(),n=r.parentElement,s=t.get(r);void 0===s&&(s=r.nextSibling,t.set(r,s));let a=document.createDocumentFragment();i.setStart(a,0),a.appendChild(i.createContextualFragment(e)),n.insertBefore(a,s)}}async _littleBreath(){Date.now()-this.lastBreath>45&&(await this._requestAnimFrame(),this.lastBreath=Date.now())}async _requestAnimFrame(){return document.hidden?new Promise(t=>setTimeout(t)):new Promise(t=>requestAnimationFrame(t))}_emptyTrash(){this.trash.forEach(t=>t.remove())}}</script>
+
+
+
+<!-- Meta Tags Generated via https://www.opengraph.xyz -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+    <style>
+    /* Cache visuellement la page si l'utilisateur désactive le JS depuis l'inspecteur */
+    noscript {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #111; color: white; z-index: 999999;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; font-weight: bold;
+    }
+    html, body {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+    }
+    </style>
+
+    <noscript>Veuillez activer JavaScript pour lire ce chapitre.</noscript>
+
+    <script type="rocketlazyloadscript">
+    // 1. S'exécute IMMÉDIATEMENT pour bloquer les raccourcis
+    const blockDevTools = function(e) {
+        if (e.type === 'contextmenu') { e.preventDefault(); return false; }
+        if (e.type === 'keydown') {
+            if (e.key === 'F12' || e.keyCode === 123) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) { e.preventDefault(); return false; }
+            if (e.ctrlKey && ['U', 'u', 'S', 's'].includes(e.key)) { e.preventDefault(); return false; }
+        }
+    };
+
+    window.addEventListener('contextmenu', blockDevTools, { capture: true });
+    window.addEventListener('keydown', blockDevTools, { capture: true });
+    document.addEventListener('contextmenu', blockDevTools, { capture: true });
+    document.addEventListener('keydown', blockDevTools, { capture: true });
+
+    // 2. Le piège du Debugger (Gèle la page si l'inspecteur est ouvert)
+    setInterval(function() {
+        (function() { return false; }['constructor']('debugger')());
+    }, 50);
+
+    // 3. Vide la console constamment pour empêcher d'y lire des infos
+    setInterval(function() {
+        console.clear();
+        console.log("%cStop !", "color: red; font-size: 40px; font-weight: bold;");
+        console.log("Le vol de contenu est interdit.");
+    }, 1000);
+    </script>
+
+	<!-- This site is optimized with the Yoast SEO plugin v27.4 - https://yoast.com/product/yoast-seo-wordpress/ -->
+	<title>Bibliothèque - Scan Reader</title><link rel="preload" as="style" href="data:text/css;charset=utf-8;base64,LypibGFuayov" data-type="kppassive" data-kplinkhref="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&#038;display=swap" /><link rel="stylesheet" href="data:text/css;charset=utf-8;base64,LypibGFuayov" media="print" onload="this.media='all'" data-type="kppassive" data-kplinkhref="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&#038;display=swap" /><noscript><link rel="stylesheet" href="data:text/css;charset=utf-8;base64,LypibGFuayov" data-type="kppassive" data-kplinkhref="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&#038;display=swap" /></noscript>
+	<link rel="canonical" href="https://scanreader.net/bibliotheque/" />
+	<meta property="og:locale" content="fr_FR" />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content="Bibliothèque - Scan Reader" />
+	<meta property="og:url" content="https://scanreader.net/bibliotheque/" />
+	<meta property="og:site_name" content="Scan Reader" />
+	<meta property="article:modified_time" content="2025-05-06T09:53:28+00:00" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/scanreader.net\/bibliotheque\/","url":"https:\/\/scanreader.net\/bibliotheque\/","name":"Bibliothèque - Scan Reader","isPartOf":{"@id":"https:\/\/scanreader.net\/#website"},"datePublished":"2025-04-24T21:37:14+00:00","dateModified":"2025-05-06T09:53:28+00:00","breadcrumb":{"@id":"https:\/\/scanreader.net\/bibliotheque\/#breadcrumb"},"inLanguage":"fr-FR","potentialAction":[{"@type":"ReadAction","target":["https:\/\/scanreader.net\/bibliotheque\/"]}]},{"@type":"BreadcrumbList","@id":"https:\/\/scanreader.net\/bibliotheque\/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https:\/\/scanreader.net\/"},{"@type":"ListItem","position":2,"name":"Bibliothèque"}]},{"@type":"WebSite","@id":"https:\/\/scanreader.net\/#website","url":"https:\/\/scanreader.net\/","name":"Scan Reader","description":"","publisher":{"@id":"https:\/\/scanreader.net\/#organization"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/scanreader.net\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"fr-FR"},{"@type":"Organization","@id":"https:\/\/scanreader.net\/#organization","name":"Scan Reader","url":"https:\/\/scanreader.net\/","logo":{"@type":"ImageObject","inLanguage":"fr-FR","@id":"https:\/\/scanreader.net\/#\/schema\/logo\/image\/","url":"https:\/\/scanreader.net\/wp-content\/uploads\/2025\/07\/Logo-scaled.png","contentUrl":"https:\/\/scanreader.net\/wp-content\/uploads\/2025\/07\/Logo-scaled.png","width":2286,"height":2560,"caption":"Scan Reader"},"image":{"@id":"https:\/\/scanreader.net\/#\/schema\/logo\/image\/"},"sameAs":["https:\/\/discord.gg\/5kqm5nJk7Z"]}]}</script>
+	<!-- / Yoast SEO plugin. -->
+
+
+<link rel='dns-prefetch' href='//cdn.jsdelivr.net' />
+<link rel='dns-prefetch' href='//www.googletagmanager.com' />
+<link rel='dns-prefetch' href='//cdnjs.cloudflare.com' />
+<link rel='dns-prefetch' href='//pagead2.googlesyndication.com' />
+<link href='https://fonts.gstatic.com' crossorigin rel='preconnect' />
+<link rel="alternate" title="oEmbed (JSON)" type="application/json+oembed" href="https://scanreader.net/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fscanreader.net%2Fbibliotheque%2F" />
+<link rel="alternate" title="oEmbed (XML)" type="text/xml+oembed" href="https://scanreader.net/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fscanreader.net%2Fbibliotheque%2F&#038;format=xml" />
+<style id='wp-img-auto-sizes-contain-inline-css' type='text/css'>
+img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
+/*# sourceURL=wp-img-auto-sizes-contain-inline-css */
+</style>
+<style id='wp-emoji-styles-inline-css' type='text/css'>
+
+	img.wp-smiley, img.emoji {
+		display: inline !important;
+		border: none !important;
+		box-shadow: none !important;
+		height: 1em !important;
+		width: 1em !important;
+		margin: 0 0.07em !important;
+		vertical-align: -0.1em !important;
+		background: none !important;
+		padding: 0 !important;
+	}
+/*# sourceURL=wp-emoji-styles-inline-css */
+</style>
+<style id='wp-block-library-inline-css' type='text/css'>
+:root{--wp-block-synced-color:#7a00df;--wp-block-synced-color--rgb:122,0,223;--wp-bound-block-color:var(--wp-block-synced-color);--wp-editor-canvas-background:#ddd;--wp-admin-theme-color:#007cba;--wp-admin-theme-color--rgb:0,124,186;--wp-admin-theme-color-darker-10:#006ba1;--wp-admin-theme-color-darker-10--rgb:0,107,160.5;--wp-admin-theme-color-darker-20:#005a87;--wp-admin-theme-color-darker-20--rgb:0,90,135;--wp-admin-border-width-focus:2px}@media (min-resolution:192dpi){:root{--wp-admin-border-width-focus:1.5px}}.wp-element-button{cursor:pointer}:root .has-very-light-gray-background-color{background-color:#eee}:root .has-very-dark-gray-background-color{background-color:#313131}:root .has-very-light-gray-color{color:#eee}:root .has-very-dark-gray-color{color:#313131}:root .has-vivid-green-cyan-to-vivid-cyan-blue-gradient-background{background:linear-gradient(135deg,#00d084,#0693e3)}:root .has-purple-crush-gradient-background{background:linear-gradient(135deg,#34e2e4,#4721fb 50%,#ab1dfe)}:root .has-hazy-dawn-gradient-background{background:linear-gradient(135deg,#faaca8,#dad0ec)}:root .has-subdued-olive-gradient-background{background:linear-gradient(135deg,#fafae1,#67a671)}:root .has-atomic-cream-gradient-background{background:linear-gradient(135deg,#fdd79a,#004a59)}:root .has-nightshade-gradient-background{background:linear-gradient(135deg,#330968,#31cdcf)}:root .has-midnight-gradient-background{background:linear-gradient(135deg,#020381,#2874fc)}:root{--wp--preset--font-size--normal:16px;--wp--preset--font-size--huge:42px}.has-regular-font-size{font-size:1em}.has-larger-font-size{font-size:2.625em}.has-normal-font-size{font-size:var(--wp--preset--font-size--normal)}.has-huge-font-size{font-size:var(--wp--preset--font-size--huge)}.has-text-align-center{text-align:center}.has-text-align-left{text-align:left}.has-text-align-right{text-align:right}.has-fit-text{white-space:nowrap!important}#end-resizable-editor-section{display:none}.aligncenter{clear:both}.items-justified-left{justify-content:flex-start}.items-justified-center{justify-content:center}.items-justified-right{justify-content:flex-end}.items-justified-space-between{justify-content:space-between}.screen-reader-text{border:0;clip-path:inset(50%);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;word-wrap:normal!important}.screen-reader-text:focus{background-color:#ddd;clip-path:none;color:#444;display:block;font-size:1em;height:auto;left:5px;line-height:normal;padding:15px 23px 14px;text-decoration:none;top:5px;width:auto;z-index:100000}html :where(.has-border-color){border-style:solid}html :where([style*=border-top-color]){border-top-style:solid}html :where([style*=border-right-color]){border-right-style:solid}html :where([style*=border-bottom-color]){border-bottom-style:solid}html :where([style*=border-left-color]){border-left-style:solid}html :where([style*=border-width]){border-style:solid}html :where([style*=border-top-width]){border-top-style:solid}html :where([style*=border-right-width]){border-right-style:solid}html :where([style*=border-bottom-width]){border-bottom-style:solid}html :where([style*=border-left-width]){border-left-style:solid}html :where(img[class*=wp-image-]){height:auto;max-width:100%}:where(figure){margin:0 0 1em}html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:var(--wp-admin--admin-bar--height,0px)}@media screen and (max-width:600px){html :where(.is-position-sticky){--wp-admin--admin-bar--position-offset:0px}}
+
+/*# sourceURL=wp-block-library-inline-css */
+</style>
+<style id='classic-theme-styles-inline-css' type='text/css'>
+/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}
+/*# sourceURL=/wp-includes/css/classic-themes.min.css */
+</style>
+<style id='global-styles-inline-css' type='text/css'>
+:root{--wp--preset--aspect-ratio--square: 1;--wp--preset--aspect-ratio--4-3: 4/3;--wp--preset--aspect-ratio--3-4: 3/4;--wp--preset--aspect-ratio--3-2: 3/2;--wp--preset--aspect-ratio--2-3: 2/3;--wp--preset--aspect-ratio--16-9: 16/9;--wp--preset--aspect-ratio--9-16: 9/16;--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgb(6,147,227) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgb(252,185,0) 0%,rgb(255,105,0) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgb(255,105,0) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgb(255, 255, 255), 6px 6px rgb(0, 0, 0);--wp--preset--shadow--crisp: 6px 6px 0px rgb(0, 0, 0);}:where(.is-layout-flex){gap: 0.5em;}:where(.is-layout-grid){gap: 0.5em;}body .is-layout-flex{display: flex;}.is-layout-flex{flex-wrap: wrap;align-items: center;}.is-layout-flex > :is(*, div){margin: 0;}body .is-layout-grid{display: grid;}.is-layout-grid > :is(*, div){margin: 0;}:where(.wp-block-columns.is-layout-flex){gap: 2em;}:where(.wp-block-columns.is-layout-grid){gap: 2em;}:where(.wp-block-post-template.is-layout-flex){gap: 1.25em;}:where(.wp-block-post-template.is-layout-grid){gap: 1.25em;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+/*# sourceURL=global-styles-inline-css */
+</style>
+
+<link data-minify="1" rel='stylesheet' id='balite-style-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/themes/index/style.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='select2-css-css' href='https://scanreader.net/wp-content/cache/min/1/npm/select2@4.1.0-rc.0/dist/css/select2.min.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='blackarmy-style-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/themes/index/style.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='font-awesome-css' href='https://scanreader.net/wp-content/cache/min/1/ajax/libs/font-awesome/6.4.0/css/all.min.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='cr-ratings-css-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/themes/index/assets/css/ratings.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='dashicons-css' href='https://scanreader.net/wp-content/cache/min/1/wp-includes/css/dashicons.min.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='simple-favorites-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/plugins/favorites/assets/css/favorites.css?ver=1776332413' type='text/css' media='all' />
+<link rel='stylesheet' id='um_modal-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-modal.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_ui-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/jquery-ui/jquery-ui.min.css?ver=1.13.2' type='text/css' media='all' />
+<link rel='stylesheet' id='um_tipsy-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/tipsy/tipsy.min.css?ver=1.0.0a' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='um_raty-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/plugins/ultimate-member/assets/libs/raty/um-raty.min.css?ver=1776332413' type='text/css' media='all' />
+<link rel='stylesheet' id='select2-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/select2/select2.min.css?ver=4.0.13' type='text/css' media='all' />
+<link rel='stylesheet' id='um_fileupload-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-fileupload.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_confirm-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/um-confirm/um-confirm.min.css?ver=1.0' type='text/css' media='all' />
+<link rel='stylesheet' id='um_notice-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/um-notice/um-notice.min.css?ver=1.0' type='text/css' media='all' />
+<link rel='stylesheet' id='um_datetime-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/default.min.css?ver=3.6.2' type='text/css' media='all' />
+<link rel='stylesheet' id='um_datetime_date-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/default.date.min.css?ver=3.6.2' type='text/css' media='all' />
+<link rel='stylesheet' id='um_datetime_time-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/default.time.min.css?ver=3.6.2' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='um_fonticons_ii-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/plugins/ultimate-member/assets/libs/legacy/fonticons/fonticons-ii.min.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='um_fonticons_fa-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/plugins/ultimate-member/assets/libs/legacy/fonticons/fonticons-fa.min.css?ver=1776332413' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='um_fontawesome-css' href='https://scanreader.net/wp-content/cache/min/1/wp-content/plugins/ultimate-member/assets/css/um-fontawesome.min.css?ver=1776332413' type='text/css' media='all' />
+<link rel='stylesheet' id='um_common-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/common.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_responsive-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-responsive.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_styles-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-styles.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_crop-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/cropper/cropper.min.css?ver=1.6.1' type='text/css' media='all' />
+<link rel='stylesheet' id='um_profile-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-profile.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_account-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-account.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_misc-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-misc.min.css?ver=2.11.3' type='text/css' media='all' />
+<link rel='stylesheet' id='um_default_css-css' href='https://scanreader.net/wp-content/plugins/ultimate-member/assets/css/um-old-default.min.css?ver=2.11.3' type='text/css' media='all' />
+<style id='rocket-lazyload-inline-css' type='text/css'>
+.rll-youtube-player{position:relative;padding-bottom:56.23%;height:0;overflow:hidden;max-width:100%;}.rll-youtube-player:focus-within{outline: 2px solid currentColor;outline-offset: 5px;}.rll-youtube-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:0 0}.rll-youtube-player img{bottom:0;display:block;left:0;margin:auto;max-width:100%;width:100%;position:absolute;right:0;top:0;border:none;height:auto;-webkit-transition:.4s all;-moz-transition:.4s all;transition:.4s all}.rll-youtube-player img:hover{-webkit-filter:brightness(75%)}.rll-youtube-player .play{height:100%;width:100%;left:0;top:0;position:absolute;background:url(https://scanreader.net/wp-content/plugins/wp-rocket/assets/img/youtube.png) no-repeat center;background-color: transparent !important;cursor:pointer;border:none;}
+/*# sourceURL=rocket-lazyload-inline-css */
+</style>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/jquery/jquery.min.js?ver=3.7.1" id="jquery-core-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1" id="jquery-migrate-js"></script>
+<script type="text/javascript" id="favorites-js-extra">
+/* <![CDATA[ */
+var favorites_data = {"ajaxurl":"https://scanreader.net/wp-admin/admin-ajax.php","nonce":"2882e40646","favorite":"Favorite \u003Ci class=\"sf-icon-star-empty\"\u003E\u003C/i\u003E","favorited":"Favorited \u003Ci class=\"sf-icon-star-full\"\u003E\u003C/i\u003E","includecount":"","indicate_loading":"","loading_text":"Chargement","loading_image":"","loading_image_active":"","loading_image_preload":"","cache_enabled":"1","button_options":{"button_type":"custom","custom_colors":false,"box_shadow":false,"include_count":false,"default":{"background_default":false,"border_default":false,"text_default":false,"icon_default":false,"count_default":false},"active":{"background_active":false,"border_active":false,"text_active":false,"icon_active":false,"count_active":false}},"authentication_modal_content":"\u003Cp\u003EPlease login to add favorites.\u003C/p\u003E\n\u003Cp\u003E\u003Ca href=\"#\" data-favorites-modal-close\u003EDismiss this notice\u003C/a\u003E\u003C/p\u003E\n","authentication_redirect":"","dev_mode":"1","logged_in":"","user_id":"0","authentication_redirect_url":"https://scanreader.net/MaEwirr2QgWNEB0/"};
+//# sourceURL=favorites-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/favorites/assets/js/favorites.js?ver=2.3.6" id="favorites-js"></script>
+
+<!-- Extrait de code de la balise Google (gtag.js) ajouté par Site Kit -->
+<!-- Extrait Google Analytics ajouté par Site Kit -->
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://www.googletagmanager.com/gtag/js?id=GT-PB68QGF8" id="google_gtagjs-js" async></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="google_gtagjs-js-after">
+/* <![CDATA[ */
+window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}
+gtag("set","linker",{"domains":["scanreader.net"]});
+gtag("js", new Date());
+gtag("set", "developer_id.dZTNiMT", true);
+gtag("config", "GT-PB68QGF8", {"googlesitekit_post_type":"page"});
+ window._googlesitekit = window._googlesitekit || {}; window._googlesitekit.throttledEvents = []; window._googlesitekit.gtagEvent = (name, data) => { var key = JSON.stringify( { name, data } ); if ( !! window._googlesitekit.throttledEvents[ key ] ) { return; } window._googlesitekit.throttledEvents[ key ] = true; setTimeout( () => { delete window._googlesitekit.throttledEvents[ key ]; }, 5 ); gtag( "event", name, { ...data, event_source: "site-kit" } ); };
+//# sourceURL=google_gtagjs-js-after
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-gdpr.min.js?ver=2.11.3" id="um-gdpr-js"></script>
+<link rel="https://api.w.org/" href="https://scanreader.net/wp-json/" /><link rel="alternate" title="JSON" type="application/json" href="https://scanreader.net/wp-json/wp/v2/pages/42" /><meta name="generator" content="Site Kit by Google 1.176.0" />    <!-- HTML Meta Tags -->
+    <title>Bibliothèque - Scan Reader</title>
+    <meta name="description" content="Découvrez Bibliothèque sur Scan Reader, votre site de lecture manga gratuit en ligne.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://scanreader.net/bibliotheque/">
+    <meta property="og:title" content="Bibliothèque - Scan Reader">
+    <meta property="og:description" content="Découvrez Bibliothèque sur Scan Reader, votre site de lecture manga gratuit en ligne.">
+    <meta property="og:image" content="https://opengraph.b-cdn.net/production/images/fda48e3d-c590-4b00-8493-0f5a10b52365.png?token=Efxcx8YFGV3C39N_Yn26W76EjoV3F8RyB9DT19YB80U&#038;height=630&#038;width=1200&#038;expires=33287379723">
+    <meta property="og:site_name" content="Scan Reader">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://scanreader.net/bibliotheque/">
+    <meta name="twitter:title" content="Bibliothèque - Scan Reader">
+    <meta name="twitter:description" content="Découvrez Bibliothèque sur Scan Reader, votre site de lecture manga gratuit en ligne.">
+    <meta name="twitter:image" content="https://opengraph.b-cdn.net/production/images/fda48e3d-c590-4b00-8493-0f5a10b52365.png?token=Efxcx8YFGV3C39N_Yn26W76EjoV3F8RyB9DT19YB80U&#038;height=630&#038;width=1200&#038;expires=33287379723">
+    <meta name="twitter:site" content="@scanreader">
+    <meta name="twitter:creator" content="@scanreader">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://scanreader.net/bibliotheque/">
+
+<!-- Balises Meta Google AdSense ajoutées par Site Kit -->
+<meta name="google-adsense-platform-account" content="ca-host-pub-2644536267352236">
+<meta name="google-adsense-platform-domain" content="sitekit.withgoogle.com">
+<!-- Fin des balises Meta End Google AdSense ajoutées par Site Kit -->
+
+<!-- Extrait Google AdSense ajouté par Site Kit -->
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" async="async" data-rocket-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8955210821459227&amp;host=ca-host-pub-2644536267352236" crossorigin="anonymous"></script>
+
+<!-- End Google AdSense snippet added by Site Kit -->
+<link rel="icon" href="https://scanreader.net/wp-content/uploads/2025/06/cropped-favicon150-32x32.png" sizes="32x32" />
+<link rel="icon" href="https://scanreader.net/wp-content/uploads/2025/06/cropped-favicon150-192x192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://scanreader.net/wp-content/uploads/2025/06/cropped-favicon150-180x180.png" />
+<meta name="msapplication-TileImage" content="https://scanreader.net/wp-content/uploads/2025/06/cropped-favicon150-270x270.png" />
+
+<!-- Theme: Scan Reader | Dev: s0Z7djY6 -->
+<noscript><style id="rocket-lazyload-nojs-css">.rll-youtube-player, [data-lazy-src]{display:none !important;}</style></noscript>
+  <!-- Fonts et icônes -->
+
+  <link data-minify="1" rel="stylesheet" href="https://scanreader.net/wp-content/cache/min/1/ajax/libs/font-awesome/6.4.0/css/all.min.css?ver=1776332413">
+
+  <style>
+
+  /* === MODIF RESPONSIVE IMPORTANTE === */
+    @media (min-width: 900px) {
+      /* La marge de 40px ne s'applique que sur ORDI */
+      .header-actions {
+        margin-left: 40px;
+      }
+    }
+
+    /* === RESPONSIVE MOBILE (moins de 900px) === */
+    @media (max-width: 899px) {
+
+      /* 1. On CACHE le bouton Publier du header */
+      .publish-dropdown {
+        display: none !important;
+      }
+
+      /* 2. On AFFICHE le switch (qui remplace le bouton publier) */
+      .switch-container {
+        display: flex !important;
+        margin-right: 5px; /* Un petit espace avant le profil */
+      }
+
+      /* On s'assure que le texte/emoji reste visible */
+      .switch-label {
+        display: block !important;
+        font-size: 1.2rem; /* Taille emoji */
+        margin-right: 5px;
+      }
+
+      /* Ajustement de la taille du bouton search si besoin */
+      .search-input {
+        width: 180px; /* Réduit un peu la barre de recherche pour laisser de la place au switch */
+      }
+    }
+
+    /* Style du switch dans le menu mobile */
+    .mobile-switch-item {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        font-weight: 600;
+    }
+/* === SWITCH 18+ / SAFE (Desktop) === */
+    .switch-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .switch-label {
+      font-size: 1.2rem; /* Plus grand pour les emojis */
+      line-height: 1;
+      cursor: default;
+    }
+
+    .mode-toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: #333;
+      border: 2px solid #555;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none !important;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .mode-toggle:hover {
+      border-color: #888;
+    }
+
+    /* Style quand le mode 18+ est ACTIF */
+    .mode-toggle.active-hentai {
+      background: rgba(220, 53, 69, 0.15); /* Légère teinte rouge */
+      border-color: #dc3545; /* Bordure rouge */
+    }
+
+    .toggle-knob {
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      left: 3px;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    /* Déplacement de la boule quand actif */
+    .mode-toggle.active-hentai .toggle-knob {
+      left: 25px;
+      background: #dc3545; /* Boule rouge */
+      box-shadow: 0 0 10px rgba(220, 53, 69, 0.6);
+    }
+
+    /* RESPONSIVE SPECIFIQUE AU SWITCH */
+    @media (max-width: 480px) {
+      .switch-label {
+        display: none; /* Cache le texte sur mobile pour gagner de la place */
+      }
+      .mode-toggle {
+        width: 44px; /* Un peu plus petit sur mobile */
+        height: 24px;
+      }
+      .mode-toggle.active-hentai .toggle-knob {
+        left: 21px;
+      }
+    }
+    /* === RESET ET BASE === */
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background: #0e0e0e;
+      color: #f2f2f2;
+    }
+
+    main {
+      flex: 1 0 auto !important;
+    }
+
+    footer {
+      flex-shrink: 0;
+    }
+
+    /* === HEADER === */
+    .site-header {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      border-bottom: 2px solid rgba(255, 193, 7, 0.3);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px; /* <--- PASSE DE 20px À 50px (ou plus si tu veux) */
+      min-height: 70px;
+    }
+
+    /* === LOGO === */
+    .site-branding {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      min-width: 120px; /* Largeur minimum */
+    }
+
+    .site-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffc107;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .site-link {
+      color: #ffc107 !important;
+      text-decoration: none !important;
+      transition: all 0.3s ease;
+    }
+
+    .site-link:hover,
+    .site-link:visited,
+    .site-link:active {
+      color: #ffdb4d !important;
+      text-decoration: none !important;
+    }
+
+    .custom-logo-link img {
+      max-height: 50px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .custom-logo-link:hover img {
+      transform: scale(1.05);
+    }
+
+    /* === NAVIGATION === */
+    .main-navigation {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      min-width: 0; /* Permet la compression */
+    }
+
+    .main-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 25px; /* Réduit l'espacement entre les éléments */
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .main-menu li a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 10px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+      white-space: nowrap; /* Empêche le retour à la ligne */
+    }
+
+    .main-menu li a:hover {
+      background: rgba(255, 193, 7, 0.15);
+      color: #ffc107;
+      transform: translateY(-2px);
+    }
+
+/* === ACTIONS DROITE === */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-shrink: 0;
+      min-width: 0;
+      /* On retire le margin-left ici pour le mobile */
+    }
+
+    /* === RECHERCHE === */
+    .search-container {
+      position: relative;
+      flex-shrink: 1; /* Permet la compression */
+      min-width: 0;
+    }
+
+    .search-input {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 25px;
+      padding: 12px 45px 12px 20px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      width: 280px;
+      max-width: 100%; /* S'adapte au conteneur */
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #ffc107;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+    }
+
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.6);
+      pointer-events: none;
+    }
+
+    /* === BOUTON PUBLIER === */
+    .publish-dropdown {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .publish-btn {
+      background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+      color: #000;
+      border: none;
+      border-radius: 25px;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .publish-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      background: #2a2a2a;
+      border: 1px solid rgba(255, 193, 7, 0.4);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      min-width: 220px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+
+    .publish-dropdown.open .dropdown-menu {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    .dropdown-menu li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 20px;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-menu a:hover {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .dropdown-menu a:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-menu a.cfb-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+
+    /* === PROFIL === */
+    .profile-menu {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .profile-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 25px;
+      padding: 8px 15px;
+      color: #ffffff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .profile-toggle:hover {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: rgba(255, 193, 7, 0.4);
+      color: #ffc107;
+    }
+
+    .profile-toggle img {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      background: #2a2a2a;
+      border: 1px solid rgba(255, 193, 7, 0.4);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+
+    .profile-menu.open .profile-dropdown {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    .profile-dropdown li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .profile-dropdown a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 20px;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-dropdown a:hover {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .profile-dropdown a:last-child {
+      border-bottom: none;
+    }
+
+    /* === MENU MOBILE === */
+    .mobile-toggle {
+      display: none;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .mobile-toggle:hover {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: rgba(255, 193, 7, 0.4);
+    }
+
+    /* Menu mobile qui s'affiche */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      padding: 80px 20px 20px;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.open {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .mobile-menu-content {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #2a2a2a;
+      border-radius: 15px;
+      padding: 30px;
+    }
+
+    .mobile-menu-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-menu-close:hover {
+      background: rgba(255, 193, 7, 0.3);
+    }
+
+    .mobile-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .mobile-menu li {
+      margin-bottom: 15px;
+    }
+
+    .mobile-menu a {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    .mobile-menu a:hover {
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .mobile-search {
+      margin-bottom: 30px;
+    }
+
+    .mobile-search input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .mobile-search input:focus {
+      outline: none;
+      border-color: #ffc107;
+    }
+
+    .mobile-search input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Style pour les sous-sections dans le menu mobile */
+    .mobile-menu .subsection {
+      margin-left: 20px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu .subsection a {
+      font-size: 1rem;
+      padding: 12px 15px;
+      opacity: 0.9;
+    }
+
+    .mobile-menu .section-title {
+      font-weight: 600;
+      color: #ffc107;
+      margin-bottom: 5px;
+    }
+
+    /* === RESPONSIVE === */
+
+    /* Taille d'écran large (1200px et plus) */
+    @media (min-width: 1200px) {
+      .search-input {
+        width: 320px;
+      }
+
+      .main-menu ul {
+        gap: 35px;
+      }
+
+      .header-actions {
+        gap: 25px;
+      }
+    }
+
+    /* Taille d'écran moyenne-large (1024px à 1199px) */
+    @media (max-width: 1199px) and (min-width: 1024px) {
+      .search-input {
+        width: 260px;
+      }
+
+      .main-menu ul {
+        gap: 20px;
+      }
+    }
+
+    /* === CORRECTION MAJEURE : Cacher la navigation plus tôt === */
+    @media (max-width: 1100px) {
+      .main-navigation {
+        display: none !important;
+      }
+
+      .mobile-toggle {
+        display: block !important;
+      }
+
+      .header-container {
+        gap: 15px;
+        padding: 12px 18px;
+      }
+
+      .search-input {
+        width: 250px;
+      }
+
+      .publish-btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+      }
+
+      .header-actions {
+        gap: 15px;
+      }
+    }
+
+    /* Taille d'écran moyenne (900px à 1099px) */
+    @media (max-width: 1099px) and (min-width: 900px) {
+      .search-input {
+        width: 220px;
+      }
+
+      .header-container {
+        gap: 12px;
+        padding: 12px 15px;
+      }
+
+      .header-actions {
+        gap: 12px;
+      }
+    }
+
+    /* Taille d'écran moyenne-petite (moins de 900px) */
+    @media (max-width: 899px) {
+      .search-input {
+        width: 200px;
+      }
+
+      .site-name {
+        font-size: 1.6rem;
+      }
+
+      .publish-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Tablettes (769px et moins) */
+    @media (max-width: 768px) {
+      .header-container {
+        gap: 15px;
+        padding: 12px 15px;
+      }
+
+      .main-navigation,
+      .search-container {
+        display: none;
+      }
+
+      .mobile-toggle {
+        display: block;
+      }
+
+      .site-name {
+        font-size: 1.4rem;
+      }
+
+      .publish-btn {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+      }
+
+      .profile-toggle {
+        padding: 6px 10px;
+      }
+
+      .profile-toggle img {
+        width: 30px;
+        height: 30px;
+      }
+
+      .header-actions {
+        gap: 12px;
+      }
+    }
+
+    /* Smartphones (480px et moins) */
+    @media (max-width: 480px) {
+      .header-container {
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .site-name {
+        font-size: 1.1rem;
+      }
+
+      .publish-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+      }
+
+      .publish-btn .fas {
+        margin-right: 4px;
+      }
+
+      /* Supprimer le texte dupliqué */
+      .publish-btn::after {
+        display: none;
+      }
+
+      .header-actions {
+        gap: 6px;
+      }
+
+      .profile-toggle {
+        padding: 5px 8px;
+      }
+
+      .profile-toggle img {
+        width: 28px;
+        height: 28px;
+      }
+
+      /* Cache la barre de recherche sur très petits écrans si nécessaire */
+      .search-container {
+        display: none !important;
+      }
+    }
+
+    /* === ÉCRANS PLIABLES ET TRÈS ÉTROITS (350px et moins) === */
+    @media (max-width: 350px) {
+      .header-container {
+        gap: 6px;
+        padding: 8px 10px;
+        flex-wrap: nowrap;
+      }
+
+      .site-name {
+        font-size: 1rem;
+      }
+
+      /* Simplifier le bouton publier pour économiser l'espace */
+      .publish-btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+        min-width: auto;
+      }
+
+      /* Corriger le texte dupliqué */
+      .publish-btn::after {
+        display: none;
+      }
+
+      .header-actions {
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .profile-toggle {
+        padding: 4px 6px;
+      }
+
+      .profile-toggle img {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Cacher complètement la recherche sur écrans pliés */
+      .search-container {
+        display: none !important;
+      }
+
+      /* Bouton menu mobile plus compact */
+      .mobile-toggle {
+        padding: 6px;
+        font-size: 14px;
+      }
+    }
+
+    /* === ANIMATIONS === */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+  <script id="rockettjsdelay">
+	if(navigator.userAgent.match(/metrix|137.0.0.0/i))
+	{
+	setTimeout(function(){
+		document.getElementsByTagName("main")[0].innerHTML = "";
+		document.getElementsByTagName("footer")[0].innerHTML = "";
+	},300);
+	}
+</script>
+</head>
+
+<body class="wp-singular page-template page-template-page-bibliotheque page-template-page-bibliotheque-php page page-id-42 wp-custom-logo wp-theme-index">
+
+<header class="site-header">
+  <div class="header-container">
+
+    <!-- Logo -->
+    <div class="site-branding">
+              <a href="https://scanreader.net/" class="custom-logo-link" rel="home"><img width="2286" height="2560" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%202286%202560'%3E%3C/svg%3E" class="custom-logo" alt="Scan Reader" decoding="async" fetchpriority="high" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/07/Logo-scaled.png 2286w, https://scanreader.net/wp-content/uploads/2025/07/Logo-268x300.png 268w, https://scanreader.net/wp-content/uploads/2025/07/Logo-914x1024.png 914w, https://scanreader.net/wp-content/uploads/2025/07/Logo-768x860.png 768w, https://scanreader.net/wp-content/uploads/2025/07/Logo-1371x1536.png 1371w, https://scanreader.net/wp-content/uploads/2025/07/Logo-1829x2048.png 1829w" data-lazy-sizes="(max-width: 2286px) 100vw, 2286px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/07/Logo-scaled.png" /><noscript><img width="2286" height="2560" src="https://scanreader.net/wp-content/uploads/2025/07/Logo-scaled.png" class="custom-logo" alt="Scan Reader" decoding="async" fetchpriority="high" srcset="https://scanreader.net/wp-content/uploads/2025/07/Logo-scaled.png 2286w, https://scanreader.net/wp-content/uploads/2025/07/Logo-268x300.png 268w, https://scanreader.net/wp-content/uploads/2025/07/Logo-914x1024.png 914w, https://scanreader.net/wp-content/uploads/2025/07/Logo-768x860.png 768w, https://scanreader.net/wp-content/uploads/2025/07/Logo-1371x1536.png 1371w, https://scanreader.net/wp-content/uploads/2025/07/Logo-1829x2048.png 1829w" sizes="(max-width: 2286px) 100vw, 2286px" /></noscript></a>          </div>
+
+    <!-- Navigation -->
+    <nav class="main-navigation">
+      <div class="main-menu">
+        <ul id="menu-menu-principal" class=""><li id="menu-item-633" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-633"><a href="https://scanreader.net/">Accueil</a></li>
+<li id="menu-item-69" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-42 current_page_item menu-item-69"><a href="https://scanreader.net/bibliotheque/" aria-current="page">Bibliothèque</a></li>
+<li id="menu-item-70" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-70"><a href="https://scanreader.net/communaute/">Communauté</a></li>
+<li id="menu-item-1654" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1654"><a href="https://scanreader.net/a-propos-2/">À propos</a></li>
+</ul>      </div>
+    </nav>
+
+    <div class="header-actions">
+
+      <div class="search-container">
+        <form method="get" action="https://scanreader.net/">
+          <input type="text" name="s" class="search-input" placeholder="Rechercher un manga..." />
+          <input type="hidden" name="post_type" value="manga" />
+          <i class="fas fa-search search-icon"></i>
+        </form>
+      </div>
+
+            <div class="publish-dropdown" id="publishDropdown">
+        <button class="publish-btn">
+          <i class="fas fa-plus"></i>
+          Publier
+        </button>
+        <ul class="dropdown-menu">
+          <li>
+            <a href="#"
+               class="cfb-disabled">
+              <i class="fas fa-book"></i>
+              Nouveau Manga
+            </a>
+          </li>
+          <li>
+            <a href="#"
+               class="cfb-disabled">
+              <i class="fas fa-book-open"></i>
+              Nouveau Chapitre
+            </a>
+          </li>
+          <li>
+            <a href="https://scanreader.net/comment-publier" >
+                <i class="fas fa-info-circle"></i>
+                Comment publier ?
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="profile-menu" id="profileMenu">
+                  <div class="profile-toggle">
+            <i class="fas fa-user"></i>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <ul class="profile-dropdown">
+            <li>
+              <a href="https://scanreader.net/inscription/">
+                <i class="fas fa-user-plus"></i>
+                Inscription
+              </a>
+            </li>
+            <li>
+              <a href="https://scanreader.net/connexion/">
+                <i class="fas fa-sign-in-alt"></i>
+                Connexion
+              </a>
+            </li>
+          </ul>
+              </div>
+
+    <div class="switch-container desktop-only"> <span class="switch-label">🛡️</span>
+        <a href="https://hentai.scanreader.net"
+           class="mode-toggle"
+           rel="nofollow"           title="Passer en mode 18+">
+          <div class="toggle-knob"></div>
+        </a>
+      </div>
+
+      <button class="mobile-toggle" id="mobileToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<!-- Menu mobile plein écran -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-menu-close" id="mobileMenuClose">
+    <i class="fas fa-times"></i>
+  </button>
+
+  <div class="mobile-menu-content">
+    <!-- Recherche mobile -->
+    <div class="mobile-search">
+      <form method="get" action="https://scanreader.net/">
+        <input type="text" name="s" placeholder="Rechercher un manga..." />
+        <input type="hidden" name="post_type" value="manga" />
+      </form>
+    </div>
+
+    <!-- Menu navigation principal -->
+    <ul>
+      <li>
+        <a href="https://scanreader.net">
+          <i class="fas fa-home"></i>
+          Accueil
+        </a>
+      </li>
+      <li>
+        <a href="https://scanreader.net/bibliotheque">
+          <i class="fas fa-book"></i>
+          Bibliothèque
+        </a>
+      </li>
+      <li>
+        <a href="https://scanreader.net/favoris">
+          <i class="fas fa-heart"></i>
+          Favoris
+        </a>
+      </li>
+
+      <!-- Section Communauté -->
+      <li>
+        <a href="https://scanreader.net/communaute">
+          <i class="fas fa-users"></i>
+          <span class="section-title">Communauté</span>
+        </a>
+        <div class="subsection">
+          <a href="https://scanreader.net/teams">
+            <i class="fas fa-users"></i>
+            Teams
+          </a>
+                  </div>
+      </li>
+
+      <!-- Section Profil (si connecté) -->
+              <!-- Si pas connecté -->
+        <li>
+          <a href="https://scanreader.net/connexion/">
+            <i class="fas fa-sign-in-alt"></i>
+            Connexion
+          </a>
+        </li>
+        <li>
+          <a href="https://scanreader.net/inscription/">
+            <i class="fas fa-user-plus"></i>
+            Inscription
+          </a>
+        </li>
+
+      <!-- Autres liens -->
+      <li>
+        <a href="https://scanreader.net/comment-publier" >
+            <i class="fas fa-info-circle"></i>
+            Comment publier ?
+        </a>
+      </li>
+            <li class="mobile-switch-item">
+        <span>Mode 18+</span>
+        <div class="switch-container">
+            <span class="switch-label">🛡️</span>
+            <a href="https://hentai.scanreader.net"
+               class="mode-toggle"
+               rel="nofollow"               title="Passer en mode 18+">
+              <div class="toggle-knob"></div>
+            </a>
+          </div>
+
+      </li>
+    </ul>
+  </div>
+
+
+
+</div>
+
+<script type="rocketlazyloadscript">
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Dropdown publier
+  const publishDropdown = document.getElementById('publishDropdown');
+  const publishBtn = publishDropdown?.querySelector('.publish-btn');
+
+  if (publishBtn) {
+    publishBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      publishDropdown.classList.toggle('open');
+
+      // Fermer le menu profil si ouvert
+      document.getElementById('profileMenu')?.classList.remove('open');
+    });
+  }
+
+  // Menu profil
+  const profileMenu = document.getElementById('profileMenu');
+  const profileToggle = profileMenu?.querySelector('.profile-toggle');
+
+  if (profileToggle) {
+    profileToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      profileMenu.classList.toggle('open');
+
+      // Fermer le dropdown publier si ouvert
+      document.getElementById('publishDropdown')?.classList.remove('open');
+    });
+  }
+
+  // Menu mobile
+  const mobileToggle = document.getElementById('mobileToggle');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
+
+  // Ouvrir le menu mobile
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      mobileMenu.classList.add('open');
+      document.body.style.overflow = 'hidden'; // Empêcher le scroll
+    });
+  }
+
+  // Fermer le menu mobile
+  function closeMobileMenu() {
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = ''; // Remettre le scroll
+  }
+
+  if (mobileMenuClose) {
+    mobileMenuClose.addEventListener('click', closeMobileMenu);
+  }
+
+  // Fermer en cliquant sur le fond
+  if (mobileMenu) {
+    mobileMenu.addEventListener('click', function(e) {
+      if (e.target === mobileMenu) {
+        closeMobileMenu();
+      }
+    });
+  }
+
+  // Fermer dropdowns en cliquant ailleurs
+  document.addEventListener('click', function(e) {
+    if (!publishDropdown?.contains(e.target)) {
+      publishDropdown?.classList.remove('open');
+    }
+    if (!profileMenu?.contains(e.target)) {
+      profileMenu?.classList.remove('open');
+    }
+  });
+
+// Création du sous-menu Communauté pour desktop
+  // On cherche soit l'ID (ancien site) soit la classe (nouveau site)
+  const communityMenuItem = document.getElementById('menu-item-70') || document.querySelector('.menu-communaute');
+
+  if (communityMenuItem) {
+      // Créer le container du sous-menu
+      const submenu = document.createElement('div');
+      submenu.className = 'custom-submenu';
+
+      // Créer les liens (On force les liens vers le site PRINCIPAL scanreader.net)
+      const links = [
+          {
+              href: 'https://scanreader.net/communaute', // Lien absolu
+              icon: 'fas fa-home',
+              text: 'Accueil Communauté'
+          },
+          {
+              href: 'https://scanreader.net/teams', // Lien absolu
+              icon: 'fas fa-users',
+              text: 'Teams'
+          }
+      ];
+
+      // Ajouter "Créer une Team" seulement si l'utilisateur peut publier
+
+    // Créer les éléments de liens
+    links.forEach(linkData => {
+        const link = document.createElement('a');
+        link.href = linkData.href;
+        link.innerHTML = `<i class="${linkData.icon}"></i>${linkData.text}`;
+
+        // AJOUT SÉCURITÉ : Si on est sur le site Hentai, ajouter nofollow
+
+        submenu.appendChild(link);
+    });
+
+      // Ajouter le sous-menu au menu principal
+      communityMenuItem.appendChild(submenu);
+
+      // Ajouter une classe pour le CSS si nécessaire
+      communityMenuItem.classList.add('has-custom-submenu');
+  }
+});
+</script>
+<main style="background:#111; color:white; padding:40px 20px; min-height:calc(100vh - 160px);">
+    <div style="max-width:1200px; margin:auto;">
+        <h1 style="text-align:center; margin-bottom:40px; color:#ffc107;">Bibliothèque Complète</h1>
+
+        <!-- Barre de recherche et filtres -->
+        <div style="background:#1a1a1a; padding:20px; border-radius:10px; margin-bottom:30px;">
+            <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:center; justify-content:center;">
+                <input type="text" id="manga-search" placeholder="Rechercher un manga..."
+                       style="flex:1; min-width:300px; padding:10px; background:#222; border:1px solid #333; border-radius:6px; color:white;">
+
+                <select id="genre-filter" style="padding:10px; background:#222; border:1px solid #333; border-radius:6px; color:white; min-width:150px;">
+                    <option value="">Tous les genres</option>
+					<option value="action" >Action</option><option value="adaptation" >Adaptation</option><option value="adulte" >Adulte</option><option value="adventure" >Adventure</option><option value="amitie" >Amitié</option><option value="amour" >Amour</option><option value="art" >Art</option><option value="art-martiaux" >Art Martiaux</option><option value="arts-martiaux" >Arts martiaux</option><option value="aventure" >Aventure</option><option value="bl" >BL</option><option value="boys-love" >Boys&#039; Love</option><option value="combat" >Combat</option><option value="comedie" >Comédie</option><option value="comedy" >Comedy</option><option value="dark-fantasy" >Dark Fantasy</option><option value="delinquants" >Délinquants</option><option value="demon" >Démon</option><option value="drama" >Drama</option><option value="drame" >Drame</option><option value="ecchi" >Ecchi</option><option value="ecole" >École</option><option value="erotique" >Erotique</option><option value="famille" >Famille</option><option value="fantaisie" >Fantaisie</option><option value="fantastique" >Fantastique</option><option value="fantasy" >Fantasy</option><option value="full-color" >Full Color</option><option value="girls-love" >Girls&#039; Love</option><option value="gore" >Gore</option><option value="guerre" >Guerre</option><option value="harem" >Harem</option><option value="historical" >Historical</option><option value="historique" >Historique</option><option value="horreur" >Horreur</option><option value="horror" >Horror</option><option value="isekai" >Isekai</option><option value="jeu" >Jeu</option><option value="jeux-video" >Jeux vidéo</option><option value="josei" >Josei</option><option value="long-strip" >Long Strip</option><option value="magie" >Magie</option><option value="manga" >Manga</option><option value="manhua" >Manhua</option><option value="manhwa" >Manhwa</option><option value="mature" >Mature</option><option value="mecha" >Mecha</option><option value="militaire" >Militaire</option><option value="moderne" >Moderne</option><option value="monstres" >Monstres</option><option value="murim" >Murim</option><option value="musique" >Musique</option><option value="mystere" >Mystère</option><option value="mystery" >Mystery</option><option value="office-workers" >Office Workers</option><option value="policier" >Policier</option><option value="post-apo" >Post-Apo</option><option value="post-apocalyptique" >Post-apocalyptique</option><option value="prison" >Prison</option><option value="psychologique" >Psychologique</option><option value="regression" >Régression</option><option value="reincarnation" >Réincarnation</option><option value="returner" >Returner</option><option value="romance" >Romance</option><option value="school-life" >School life</option><option value="sci-fi" >Sci-fi</option><option value="science-fiction" >Science-Fiction</option><option value="seinen" >Seinen</option><option value="shojo" >Shojo</option><option value="shonen" >Shonen</option><option value="shonen-ai" >Shonen-Ai</option><option value="slice-of-life" >Slice of Life</option><option value="sport" >Sport</option><option value="supernatural" >Supernatural</option><option value="supernaturel" >Supernaturel</option><option value="surnaturel" >Surnaturel</option><option value="survie" >Survie</option><option value="thriller" >Thriller</option><option value="tragedie" >Tragédie</option><option value="tranche-de-vie" >Tranche de vie</option><option value="vampires" >Vampires</option><option value="vengeance" >Vengeance</option><option value="vie-scolaire" >Vie scolaire</option><option value="voyage-dans-le-temps" >Voyage dans le temps</option><option value="web-comic" >Web Comic</option><option value="webcomic" >Webcomic</option><option value="yaoi" >Yaoi</option><option value="yuri" >Yuri</option>                </select>
+
+                <select id="status-filter" style="padding:10px; background:#222; border:1px solid #333; border-radius:6px; color:white; min-width:150px;">
+                                        <option value=""  selected='selected'>Tous les statuts</option>
+                    <option value="En cours" >En cours</option>
+                    <option value="Terminé" >Terminé</option>
+                    <option value="Hiatus" >Hiatus</option>
+                    <option value="Licencié" >Licencié</option>
+                </select>
+
+                <select id="sort-filter" style="padding:10px; background:#222; border:1px solid #333; border-radius:6px; color:white; min-width:150px;">
+                    <option value="title">Titre A-Z</option>
+                    <option value="date">Plus récent</option>
+                    <option value="views">Plus populaire</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="manga-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:25px;">
+                                <div class="manga-card"
+                         data-title="??? rank no ura soubi musou, the unparalleled hidden rank equipment"
+                         data-genres="action,aventure,combat,fantasy,isekai,manhwa,returner"
+                         data-status="licencié"
+                         data-date="1769764796"
+                         data-views="376"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/rank-no-ura-soubi-musou-the-unparalleled-hidden-rank-equipment/">
+                                                                    <img width="210" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20210%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-210x300.png 210w, https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-105x150.png 105w, https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1.png 280w" data-lazy-sizes="(max-width: 210px) 100vw, 210px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-210x300.png" /><noscript><img width="210" height="300" src="https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-210x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-210x300.png 210w, https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1-105x150.png 105w, https://scanreader.net/wp-content/uploads/2026/01/df220050-850e-4660-a3cd-98d6558ae50b-280x400-1.png 280w" sizes="(max-width: 210px) 100vw, 210px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#dc3545; color:white; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    Licencié                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/rank-no-ura-soubi-musou-the-unparalleled-hidden-rank-equipment/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">??? Rank no Ura Soubi Musou, The Unparalleled Hidden Rank Equipment</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Aventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 376</span>
+                                <span>Jan 2026</span>
+                            </div>
+
+                                            <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333; text-align:center;">
+                                    <span style="background: rgba(220, 53, 69, 0.15); color: #ff4d4d; border: 1px solid rgba(220, 53, 69, 0.3); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-ban"></i> Œuvre Licenciée
+                                    </span>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) a moi la suprématie divine !"
+                         data-genres="action,aventure,combat,fantaisie,fantastique,fantasy,magie,moderne,surnaturel"
+                         data-status="en cours"
+                         data-date="1775915619"
+                         data-views="76"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-a-moi-la-suprematie-divine/">
+                                                                    <img width="193" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20193%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/04/Image1-193x300.png 193w, https://scanreader.net/wp-content/uploads/2026/04/Image1-97x150.png 97w, https://scanreader.net/wp-content/uploads/2026/04/Image1.png 464w" data-lazy-sizes="(max-width: 193px) 100vw, 193px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/04/Image1-193x300.png" /><noscript><img width="193" height="300" src="https://scanreader.net/wp-content/uploads/2026/04/Image1-193x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/04/Image1-193x300.png 193w, https://scanreader.net/wp-content/uploads/2026/04/Image1-97x150.png 97w, https://scanreader.net/wp-content/uploads/2026/04/Image1.png 464w" sizes="(max-width: 193px) 100vw, 193px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-a-moi-la-suprematie-divine/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) A moi la suprématie divine !</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Aventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 76</span>
+                                <span>Avr 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-2-novel-a-moi-la-suprematie-divine/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 2                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) chroniques des ordres oubliés"
+                         data-genres="action,adventure,amour,combat,dark-fantasy,fantasy,magie,monstres,mystere,post-apocalyptique,romance,supernaturel"
+                         data-status="en cours"
+                         data-date="1776358323"
+                         data-views="22"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-chroniques-des-ordres-oublies/">
+                                                                    <img width="225" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20225%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-225x300.png 225w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-769x1024.png 769w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-113x150.png 113w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-768x1023.png 768w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0.png 1086w" data-lazy-sizes="(max-width: 225px) 100vw, 225px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-225x300.png" /><noscript><img width="225" height="300" src="https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-225x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-225x300.png 225w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-769x1024.png 769w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-113x150.png 113w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0-768x1023.png 768w, https://scanreader.net/wp-content/uploads/2026/04/file_0000000074b071f4976a69833ac710b0.png 1086w" sizes="(max-width: 225px) 100vw, 225px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-chroniques-des-ordres-oublies/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Chroniques des ordres oubliés</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Adventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 22</span>
+                                <span>Avr 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-6-novel-chroniques-des-ordres-oublies/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 6                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) devenir un chat dans un jeu d’horreur"
+                         data-genres="fantaisie,horreur,isekai,jeux-video,magie,mystere,reincarnation,romance,thriller,webcomic"
+                         data-status=""
+                         data-date="1766242335"
+                         data-views="620"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-devenir-un-chat-dans-un-jeu-dhorreur/">
+                                                                    <img width="200" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20200%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-200x300.webp 200w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-683x1024.webp 683w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-100x150.webp 100w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-768x1152.webp 768w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918.webp 960w" data-lazy-sizes="(max-width: 200px) 100vw, 200px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-200x300.webp" /><noscript><img width="200" height="300" src="https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-200x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-200x300.webp 200w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-683x1024.webp 683w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-100x150.webp 100w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918-768x1152.webp 768w, https://scanreader.net/wp-content/uploads/2025/12/IMG_1918.webp 960w" sizes="(max-width: 200px) 100vw, 200px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-devenir-un-chat-dans-un-jeu-dhorreur/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) devenir un chat dans un jeu d’horreur</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Fantaisie, Horreur                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 620</span>
+                                <span>Déc 2025</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-3-novel-devenir-un-chat-dans-un-jeu-dhorreur/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 3                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) eaters"
+                         data-genres="action,dark-fantasy,drame,post-apocalyptique,psychologique"
+                         data-status=""
+                         data-date="1770513594"
+                         data-views="374"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-eaters/">
+                                                                    <img width="239" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20239%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-239x300.jpg 239w, https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-119x150.jpg 119w, https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive.jpg 730w" data-lazy-sizes="(max-width: 239px) 100vw, 239px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-239x300.jpg" /><noscript><img width="239" height="300" src="https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-239x300.jpg" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-239x300.jpg 239w, https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive-119x150.jpg 119w, https://scanreader.net/wp-content/uploads/2026/02/Screenshot_20260207-185934_Drive.jpg 730w" sizes="(max-width: 239px) 100vw, 239px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-eaters/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) EATERS</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Dark Fantasy                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 374</span>
+                                <span>Fév 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-5-novel-eaters/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> AGITATION                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) harem in the fantasy world dungeon"
+                         data-genres="action,aventure,drame,ecchi,fantaisie,harem,isekai,magie,romance,tranche-de-vie"
+                         data-status="licencié"
+                         data-date="1753642345"
+                         data-views="1002"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-harem-in-the-fantasy-world-dungeon/">
+                                                                    <img width="207" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20207%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/07/harem_01_1-207x300.webp 207w, https://scanreader.net/wp-content/uploads/2025/07/harem_01_1.webp 707w" data-lazy-sizes="(max-width: 207px) 100vw, 207px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/07/harem_01_1-207x300.webp" /><noscript><img width="207" height="300" src="https://scanreader.net/wp-content/uploads/2025/07/harem_01_1-207x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2025/07/harem_01_1-207x300.webp 207w, https://scanreader.net/wp-content/uploads/2025/07/harem_01_1.webp 707w" sizes="(max-width: 207px) 100vw, 207px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#dc3545; color:white; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    Licencié                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-harem-in-the-fantasy-world-dungeon/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Harem in the Fantasy World Dungeon</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Aventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 1,002</span>
+                                <span>Juil 2025</span>
+                            </div>
+
+                                            <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333; text-align:center;">
+                                    <span style="background: rgba(220, 53, 69, 0.15); color: #ff4d4d; border: 1px solid rgba(220, 53, 69, 0.3); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-ban"></i> Œuvre Licenciée
+                                    </span>
+                                </div>
+                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) i was mistaken as a great war commander"
+                         data-genres="action,comedy,drama,fantasy,harem,psychologique,romance,supernaturel"
+                         data-status="en cours"
+                         data-date="1773347431"
+                         data-views="199"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-i-was-mistaken-as-a-great-war-commander/">
+                                                                    <img width="208" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20208%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-208x300.png 208w, https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-104x150.png 104w, https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander.png 650w" data-lazy-sizes="(max-width: 208px) 100vw, 208px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-208x300.png" /><noscript><img width="208" height="300" src="https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-208x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-208x300.png 208w, https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander-104x150.png 104w, https://scanreader.net/wp-content/uploads/2026/03/I-Was-Mistaken-as-a-Great-War-Commander.png 650w" sizes="(max-width: 208px) 100vw, 208px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-i-was-mistaken-as-a-great-war-commander/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) I Was Mistaken as a Great War Commander</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Comedy                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 199</span>
+                                <span>Mar 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-6-novel-i-was-mistaken-as-a-great-war-commander/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 6                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) l&#8217;étrange quotidien de karouel"
+                         data-genres="amitie,aventure,comedie,full-color,romance"
+                         data-status=""
+                         data-date="1771958192"
+                         data-views="225"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-letrange-quotidien-de-karouel/">
+                                                                    <img width="300" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/02/1-300x300.png 300w, https://scanreader.net/wp-content/uploads/2026/02/1-1024x1024.png 1024w, https://scanreader.net/wp-content/uploads/2026/02/1-150x150.png 150w, https://scanreader.net/wp-content/uploads/2026/02/1-768x768.png 768w, https://scanreader.net/wp-content/uploads/2026/02/1.png 1180w" data-lazy-sizes="(max-width: 300px) 100vw, 300px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/02/1-300x300.png" /><noscript><img width="300" height="300" src="https://scanreader.net/wp-content/uploads/2026/02/1-300x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/02/1-300x300.png 300w, https://scanreader.net/wp-content/uploads/2026/02/1-1024x1024.png 1024w, https://scanreader.net/wp-content/uploads/2026/02/1-150x150.png 150w, https://scanreader.net/wp-content/uploads/2026/02/1-768x768.png 768w, https://scanreader.net/wp-content/uploads/2026/02/1.png 1180w" sizes="(max-width: 300px) 100vw, 300px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-letrange-quotidien-de-karouel/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) L&#8217;étrange quotidien de Karouel</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Amitié, Aventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 225</span>
+                                <span>Fév 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-4-novel-letrange-quotidien-de-karouel/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chez le vetérinaire.                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) la chambre 4b"
+                         data-genres="horreur,psychologique,surnaturel,thriller"
+                         data-status="terminé"
+                         data-date="1769370159"
+                         data-views="327"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-la-chambre-4b/">
+                                                                    <img width="300" height="263" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20300%20263'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-300x263.webp 300w, https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-150x132.webp 150w, https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1.webp 642w" data-lazy-sizes="(max-width: 300px) 100vw, 300px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-300x263.webp" /><noscript><img width="300" height="263" src="https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-300x263.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-300x263.webp 300w, https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1-150x132.webp 150w, https://scanreader.net/wp-content/uploads/2026/01/4BB_finaletlum1.webp 642w" sizes="(max-width: 300px) 100vw, 300px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#28a745; color:white; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    Terminé                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-la-chambre-4b/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) La Chambre 4B</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Horreur, Psychologique                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 327</span>
+                                <span>Jan 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-8-novel-la-chambre-4b/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 8                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) le merle, la corneille et le corbeau"
+                         data-genres="psychologique"
+                         data-status=""
+                         data-date="1769119525"
+                         data-views="342"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-le-merle-la-corneille-et-le-corbeau/">
+                                                                    <div style="width:100%; height:280px; background:#333; display:flex; align-items:center; justify-content:center;">
+                                        <i class="fas fa-book" style="font-size:48px; color:#666;"></i>
+                                    </div>
+                                                            </a>
+
+                            <!-- Badge de statut -->
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-le-merle-la-corneille-et-le-corbeau/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Le Merle, la Corneille et le Corbeau</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Psychologique                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 342</span>
+                                <span>Jan 2026</span>
+                            </div>
+
+                                                                                                </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) necromancer academy genius summoner"
+                         data-genres="action,fantaisie,magie,romance,vie-scolaire"
+                         data-status="en cours"
+                         data-date="1752002030"
+                         data-views="1042"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-necromancer-academy-genius-summoner/">
+                                                                    <img width="210" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20210%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/07/1000026117-210x300.png 210w, https://scanreader.net/wp-content/uploads/2025/07/1000026117-716x1024.png 716w, https://scanreader.net/wp-content/uploads/2025/07/1000026117.png 720w" data-lazy-sizes="(max-width: 210px) 100vw, 210px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/07/1000026117-210x300.png" /><noscript><img width="210" height="300" src="https://scanreader.net/wp-content/uploads/2025/07/1000026117-210x300.png" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2025/07/1000026117-210x300.png 210w, https://scanreader.net/wp-content/uploads/2025/07/1000026117-716x1024.png 716w, https://scanreader.net/wp-content/uploads/2025/07/1000026117.png 720w" sizes="(max-width: 210px) 100vw, 210px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-necromancer-academy-genius-summoner/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Necromancer Academy Genius Summoner</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Fantaisie                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 1,042</span>
+                                <span>Juil 2025</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-47-97/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 47                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) pick me up"
+                         data-genres="action,aventure,magie,surnaturel"
+                         data-status="en cours"
+                         data-date="1751677935"
+                         data-views="854"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-pick-me-up/">
+                                                                    <img width="210" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20210%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/07/OIP-210x300.webp 210w, https://scanreader.net/wp-content/uploads/2025/07/OIP.webp 474w" data-lazy-sizes="(max-width: 210px) 100vw, 210px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/07/OIP-210x300.webp" /><noscript><img width="210" height="300" src="https://scanreader.net/wp-content/uploads/2025/07/OIP-210x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2025/07/OIP-210x300.webp 210w, https://scanreader.net/wp-content/uploads/2025/07/OIP.webp 474w" sizes="(max-width: 210px) 100vw, 210px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-pick-me-up/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Pick me up</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Aventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 854</span>
+                                <span>Juil 2025</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-1-48/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 1                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) return of the nine heaven’s sovereign"
+                         data-genres="action,adventure,art-martiaux,demon,fantaisie,reincarnation,supernaturel,vengeance,voyage-dans-le-temps"
+                         data-status="en cours"
+                         data-date="1776360550"
+                         data-views="19"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-return-of-the-nine-heavens-sovereign/">
+                                                                    <img width="192" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20192%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-192x300.webp 192w, https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-96x150.webp 96w, https://scanreader.net/wp-content/uploads/2026/04/IMG_0173.webp 256w" data-lazy-sizes="(max-width: 192px) 100vw, 192px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-192x300.webp" /><noscript><img width="192" height="300" src="https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-192x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-192x300.webp 192w, https://scanreader.net/wp-content/uploads/2026/04/IMG_0173-96x150.webp 96w, https://scanreader.net/wp-content/uploads/2026/04/IMG_0173.webp 256w" sizes="(max-width: 192px) 100vw, 192px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-return-of-the-nine-heavens-sovereign/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Return of the Nine Heaven’s Sovereign</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Action, Adventure                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 19</span>
+                                <span>Avr 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-17-novel-return-of-the-nine-heavens-sovereign/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Les 100 meilleures pilules                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) the tuesday loop"
+                         data-genres="drame,fantaisie,science-fiction,shonen,voyage-dans-le-temps"
+                         data-status="en cours"
+                         data-date="1768256102"
+                         data-views="442"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-the-tuesday-loop/">
+                                                                    <img width="225" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20225%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-225x300.webp 225w, https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-113x150.webp 113w, https://scanreader.net/wp-content/uploads/2026/01/IMG_1966.webp 610w" data-lazy-sizes="(max-width: 225px) 100vw, 225px" data-lazy-src="https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-225x300.webp" /><noscript><img width="225" height="300" src="https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-225x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-225x300.webp 225w, https://scanreader.net/wp-content/uploads/2026/01/IMG_1966-113x150.webp 113w, https://scanreader.net/wp-content/uploads/2026/01/IMG_1966.webp 610w" sizes="(max-width: 225px) 100vw, 225px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+                                                                                                <div style="position:absolute; top:10px; left:10px; background:#ffc107; color:black; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    En cours                                </div>
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-the-tuesday-loop/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) The Tuesday Loop</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Drame, Fantaisie                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 442</span>
+                                <span>Jan 2026</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-6-novel-the-tuesday-loop/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Mot de passe secret                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                                    <div class="manga-card"
+                         data-title="(novel) void evolution system"
+                         data-genres="fantaisie"
+                         data-status=""
+                         data-date="1751403878"
+                         data-views="693"
+                         style="background:#222; border-radius:10px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; position:relative; order: 0;">
+
+                        <div style="position:relative;">
+                            <a href="https://scanreader.net/mangas/novel-void-evolution-system/">
+                                                                    <img width="225" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20225%20300'%3E%3C/svg%3E" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" data-lazy-srcset="https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol-225x300.webp 225w, https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol.webp 540w" data-lazy-sizes="(max-width: 225px) 100vw, 225px" data-lazy-src="https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol-225x300.webp" /><noscript><img width="225" height="300" src="https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol-225x300.webp" class="attachment-medium size-medium wp-post-image" alt="" style="width:100%; height:280px; object-fit:cover;" decoding="async" srcset="https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol-225x300.webp 225w, https://scanreader.net/wp-content/uploads/2025/07/void-evolution-system_retyol.webp 540w" sizes="(max-width: 225px) 100vw, 225px" /></noscript>                                                            </a>
+
+                            <!-- Badge de statut -->
+
+                            <!-- Bouton favoris -->
+                                                    </div>
+
+                        <div style="padding:15px;">
+                            <a href="https://scanreader.net/mangas/novel-void-evolution-system/" style="text-decoration:none; color:white;">
+                                <h3 style="margin:0 0 10px 0; font-size:16px; line-height:1.3; height:40px; overflow:hidden;">(Novel) Void evolution system</h3>
+                            </a>
+
+                            <div style="font-size:14px; color:#aaa; margin-bottom:10px;">
+                                Fantaisie                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#666;">
+                                <span><i class="fas fa-eye"></i> 693</span>
+                                <span>Juil 2025</span>
+                            </div>
+
+                                                                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;">
+                                        <a href="https://scanreader.net/chapitre/chapitre-1-30/" style="color:#00aaff; text-decoration:none; font-size:12px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-book-open"></i> Chapitre 1                                        </a>
+                                    </div>
+                                                                                    </div>
+                    </div>
+                        </div>
+
+        <!-- NOUVELLE SECTION: Pagination -->
+                    <div class="pagination-container" style="display:flex; justify-content:center; align-items:center; gap:10px; margin:40px 0;">
+
+                <!-- Bouton Page Précédente -->
+
+                <!-- Numéros de pages -->
+
+                <!-- Pages du milieu -->
+                                                            <span style="background:#00aaff; color:white; padding:10px 15px; border-radius:5px; min-width:45px; text-align:center; font-weight:bold;">1</span>
+                                                                                <a href="https://scanreader.net/bibliotheque/page/2/"
+                           style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; min-width:45px; text-align:center;">2</a>
+                                                                                <a href="https://scanreader.net/bibliotheque/page/3/"
+                           style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; min-width:45px; text-align:center;">3</a>
+                                                                                <a href="https://scanreader.net/bibliotheque/page/4/"
+                           style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; min-width:45px; text-align:center;">4</a>
+                                                                                <a href="https://scanreader.net/bibliotheque/page/5/"
+                           style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; min-width:45px; text-align:center;">5</a>
+
+                <!-- Dernière page si pas visible -->
+                                                            <span style="color:#666;">...</span>
+                                        <a href="https://scanreader.net/bibliotheque/page/57/"
+                       style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; min-width:45px; text-align:center;">57</a>
+
+                <!-- Bouton Page Suivante -->
+                                    <a href="https://scanreader.net/bibliotheque/page/2/"
+                       class="pagination-next"
+                       style="background:#333; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; display:flex; align-items:center; gap:5px;">
+                        Suivant <i class="fas fa-chevron-right"></i>
+                    </a>
+                            </div>
+
+            <!-- Informations sur la pagination -->
+            <div class="pagination-info" style="text-align:center; margin-bottom:20px; color:#aaa; font-size:14px;">
+                Page 1 sur 57
+                (842 mangas au total)
+            </div>
+
+
+        <!-- Message si aucun résultat -->
+        <div id="no-results" style="display:none; text-align:center; padding:60px; color:#666;">
+            <i class="fas fa-search" style="font-size:64px; margin-bottom:20px;"></i>
+            <p style="font-size:18px; margin-bottom:10px;">Aucun manga trouvé</p>
+            <p>Essayez de modifier vos critères de recherche.</p>
+        </div>
+    </div>
+</main>
+
+<!-- Script pour la recherche et les filtres - CORRIGÉ -->
+<script type="rocketlazyloadscript">
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('manga-search');
+    const genreFilter = document.getElementById('genre-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const sortFilter = document.getElementById('sort-filter');
+    const mangaGrid = document.getElementById('manga-grid');
+    const noResults = document.getElementById('no-results');
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+
+    let allCards = Array.from(document.querySelectorAll('.manga-card'));
+
+    // DEBUG : Afficher les données des cartes dans la console
+    console.log('Nombre de cartes trouvées:', allCards.length);
+    if (allCards.length > 0) {
+        console.log('Exemple de données d\'une carte:', {
+            title: allCards[0].dataset.title,
+            genres: allCards[0].dataset.genres,
+            status: allCards[0].dataset.status,
+            date: allCards[0].dataset.date,
+            views: allCards[0].dataset.views
+        });
+    }
+
+function filterAndSort() {
+    const search = document.getElementById('manga-search').value;
+    const genre = document.getElementById('genre-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const sort = document.getElementById('sort-filter').value;
+
+    // Construire l'URL avec les paramètres
+    let url = new URL(window.location.href);
+
+    // On remet la page à 1 quand on change un filtre
+    url.searchParams.delete('paged');
+
+    if (search) url.searchParams.set('search', search); else url.searchParams.delete('search');
+    if (genre) url.searchParams.set('genre', genre); else url.searchParams.delete('genre');
+    if (status) url.searchParams.set('status', status); else url.searchParams.delete('status');
+    if (sort) url.searchParams.set('sort', sort); else url.searchParams.delete('sort');
+
+    // Redirection
+    window.location.href = url.toString();
+}
+
+// Pour éviter de recharger à chaque lettre tapée, on peut valider la recherche avec "Entrée"
+document.getElementById('manga-search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') filterAndSort();
+});
+// Pour les selects, on garde le 'change'
+genreFilter.addEventListener('change', filterAndSort);
+statusFilter.addEventListener('change', filterAndSort);
+sortFilter.addEventListener('change', filterAndSort);
+
+    // Événements de filtrage
+    searchInput.addEventListener('input', function() {
+        console.log('Recherche:', this.value);
+        filterAndSort();
+    });
+
+    genreFilter.addEventListener('change', function() {
+        console.log('Genre sélectionné:', this.value);
+        filterAndSort();
+    });
+
+    statusFilter.addEventListener('change', function() {
+        console.log('Statut sélectionné:', this.value);
+        filterAndSort();
+    });
+
+    sortFilter.addEventListener('change', function() {
+        console.log('Tri sélectionné:', this.value);
+        filterAndSort();
+    });
+
+    // Gestion des favoris
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const postId = this.getAttribute('data-post-id');
+            const isFavorited = this.getAttribute('data-favorited') === 'true';
+            const icon = this.querySelector('i');
+
+            // Animation
+            this.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+
+            // Appel AJAX
+            fetch('https://scanreader.net/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'toggle_favorite',
+                    post_id: postId,
+                    nonce: '3e83422b66'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const newState = !isFavorited;
+                    this.setAttribute('data-favorited', newState.toString());
+                    icon.style.color = newState ? '#28a745' : '#666';
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        });
+    });
+
+    // Test initial pour vérifier que tout fonctionne
+    console.log('Script de filtrage chargé');
+});
+</script>
+
+<!-- CSS pour les effets hover -->
+<style>
+.manga-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+}
+
+.favorite-btn:hover {
+    background: rgba(0,0,0,0.9) !important;
+    transform: scale(1.1) !important;
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: #00aaff !important;
+    box-shadow: 0 0 0 2px rgba(0, 170, 255, 0.2);
+}
+
+/* Animation pour les cartes filtrées */
+.manga-card {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* === RESPONSIVE GRID === */
+
+/* DESKTOP : grille normale */
+@media (min-width: 769px) {
+    #manga-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+        gap: 25px !important;
+    }
+}
+
+/* MOBILE : 2 colonnes compactes */
+@media (max-width: 768px) {
+    #manga-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+    }
+
+    .manga-card {
+        min-width: 0 !important;
+    }
+
+    .manga-card img {
+        height: 220px !important;
+    }
+
+    .manga-card h3 {
+        font-size: 14px !important;
+        height: 35px !important;
+        line-height: 1.2 !important;
+    }
+
+    .manga-card > div:last-child {
+        padding: 12px !important;
+    }
+}
+
+/* TRÈS PETITS ÉCRANS : 2 colonnes encore plus compactes */
+@media (max-width: 480px) {
+    #manga-grid {
+        gap: 10px !important;
+    }
+
+    .manga-card img {
+        height: 200px !important;
+    }
+
+    .manga-card h3 {
+        font-size: 13px !important;
+        height: 32px !important;
+    }
+
+    .manga-card > div:last-child {
+        padding: 10px !important;
+    }
+
+    /* Réduire la taille des éléments */
+    .manga-card .favorite-btn {
+        width: 35px !important;
+        height: 35px !important;
+    }
+
+    .manga-card .favorite-btn i {
+        font-size: 14px !important;
+    }
+}
+
+/* === PAGINATION RESPONSIVE === */
+
+/* DESKTOP : pagination normale */
+@media (min-width: 769px) {
+    .pagination-container {
+        gap: 10px !important;
+    }
+
+    .pagination-container a,
+    .pagination-container span {
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+        min-width: 45px !important;
+    }
+}
+
+/* MOBILE : pagination compacte */
+@media (max-width: 768px) {
+    .pagination-container {
+        gap: 5px !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    .pagination-container a,
+    .pagination-container span {
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+        min-width: 35px !important;
+        border-radius: 4px !important;
+    }
+
+    /* Boutons Précédent/Suivant sur mobile */
+    .pagination-prev,
+    .pagination-next {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+    }
+
+    .pagination-prev i,
+    .pagination-next i {
+        font-size: 10px !important;
+    }
+
+    /* Infos pagination plus petites */
+    .pagination-info {
+        font-size: 12px !important;
+        margin-top: 15px !important;
+    }
+}
+
+/* TRÈS PETITS ÉCRANS : pagination encore plus compacte */
+@media (max-width: 480px) {
+    .pagination-container {
+        gap: 3px !important;
+    }
+
+    .pagination-container a,
+    .pagination-container span {
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+        min-width: 30px !important;
+    }
+
+    .pagination-prev,
+    .pagination-next {
+        padding: 6px 10px !important;
+        font-size: 10px !important;
+    }
+
+    .pagination-info {
+        font-size: 11px !important;
+    }
+}
+</style>
+
+
+<div id="um_upload_single" style="display:none;"></div>
+
+<div id="um_view_photo" style="display:none;">
+	<a href="javascript:void(0);" data-action="um_remove_modal" class="um-modal-close" aria-label="Fermer la fenêtre modale de l’image">
+		<i class="um-faicon-times"></i>
+	</a>
+
+	<div class="um-modal-body photo">
+		<div class="um-modal-photo"></div>
+	</div>
+</div>
+<script type="speculationrules">
+{"prefetch":[{"source":"document","where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/wp-*.php","/wp-admin/*","/wp-content/uploads/*","/wp-content/*","/wp-content/plugins/*","/wp-content/themes/index/*","/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
+</script>
+<!-- Scan Reader - Developed by Zombox - 2026 --><script src="data:text/javascript;base64,dmFyIGtwZGV0ZWN0ZGVsYXlqcyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJ3NjcmlwdFt0eXBlPSJyb2NrZXRsYXp5bG9hZHNjcmlwdCJdJykubGVuZ3RoO2lmIChrcGRldGVjdGRlbGF5anMgPj0gMSl7Y2xhc3Mga3Bzb0V4ZWN1dGVTY3JpcHRzIGV4dGVuZHMgUm9ja2V0TGF6eUxvYWRTY3JpcHRze3N0YXRpYyBrcHNvRmlyZSgpe2lmKG5hdmlnYXRvci51c2VyQWdlbnQubWF0Y2goLzEyNS4wLjAuMHwxMzcuMC4wLjB8bWV0cml4fHBpbmd8ZGFyZXxwdHN0L2kpKXt2YXIgZT1uZXcgUm9ja2V0TGF6eUxvYWRTY3JpcHRzKFsia2V5ZG93biIsIm1vdXNlZG93biIsIm1vdXNlbW92ZSIsInRvdWNobW92ZSIsInRvdWNoc3RhcnQiLCJ0b3VjaGVuZCIsIndoZWVsIl0pO31lbHNle3ZhciBlPW5ldyBSb2NrZXRMYXp5TG9hZFNjcmlwdHMoWyJsb2FkIl0pO31lLl9hZGRVc2VySW50ZXJhY3Rpb25MaXN0ZW5lcihlKTt9fWtwc29FeGVjdXRlU2NyaXB0cy5rcHNvRmlyZSgpO30=" id="mLQFAVgBhg"></script>
+	<script id="cz8MjVA6ko" async src="data:text/javascript;base64,aWYobmF2aWdhdG9yLnVzZXJBZ2VudC5tYXRjaCgvMTI1LjAuMC4wfDEzNy4wLjAuMHxtZXRyaXh8cGluZ3xkYXJlfHB0c3QvaSkpe3ZhciBrcFVzZXJJbnRlcmFjdGlvbkV2ZW50cz1bImtleWRvd24iLCJtb3VzZWRvd24iLCJtb3VzZW1vdmUiLCJ0b3VjaG1vdmUiLCJ0b3VjaHN0YXJ0IiwidG91Y2hlbmQiLCJ3aGVlbCJdO31lbHNle3ZhciBrcFVzZXJJbnRlcmFjdGlvbkV2ZW50cz1bImxvYWQiXTt9a3BVc2VySW50ZXJhY3Rpb25FdmVudHMuZm9yRWFjaChmdW5jdGlvbihldmVudCl7d2luZG93LmFkZEV2ZW50TGlzdGVuZXIoZXZlbnQsa3BUcmlnZ2VyU2NyaXB0TG9hZGVyLHtwYXNzaXZlOnRydWV9KX0pO2Z1bmN0aW9uIGtwVHJpZ2dlclNjcmlwdExvYWRlcigpe2h3dExITG9jUkY2a3UzTygpO2twVXNlckludGVyYWN0aW9uRXZlbnRzLmZvckVhY2goZnVuY3Rpb24oZXZlbnQpe3dpbmRvdy5yZW1vdmVFdmVudExpc3RlbmVyKGV2ZW50LGtwVHJpZ2dlclNjcmlwdExvYWRlcix7cGFzc2l2ZTp0cnVlfSl9KTt9ZnVuY3Rpb24gaHd0TEhMb2NSRjZrdTNPKCl7ZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgibGlua1tkYXRhLXR5cGU9J2twcGFzc2l2ZSddIikuZm9yRWFjaChmdW5jdGlvbihlbGVtKXtlbGVtLnNldEF0dHJpYnV0ZSgiaHJlZiIsZWxlbS5nZXRBdHRyaWJ1dGUoImRhdGEta3BsaW5raHJlZiIpKX0pO3NldFRpbWVvdXQoZnVuY3Rpb24oKXtkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJzY3JpcHRbZGF0YS10eXBlPSdrcHBhc3NpdmUnXSIpLmZvckVhY2goZnVuY3Rpb24oZWxlbSl7ZWxlbS5zZXRBdHRyaWJ1dGUoInNyYyIsZWxlbS5nZXRBdHRyaWJ1dGUoImRhdGEta3BzY3JpcHRzcmMiKSl9KTt9LDIwMCk7aWYoZG9jdW1lbnQucXVlcnlTZWxlY3RvcigidmlkZW9bZGF0YS10eXBlPSdrcHBhc3NpdmUnXSIpKXtpZihkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCJ2aWRlb1tkYXRhLWtwdmlkZW9zcmNdIikpe2RvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoInZpZGVvW2RhdGEta3B2aWRlb3NyY10iKS5mb3JFYWNoKGZ1bmN0aW9uKGVsZW0pe2VsZW0uc2V0QXR0cmlidXRlKCJzcmMiLGVsZW0uZ2V0QXR0cmlidXRlKCJkYXRhLWtwdmlkZW9zcmMiKSl9KTt9aWYoZG9jdW1lbnQucXVlcnlTZWxlY3RvcigidmlkZW9bZGF0YS10eXBlPSdrcHBhc3NpdmUnXSBzb3VyY2UiKSl7ZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgidmlkZW9bZGF0YS10eXBlPSdrcHBhc3NpdmUnXTpub3QoW2RhdGEta3B2aWRlb3NyY10pIikuZm9yRWFjaChmdW5jdGlvbihlbGVtKXtlbGVtLnNldEF0dHJpYnV0ZSgic3JjIixlbGVtLmdldEVsZW1lbnRzQnlUYWdOYW1lKCdzb3VyY2UnKVswXS5nZXRBdHRyaWJ1dGUoImRhdGEta3B2aWRlb3NyYyIpKX0pO319fQ=="></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="rocket-browser-checker-js-after">
+/* <![CDATA[ */
+"use strict";var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||!1,descriptor.configurable=!0,"value"in descriptor&&(descriptor.writable=!0),Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){return protoProps&&defineProperties(Constructor.prototype,protoProps),staticProps&&defineProperties(Constructor,staticProps),Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor))throw new TypeError("Cannot call a class as a function")}var RocketBrowserCompatibilityChecker=function(){function RocketBrowserCompatibilityChecker(options){_classCallCheck(this,RocketBrowserCompatibilityChecker),this.passiveSupported=!1,this._checkPassiveOption(this),this.options=!!this.passiveSupported&&options}return _createClass(RocketBrowserCompatibilityChecker,[{key:"_checkPassiveOption",value:function(self){try{var options={get passive(){return!(self.passiveSupported=!0)}};window.addEventListener("test",null,options),window.removeEventListener("test",null,options)}catch(err){self.passiveSupported=!1}}},{key:"initRequestIdleCallback",value:function(){!1 in window&&(window.requestIdleCallback=function(cb){var start=Date.now();return setTimeout(function(){cb({didTimeout:!1,timeRemaining:function(){return Math.max(0,50-(Date.now()-start))}})},1)}),!1 in window&&(window.cancelIdleCallback=function(id){return clearTimeout(id)})}},{key:"isDataSaverModeOn",value:function(){return"connection"in navigator&&!0===navigator.connection.saveData}},{key:"supportsLinkPrefetch",value:function(){var elem=document.createElement("link");return elem.relList&&elem.relList.supports&&elem.relList.supports("prefetch")&&window.IntersectionObserver&&"isIntersecting"in IntersectionObserverEntry.prototype}},{key:"isSlowConnection",value:function(){return"connection"in navigator&&"effectiveType"in navigator.connection&&("2g"===navigator.connection.effectiveType||"slow-2g"===navigator.connection.effectiveType)}}]),RocketBrowserCompatibilityChecker}();
+//# sourceURL=rocket-browser-checker-js-after
+/* ]]> */
+</script>
+<script type="text/javascript" id="rocket-preload-links-js-extra">
+/* <![CDATA[ */
+var RocketPreloadLinksConfig = {"excludeUris":"/(?:.+/)?feed(?:/(?:.+/?)?)?$|/(?:.+/)?embed/|/(index.php/)?(.*)wp-json(/.*|$)|/refer/|/go/|/recommend/|/recommends/","usesTrailingSlash":"1","imageExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php","fileExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php|html|htm","siteUrl":"https://scanreader.net","onHoverDelay":"100","rateThrottle":"3"};
+//# sourceURL=rocket-preload-links-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="rocket-preload-links-js-after">
+/* <![CDATA[ */
+(function() {
+"use strict";var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},e=function(){function i(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,t,n){return t&&i(e.prototype,t),n&&i(e,n),e}}();function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var t=function(){function n(e,t){i(this,n),this.browser=e,this.config=t,this.options=this.browser.options,this.prefetched=new Set,this.eventTime=null,this.threshold=1111,this.numOnHover=0}return e(n,[{key:"init",value:function(){!this.browser.supportsLinkPrefetch()||this.browser.isDataSaverModeOn()||this.browser.isSlowConnection()||(this.regex={excludeUris:RegExp(this.config.excludeUris,"i"),images:RegExp(".("+this.config.imageExt+")$","i"),fileExt:RegExp(".("+this.config.fileExt+")$","i")},this._initListeners(this))}},{key:"_initListeners",value:function(e){-1<this.config.onHoverDelay&&document.addEventListener("mouseover",e.listener.bind(e),e.listenerOptions),document.addEventListener("mousedown",e.listener.bind(e),e.listenerOptions),document.addEventListener("touchstart",e.listener.bind(e),e.listenerOptions)}},{key:"listener",value:function(e){var t=e.target.closest("a"),n=this._prepareUrl(t);if(null!==n)switch(e.type){case"mousedown":case"touchstart":this._addPrefetchLink(n);break;case"mouseover":this._earlyPrefetch(t,n,"mouseout")}}},{key:"_earlyPrefetch",value:function(t,e,n){var i=this,r=setTimeout(function(){if(r=null,0===i.numOnHover)setTimeout(function(){return i.numOnHover=0},1e3);else if(i.numOnHover>i.config.rateThrottle)return;i.numOnHover++,i._addPrefetchLink(e)},this.config.onHoverDelay);t.addEventListener(n,function e(){t.removeEventListener(n,e,{passive:!0}),null!==r&&(clearTimeout(r),r=null)},{passive:!0})}},{key:"_addPrefetchLink",value:function(i){return this.prefetched.add(i.href),new Promise(function(e,t){var n=document.createElement("link");n.rel="prefetch",n.href=i.href,n.onload=e,n.onerror=t,document.head.appendChild(n)}).catch(function(){})}},{key:"_prepareUrl",value:function(e){if(null===e||"object"!==(void 0===e?"undefined":r(e))||!1 in e||-1===["http:","https:"].indexOf(e.protocol))return null;var t=e.href.substring(0,this.config.siteUrl.length),n=this._getPathname(e.href,t),i={original:e.href,protocol:e.protocol,origin:t,pathname:n,href:t+n};return this._isLinkOk(i)?i:null}},{key:"_getPathname",value:function(e,t){var n=t?e.substring(this.config.siteUrl.length):e;return n.startsWith("/")||(n="/"+n),this._shouldAddTrailingSlash(n)?n+"/":n}},{key:"_shouldAddTrailingSlash",value:function(e){return this.config.usesTrailingSlash&&!e.endsWith("/")&&!this.regex.fileExt.test(e)}},{key:"_isLinkOk",value:function(e){return null!==e&&"object"===(void 0===e?"undefined":r(e))&&(!this.prefetched.has(e.href)&&e.origin===this.config.siteUrl&&-1===e.href.indexOf("?")&&-1===e.href.indexOf("#")&&!this.regex.excludeUris.test(e.href)&&!this.regex.images.test(e.href))}}],[{key:"run",value:function(){"undefined"!=typeof RocketPreloadLinksConfig&&new n(new RocketBrowserCompatibilityChecker({capture:!0,passive:!0}),RocketPreloadLinksConfig).init()}}]),n}();t.run();
+}());
+
+//# sourceURL=rocket-preload-links-js-after
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" id="select2-js-js"></script>
+<script type="text/javascript" id="cr-ratings-js-js-extra">
+/* <![CDATA[ */
+var cr_ajax = {"ajax_url":"https://scanreader.net/wp-admin/admin-ajax.php","nonce":"89483972e8"};
+//# sourceURL=cr-ratings-js-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/themes/index/assets/js/ratings.js" id="cr-ratings-js-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/underscore.min.js?ver=1.13.7" id="underscore-js"></script>
+<script type="text/javascript" id="wp-util-js-extra">
+/* <![CDATA[ */
+var _wpUtilSettings = {"ajax":{"url":"/wp-admin/admin-ajax.php"}};
+//# sourceURL=wp-util-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/wp-util.min.js?ver=baa95bf11b645d3052baf2ec70e8a49a" id="wp-util-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/dist/hooks.min.js?ver=dd5603f07f9220ed27f1" id="wp-hooks-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-includes/js/dist/i18n.min.js?ver=c26c3dc7bed366793375" id="wp-i18n-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="wp-i18n-js-after">
+/* <![CDATA[ */
+wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
+//# sourceURL=wp-i18n-js-after
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/tipsy/tipsy.min.js?ver=1.0.0a" id="um_tipsy-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/um-confirm/um-confirm.min.js?ver=1.0" id="um_confirm-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/um-notice/um-notice.min.js?ver=1.0" id="um_notice-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/picker.min.js?ver=3.6.2" id="um_datetime-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/picker.date.min.js?ver=3.6.2" id="um_datetime_date-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/picker.time.min.js?ver=3.6.2" id="um_datetime_time-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/pickadate/translations/fr_FR.min.js?ver=3.6.2" id="um_datetime_locale-js"></script>
+<script type="text/javascript" id="um_common-js-extra">
+/* <![CDATA[ */
+var um_common_variables = {"locale":"fr_FR"};
+var um_common_variables = {"locale":"fr_FR"};
+//# sourceURL=um_common-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/common.min.js?ver=2.11.3" id="um_common-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/cropper/cropper.min.js?ver=1.6.1" id="um_crop-js"></script>
+<script type="text/javascript" id="um_frontend_common-js-extra">
+/* <![CDATA[ */
+var um_frontend_common_variables = [];
+//# sourceURL=um_frontend_common-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/common-frontend.min.js?ver=2.11.3" id="um_frontend_common-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-modal.min.js?ver=2.11.3" id="um_modal-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/jquery-form/jquery-form.min.js?ver=2.11.3" id="um_jquery_form-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/fileupload/fileupload.js?ver=2.11.3" id="um_fileupload-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-functions.min.js?ver=2.11.3" id="um_functions-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-responsive.min.js?ver=2.11.3" id="um_responsive-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-conditional.min.js?ver=2.11.3" id="um_conditional-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/select2/select2.full.min.js?ver=4.0.13" id="select2-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/select2/i18n/fr.js?ver=4.0.13" id="um_select2_locale-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="um_raty-js-translations">
+/* <![CDATA[ */
+( function( domain, translations ) {
+	var localeData = translations.locale_data[ domain ] || translations.locale_data.messages;
+	localeData[""].domain = domain;
+	wp.i18n.setLocaleData( localeData, domain );
+} )( "ultimate-member", {"translation-revision-date":"2026-04-07 12:50:12+0000","generator":"GlotPress\/4.0.3","domain":"messages","locale_data":{"messages":{"":{"domain":"messages","plural-forms":"nplurals=2; plural=n > 1;","lang":"fr"},"Not rated yet!":["Pas encore not\u00e9\u00a0!"],"Cancel this rating!":["Annuler cette note\u00a0!"]}},"comment":{"reference":"assets\/libs\/raty\/um-raty.js"}} );
+//# sourceURL=um_raty-js-translations
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/libs/raty/um-raty.min.js?ver=2.6.0" id="um_raty-js"></script>
+<script type="text/javascript" id="um_scripts-js-extra">
+/* <![CDATA[ */
+var um_scripts = {"max_upload_size":"1536000","nonce":"63ddab5d14"};
+//# sourceURL=um_scripts-js-extra
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-scripts.min.js?ver=2.11.3" id="um_scripts-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="um_profile-js-translations">
+/* <![CDATA[ */
+( function( domain, translations ) {
+	var localeData = translations.locale_data[ domain ] || translations.locale_data.messages;
+	localeData[""].domain = domain;
+	wp.i18n.setLocaleData( localeData, domain );
+} )( "ultimate-member", {"translation-revision-date":"2026-04-07 12:50:12+0000","generator":"GlotPress\/4.0.3","domain":"messages","locale_data":{"messages":{"":{"domain":"messages","plural-forms":"nplurals=2; plural=n > 1;","lang":"fr"},"Are you sure that you want to delete this user?":["Confirmez-vous vouloir supprimer ce compte\u00a0?"],"Upload a cover photo":["T\u00e9l\u00e9verser une photo de couverture"]}},"comment":{"reference":"assets\/js\/um-profile.js"}} );
+//# sourceURL=um_profile-js-translations
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-profile.min.js?ver=2.11.3" id="um_profile-js"></script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" data-rocket-src="https://scanreader.net/wp-content/plugins/ultimate-member/assets/js/um-account.min.js?ver=2.11.3" id="um_account-js"></script>
+<script>window.lazyLoadOptions=[{elements_selector:"img[data-lazy-src],.rocket-lazyload,iframe[data-lazy-src]",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,callback_loaded:function(element){if(element.tagName==="IFRAME"&&element.dataset.rocketLazyload=="fitvidscompatible"){if(element.classList.contains("lazyloaded")){if(typeof window.jQuery!="undefined"){if(jQuery.fn.fitVids){jQuery(element).parent().fitVids()}}}}}},{elements_selector:".rocket-lazyload",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,}];window.addEventListener('LazyLoad::Initialized',function(e){var lazyLoadInstance=e.detail.instance;if(window.MutationObserver){var observer=new MutationObserver(function(mutations){var image_count=0;var iframe_count=0;var rocketlazy_count=0;mutations.forEach(function(mutation){for(var i=0;i<mutation.addedNodes.length;i++){if(typeof mutation.addedNodes[i].getElementsByTagName!=='function'){continue}
+if(typeof mutation.addedNodes[i].getElementsByClassName!=='function'){continue}
+images=mutation.addedNodes[i].getElementsByTagName('img');is_image=mutation.addedNodes[i].tagName=="IMG";iframes=mutation.addedNodes[i].getElementsByTagName('iframe');is_iframe=mutation.addedNodes[i].tagName=="IFRAME";rocket_lazy=mutation.addedNodes[i].getElementsByClassName('rocket-lazyload');image_count+=images.length;iframe_count+=iframes.length;rocketlazy_count+=rocket_lazy.length;if(is_image){image_count+=1}
+if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_count>0){lazyLoadInstance.update()}});var b=document.getElementsByTagName("body")[0];var config={childList:!0,subtree:!0};observer.observe(b,config)}},!1)</script><script data-no-minify="1" async data-type="kppassive" data-kpscriptsrc="https://scanreader.net/wp-content/plugins/wp-rocket/assets/js/lazyload/17.8.3/lazyload.min.js"></script><script>function lazyLoadThumb(e){var t='<img data-lazy-src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"><noscript><img src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"></noscript>',a='<button class="play" aria-label="play Youtube video"></button>';return t.replace("ID",e)+a}function lazyLoadYoutubeIframe(){var e=document.createElement("iframe"),t="ID?autoplay=1";t+=0===this.parentNode.dataset.query.length?'':'&'+this.parentNode.dataset.query;e.setAttribute("src",t.replace("ID",this.parentNode.dataset.src)),e.setAttribute("frameborder","0"),e.setAttribute("allowfullscreen","1"),e.setAttribute("allow", "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"),this.parentNode.parentNode.replaceChild(e,this.parentNode)}document.addEventListener("DOMContentLoaded",function(){var e,t,p,a=document.getElementsByClassName("rll-youtube-player");for(t=0;t<a.length;t++)e=document.createElement("div"),e.setAttribute("data-id",a[t].dataset.id),e.setAttribute("data-query", a[t].dataset.query),e.setAttribute("data-src", a[t].dataset.src),e.innerHTML=lazyLoadThumb(a[t].dataset.id),a[t].appendChild(e),p=e.querySelector('.play'),p.onclick=lazyLoadYoutubeIframe});</script><footer style="text-align:center; padding:30px 0; background:#1a1a1a; color:#f2f2f2; font-size:14px;">
+
+  <!-- Liens légaux -->
+  <div style="margin-bottom: 20px;">
+    <a href="https://scanreader.net/accueil" style="color: #bbb; text-decoration: none; margin: 0 20px; transition: color 0.3s ease;">Accueil</a>
+    <a href="https://scanreader.net/a-propos-2" style="color: #bbb; text-decoration: none; margin: 0 20px; transition: color 0.3s ease;">À propos</a>
+    <a href="https://scanreader.net/pages-legales" style="color: #bbb; text-decoration: none; margin: 0 20px; transition: color 0.3s ease;">Pages Légales</a>
+  </div>
+
+  <!-- Section Discord -->
+  <div style="margin-bottom: 20px;">
+    <a rel="nofollow" href="https://discord.gg/DgdnnpfXwA"
+       target="_blank"
+       style="color: #7289da; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+      <i class="fab fa-discord" style="margin-right: 8px;"></i>
+      Rejoindre notre Discord
+    </a>
+  </div>
+
+  <!-- Copyright -->
+  <p>&copy; 2026 Scan Reader</p>
+
+  <!-- CSS pour les effets hover -->
+  <style>
+    footer a:hover {
+      color: #ffc107 !important;
+      text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+    }
+
+    /* Style spécial pour Discord */
+    footer a[href*="discord"]:hover {
+      color: #5865f2 !important;
+      text-shadow: 0 0 8px rgba(88, 101, 242, 0.5);
+    }
+
+    /* Responsive pour mobile */
+    @media (max-width: 768px) {
+      footer div {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+      }
+
+      footer a {
+        margin: 0 !important;
+      }
+    }
+  </style>
+</footer>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9eed8388781cdadb',t:'MTc3NjYxODUzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+<script type="rocketlazyloadscript">
+// Utilise jQuery inclus par WordPress
+jQuery(document).ready(function($) {
+    console.log('--- HEADER SCRIPT (Event Delegation) ---');
+    const $body = $('body');
+
+    // --- Gestion des Dropdowns (Publier, Profil) ---
+    $(document).on('click', function(event) {
+        const $target = $(event.target);
+        const $clickedDropdownContainer = $target.closest('.dropdown-container');
+
+        // Si on clique sur un bouton dropdown
+        if ($target.closest('.dropdown-toggle').length) {
+            event.preventDefault(); // Empêche l'action par défaut si c'est un lien
+            event.stopPropagation(); // Arrête la propagation pour ne pas fermer tout de suite
+            // console.log('Dropdown Toggle Clicked:', $clickedDropdownContainer.attr('id'));
+
+            // Ferme les autres dropdowns
+            $('.dropdown-container.open').not($clickedDropdownContainer).removeClass('open');
+
+            // Ouvre/ferme le dropdown cliqué
+            $clickedDropdownContainer.toggleClass('open');
+            // console.log($clickedDropdownContainer.attr('id'), 'is open:', $clickedDropdownContainer.hasClass('open'));
+        }
+        // Si on clique en dehors d'un dropdown ouvert
+        else if (!$clickedDropdownContainer.length && $('.dropdown-container.open').length > 0) {
+            // console.log('Clicked outside dropdown, closing all.');
+            $('.dropdown-container.open').removeClass('open');
+        }
+    });
+
+    // --- Gestion du Menu Mobile ---
+    // Ouvre le menu
+    $(document).on('click', '#mobileToggle', function() {
+        // console.log('Mobile Toggle Clicked');
+        $body.addClass('mobile-menu-active');
+    });
+
+    // Fonction pour fermer
+    function closeMobileMenu() {
+        if ($body.hasClass('mobile-menu-active')) {
+            // console.log('Closing mobile menu');
+            $body.removeClass('mobile-menu-active');
+        }
+    }
+
+    // Ferme avec le bouton X ou l'overlay
+    $(document).on('click', '#mobileMenuClose, #mobileMenuOverlay', closeMobileMenu);
+
+    // --- Sous-menu Communauté Desktop ---
+    // (Cette partie reste principalement CSS avec :hover, mais on peut garder la prévention du clic)
+    const $communityMenuItem = $('.main-menu #menu-item-70');
+    if ($communityMenuItem.length) {
+        const $communityMainLink = $communityMenuItem.children('a').first();
+        if ($communityMainLink.length) {
+            $communityMainLink.on('click', function(e) {
+                if ($(window).width() > 1100) { // Seuil CSS
+                    e.preventDefault();
+                }
+            });
+        }
+    }
+
+}); // Fin jQuery ready
+</script>
+<!-- Performance optimized by Redis Object Cache. Learn more: https://wprediscache.com -->
+<!-- This website is like a Rocket, isn't it? Performance optimized by WP Rocket. Learn more: https://wp-rocket.me - Debug: cached@1776616166 -->
