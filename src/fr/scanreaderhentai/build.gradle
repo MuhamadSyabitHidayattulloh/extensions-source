@@ -1,0 +1,10 @@
+ext {
+    extName = 'Scan Reader Hentai'
+    extClass = '.ScanReaderHentai'
+    themePkg = 'scanreader'
+    baseUrl = 'https://hentai.scanreader.net'
+    overrideVersionCode = 0
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
