@@ -27,13 +27,7 @@ abstract class ScanReader(
 
     override val supportsLatest = true
 
-    // ===
-    // ====
-    // =====
     // Popular
-    // =====
-    // ====
-    // ===
     override fun popularMangaRequest(page: Int): Request {
         val url = "$baseUrl/bibliotheque/".toHttpUrl().newBuilder().apply {
             if (page > 1) {
@@ -59,7 +53,7 @@ abstract class ScanReader(
             SManga.create().apply {
                 val anchor = element.selectFirst(mangaAnchorSelector)!!
                 setUrlWithoutDomain(anchor.absUrl("href"))
-                title = anchor.selectFirst(mangaTitleSelector)!!.text()
+                title = element.selectFirst(mangaTitleSelector)!!.text()
                 thumbnail_url = element.selectFirst("img")?.let {
                     it.absUrl("data-lazy-src").ifEmpty { it.absUrl("src") }
                 }
@@ -69,13 +63,7 @@ abstract class ScanReader(
         return MangasPage(mangas, hasNextPage)
     }
 
-    // ===
-    // ====
-    // =====
     // Latest
-    // =====
-    // ====
-    // ===
     override fun latestUpdatesRequest(page: Int): Request {
         val url = "$baseUrl/bibliotheque/".toHttpUrl().newBuilder().apply {
             if (page > 1) {
@@ -89,13 +77,7 @@ abstract class ScanReader(
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
-    // ===
-    // ====
-    // =====
     // Search
-    // =====
-    // ====
-    // ===
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrl.toHttpUrl().newBuilder().apply {
             addPathSegment("bibliotheque")
