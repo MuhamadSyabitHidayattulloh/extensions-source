@@ -21,6 +21,7 @@ import keiyoushi.utils.firstInstanceOrNull
 import keiyoushi.utils.getPreferencesLazy
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
@@ -53,216 +54,6 @@ class DoujinDesu :
         else -> SManga.UNKNOWN
     }
 
-    private class Category(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class Genre(name: String, val id: String = name) : Filter.CheckBox(name) {
-        override fun toString(): String = id
-    }
-
-    private class Order(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private class Status(title: String, val key: String) : Filter.TriState(title) {
-        override fun toString(): String = name
-    }
-
-    private val orderBy = arrayOf(
-        Order("Semua", ""),
-        Order("A-Z", "title"),
-        Order("Update Terbaru", "update"),
-        Order("Baru Ditambahkan", "latest"),
-        Order("Populer", "popular"),
-    )
-
-    private val statusList = arrayOf(
-        Status("Semua", ""),
-        Status("Berlanjut", "Publishing"),
-        Status("Selesai", "Finished"),
-    )
-
-    private val categoryNames = arrayOf(
-        Category("Semua", ""),
-        Category("Doujinshi", "Doujinshi"),
-        Category("Manga", "Manga"),
-        Category("Manhwa", "Manhwa"),
-    )
-
-    private fun genreList() = listOf(
-        Genre("Age Progression"),
-        Genre("Age Regression"),
-        Genre("Ahegao"),
-        Genre("All The Way Through"),
-        Genre("Amputee"),
-        Genre("Anal"),
-        Genre("Anorexia"),
-        Genre("Apron"),
-        Genre("Artist CG"),
-        Genre("Aunt"),
-        Genre("Bald"),
-        Genre("Bestiality"),
-        Genre("Big Ass"),
-        Genre("Big Breast"),
-        Genre("Big Penis"),
-        Genre("Bike Shorts"),
-        Genre("Bikini"),
-        Genre("Birth"),
-        Genre("Bisexual"),
-        Genre("Blackmail"),
-        Genre("Blindfold"),
-        Genre("Bloomers"),
-        Genre("Blowjob"),
-        Genre("Body Swap"),
-        Genre("Bodysuit"),
-        Genre("Bondage"),
-        Genre("Bowjob"),
-        Genre("Business Suit"),
-        Genre("Cheating"),
-        Genre("Collar"),
-        Genre("Collor"),
-        Genre("Condom"),
-        Genre("Cousin"),
-        Genre("Crossdressing"),
-        Genre("Cunnilingus"),
-        Genre("Dark Skin"),
-        Genre("Daughter"),
-        Genre("Defloration"),
-        Genre("Demon"),
-        Genre("Demon Girl"),
-        Genre("Dick Growth"),
-        Genre("DILF"),
-        Genre("Double Penetration"),
-        Genre("Drugs"),
-        Genre("Drunk"),
-        Genre("Elf"),
-        Genre("Emotionless Sex"),
-        Genre("Exhibitionism"),
-        Genre("Eyepatch"),
-        Genre("Females Only"),
-        Genre("Femdom"),
-        Genre("Filming"),
-        Genre("Fingering"),
-        Genre("Footjob"),
-        Genre("Full Color"),
-        Genre("Furry"),
-        Genre("Futanari"),
-        Genre("Garter Belt"),
-        Genre("Gender Bender"),
-        Genre("Ghost"),
-        Genre("Glasses"),
-        Genre("Gore"),
-        Genre("Group"),
-        Genre("Guro"),
-        Genre("Gyaru"),
-        Genre("Hairy"),
-        Genre("Handjob"),
-        Genre("Harem"),
-        Genre("Horns"),
-        Genre("Huge Breast"),
-        Genre("Huge Penis"),
-        Genre("Humiliation"),
-        Genre("Impregnation"),
-        Genre("Incest"),
-        Genre("Inflation"),
-        Genre("Insect"),
-        Genre("Inseki"),
-        Genre("Inverted Nipples"),
-        Genre("Invisible"),
-        Genre("Kemomimi"),
-        Genre("Kimono"),
-        Genre("Lactation"),
-        Genre("Leotard"),
-        Genre("Lingerie"),
-        Genre("Loli"),
-        Genre("Lolipai"),
-        Genre("Maid"),
-        Genre("Males"),
-        Genre("Males Only"),
-        Genre("Masturbation"),
-        Genre("Miko"),
-        Genre("MILF"),
-        Genre("Mind Break"),
-        Genre("Mind Control"),
-        Genre("Minigirl"),
-        Genre("Miniguy"),
-        Genre("Monster"),
-        Genre("Monster Girl"),
-        Genre("Mother"),
-        Genre("Multi-work Series"),
-        Genre("Muscle"),
-        Genre("Nakadashi"),
-        Genre("Necrophilia"),
-        Genre("Netorare"),
-        Genre("Niece"),
-        Genre("Nipple Fuck"),
-        Genre("Nurse"),
-        Genre("Old Man"),
-        Genre("Only"),
-        Genre("Oyakodon"),
-        Genre("Paizuri"),
-        Genre("Pantyhose"),
-        Genre("Possession"),
-        Genre("Pregnant"),
-        Genre("Prostitution"),
-        Genre("Rape"),
-        Genre("Rimjob"),
-        Genre("Scat"),
-        Genre("School Uniform"),
-        Genre("Sex Toys"),
-        Genre("Shemale"),
-        Genre("Shota"),
-        Genre("Sister"),
-        Genre("Sleeping"),
-        Genre("Slime"),
-        Genre("Small Breast"),
-        Genre("Snuff"),
-        Genre("Sole Female"),
-        Genre("Sole Male"),
-        Genre("Stocking"),
-        Genre("Story Arc"),
-        Genre("Sumata"),
-        Genre("Sweating"),
-        Genre("Swimsuit"),
-        Genre("Tanlines"),
-        Genre("Teacher"),
-        Genre("Tentacles"),
-        Genre("Tomboy"),
-        Genre("Tomgirl"),
-        Genre("Torture"),
-        Genre("Twins"),
-        Genre("Twintails"),
-        Genre("Uncensored"),
-        Genre("Unusual Pupils"),
-        Genre("Virginity"),
-        Genre("Webtoon"),
-        Genre("Widow"),
-        Genre("X-Ray"),
-        Genre("Yandere"),
-        Genre("Yaoi"),
-        Genre("Yuri"),
-    )
-
-    private class AuthorGroupSeriesOption(val display: String, val key: String) {
-        override fun toString(): String = display
-    }
-
-    private val authorGroupSeriesOptions = arrayOf(
-        AuthorGroupSeriesOption("None", ""),
-        AuthorGroupSeriesOption("Author", "author"),
-        AuthorGroupSeriesOption("Group", "group"),
-        AuthorGroupSeriesOption("Series", "series"),
-    )
-
-    private class AuthorGroupSeriesFilter(options: Array<AuthorGroupSeriesOption>) : Filter.Select<AuthorGroupSeriesOption>("Filter by Author/Group/Series", options, 0)
-    private class AuthorGroupSeriesValueFilter : Filter.Text("Nama Author/Group/Series")
-    private class CharacterFilter : Filter.Text("Karakter")
-    private class CategoryNames(categories: Array<Category>) : Filter.Select<Category>("Kategori", categories, 0)
-    private class OrderBy(orders: Array<Order>) : Filter.Select<Order>("Urutkan", orders, 0)
-    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
-    private class StatusList(statuses: Array<Status>) : Filter.Select<Status>("Status", statuses, 0)
-
     private fun basicInformationFromElement(element: Element): SManga {
         val manga = SManga.create()
         element.select("a").let {
@@ -292,19 +83,13 @@ class DoujinDesu :
 
     override fun popularMangaFromElement(element: Element): SManga = basicInformationFromElement(element)
 
-    override fun popularMangaRequest(page: Int): Request {
-        // Original url $baseUrl/manga/page/$page/?title=&author=&character=&statusx=&typex=&order=popular
-        return GET("$baseUrl/manhwa/page/$page/", headers)
-    }
+    override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/manga/page/$page/?order=popular", headers)
 
     // Latest
 
     override fun latestUpdatesFromElement(element: Element): SManga = basicInformationFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        // Original url $baseUrl/manga/page/$page/?title=&author=&character=&statusx=&typex=&order=update
-        return GET("$baseUrl/doujin/page/$page/", headers)
-    }
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga/page/$page/?order=update", headers)
 
     // Element Selectors
 
@@ -312,21 +97,51 @@ class DoujinDesu :
     override fun latestUpdatesSelector() = popularMangaSelector()
     override fun searchMangaSelector() = popularMangaSelector()
 
-    override fun popularMangaNextPageSelector(): String = "nav.pagination > ul > li.last > a"
+    override fun popularMangaNextPageSelector(): String = "nav.pagination a.next, nav.pagination li.active + li a, nav.pagination li.current + li a"
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
     // Search & FIlter
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        // Anything else filter handling
-        val baseUrlWithPage = if (page == 1) "$baseUrl/" else "$baseUrl/page/$page/"
+        val agsFilter = filters.firstInstanceOrNull<AuthorGroupSeriesFilter>()
+        val agsValueFilter = filters.firstInstanceOrNull<AuthorGroupSeriesValueFilter>()
+        val selectedOption = agsFilter?.values?.getOrNull(agsFilter.state)
+        val filterValue = agsValueFilter?.state?.trim() ?: ""
 
-        val finalUrl = if (query.isNotBlank()) "$baseUrlWithPage?s=${query.replace(" ", "+")}" else baseUrlWithPage
+        // Author/Group/Series filter handling (Taxonomy browsing)
+        if (query.isBlank() && selectedOption != null && selectedOption.key.isNotBlank()) {
+            val typePath = selectedOption.key
+            val url = if (filterValue.isBlank()) {
+                if (page == 1) "$baseUrl/$typePath/" else "$baseUrl/$typePath/page/$page/"
+            } else {
+                if (page == 1) "$baseUrl/$typePath/$filterValue/" else "$baseUrl/$typePath/$filterValue/page/$page/"
+            }
+            return GET(url, headers)
+        }
 
-        /* Will be used later if DoujinDesu aleardy fix their problem
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+        // Global search & filter handling
+        val url = "$baseUrl/manga/page/$page/".toHttpUrl().newBuilder()
+        if (query.isNotBlank()) {
+            url.addQueryParameter("title", query)
+        }
+
+        filters.forEach { filter ->
             when (filter) {
+                is AuthorFilter -> {
+                    if (filter.state.isNotBlank()) {
+                        url.addQueryParameter("author", filter.state)
+                    }
+                }
+                is CharacterFilter -> {
+                    if (filter.state.isNotBlank()) {
+                        url.addQueryParameter("character", filter.state)
+                    }
+                }
+                is StatusList -> {
+                    val status = filter.values[filter.state]
+                    url.addQueryParameter("statusx", status.key)
+                }
                 is CategoryNames -> {
                     val category = filter.values[filter.state]
                     url.addQueryParameter("typex", category.key)
@@ -335,9 +150,6 @@ class DoujinDesu :
                     val order = filter.values[filter.state]
                     url.addQueryParameter("order", order.key)
                 }
-                is CharacterFilter -> {
-                    url.addQueryParameter("character", filter.state)
-                }
                 is GenreList -> {
                     filter.state
                         .filter { it.state }
@@ -345,60 +157,27 @@ class DoujinDesu :
                             url.addQueryParameter("genre[]", genre.id)
                         }
                 }
-                is StatusList -> {
-                    val status = filter.values[filter.state]
-                    url.addQueryParameter("statusx", status.key)
-                }
                 else -> {}
             }
         }
-         */
 
-        val agsFilter = filters.firstInstanceOrNull<AuthorGroupSeriesFilter>()
-        val agsValueFilter = filters.firstInstanceOrNull<AuthorGroupSeriesValueFilter>()
-        val selectedOption = agsFilter?.values?.getOrNull(agsFilter.state)
-        val filterValue = agsValueFilter?.state?.trim() ?: ""
-
-        // Author/Group/Series filter handling
-        if (query.isBlank() && selectedOption != null && selectedOption.key.isNotBlank()) {
-            val typePath = selectedOption.key
-            val request = if (filterValue.isBlank()) {
-                val url = if (page == 1) {
-                    "$baseUrl/$typePath/"
-                } else {
-                    "$baseUrl/$typePath/page/$page/"
-                }
-                GET(url, headers)
-            } else {
-                val url = if (page == 1) {
-                    "$baseUrl/$typePath/$filterValue/"
-                } else {
-                    "$baseUrl/$typePath/$filterValue/page/$page/"
-                }
-                GET(url, headers)
-            }
-            return request
-        }
-        return GET(finalUrl, headers)
+        return GET(url.build(), headers)
     }
 
     override fun searchMangaFromElement(element: Element): SManga = basicInformationFromElement(element)
 
     override fun getFilterList() = FilterList(
-        Filter.Header("NB: Fitur Emergency, jadi maklumi aja jika ada bug!"),
-        Filter.Separator(),
-        Filter.Header("NB: Tidak bisa digabungkan dengan memakai pencarian teks dan filter lainnya, serta harus memasukkan nama Author, Group dan Series secara lengkap!"),
-        AuthorGroupSeriesFilter(authorGroupSeriesOptions),
-        AuthorGroupSeriesValueFilter(),
-        Filter.Separator(),
-        /* Will be used later if DoujinDesu aleardy fix their problem
-        Filter.Header("NB: Untuk Character Filter akan mengambil hasil apapun jika diinput, misal 'alice', maka hasil akan memunculkan semua Karakter yang memiliki nama 'Alice', bisa digabungkan dengan filter lainnya"),
+        Filter.Header("Filter ini bisa digunakan bersamaan dengan pencarian teks"),
+        AuthorFilter(),
         CharacterFilter(),
         StatusList(statusList),
         CategoryNames(categoryNames),
         OrderBy(orderBy),
         GenreList(genreList()),
-         */
+        Filter.Separator(),
+        Filter.Header("NB: Filter dibawah ini tidak bisa digabungkan dengan pencarian teks/filter diatas, serta harus memasukkan nama secara lengkap!"),
+        AuthorGroupSeriesFilter(authorGroupSeriesOptions),
+        AuthorGroupSeriesValueFilter(),
     )
 
     // Detail Parse
@@ -422,7 +201,7 @@ class DoujinDesu :
             infoElement.select("td:contains(Group) ~ td").joinToString { it.text() }
         }
         val authorParser = if (authorName.isNullOrEmpty()) {
-            groupName?.takeIf { !it.isNullOrEmpty() && it != "Tidak Diketahui" }
+            groupName.takeIf { it != "Tidak Diketahui" }
         } else {
             authorName
         }
