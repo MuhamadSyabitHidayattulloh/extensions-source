@@ -59,7 +59,7 @@ class Reimanga :
     private val preferences by getPreferencesLazy()
 
     override fun headersBuilder() = super.headersBuilder()
-        .set("Referer", "$baseUrl/")
+        .set("Referer", baseUrl)
 
     private val rscHeaders = headersBuilder()
         .set("rsc", "1")
@@ -286,6 +286,9 @@ class Reimanga :
 
     private val spaceRegex = Regex("""\s+""")
 
+    private val bloggerParamRegex = Regex("""=[swh]\d+[^/?]*($|\?)""", RegexOption.IGNORE_CASE)
+    private val bloggerPathRegex = Regex("""/[swh]\d+[^/]*/""", RegexOption.IGNORE_CASE)
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -298,7 +301,14 @@ class Reimanga :
         val data = response.extractNextJs<Images>()
 
         return data?.images.orEmpty().mapIndexed { index, image ->
-            Page(index, imageUrl = image.url)
+            var url = image.url
+
+            if (url.contains("googleusercontent.com") || url.contains("bp.blogspot.com")) {
+                url = url.replace(bloggerParamRegex, "=s0$1")
+                    .replace(bloggerPathRegex, "/s0/")
+            }
+
+            Page(index, imageUrl = url)
         }
     }
 
