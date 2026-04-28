@@ -59,7 +59,8 @@ class Reimanga :
     private val preferences by getPreferencesLazy()
 
     override fun headersBuilder() = super.headersBuilder()
-        .set("Referer", baseUrl)
+        .set("Origin", baseUrl)
+        .set("Referer", "$baseUrl/")
 
     private val rscHeaders = headersBuilder()
         .set("rsc", "1")
@@ -286,29 +287,23 @@ class Reimanga :
 
     private val spaceRegex = Regex("""\s+""")
 
-    private val bloggerParamRegex = Regex("""=[swh]\d+[^/?]*($|\?)""", RegexOption.IGNORE_CASE)
-    private val bloggerPathRegex = Regex("""/[swh]\d+[^/]*/""", RegexOption.IGNORE_CASE)
-
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
-    override fun pageListRequest(chapter: SChapter): Request = GET(getChapterUrl(chapter), rscHeaders)
+    override fun pageListRequest(chapter: SChapter): Request {
+        val chapterId = chapter.url.substringAfterLast("/")
+
+        return GET("$baseUrl/api/chapters/$chapterId/images", headers)
+    }
 
     override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/manga/${chapter.url}"
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.extractNextJs<Images>()
+        val data = response.parseAs<Images>()
 
-        return data?.images.orEmpty().mapIndexed { index, image ->
-            var url = image.url
-
-            if (url.contains("googleusercontent.com") || url.contains("bp.blogspot.com")) {
-                url = url.replace(bloggerParamRegex, "=s0$1")
-                    .replace(bloggerPathRegex, "/s0/")
-            }
-
-            Page(index, imageUrl = url)
+        return data.images.mapIndexed { index, image ->
+            Page(index, imageUrl = image.url)
         }
     }
 
