@@ -43,8 +43,9 @@ class AstralScans : MangaThemesia("Astral Scans", "https://astralscans.top", "id
 
                     val document = Jsoup.parse(rawHtml)
                     val chapters = document.select("[$dynamicDataAttr]").mapNotNull { element ->
-                        val isTrap = element.hasClass("trap_6afab") ||
-                            element.closest(".trap_6afab") != null
+                        val isTrap = element.hasClass("trap") ||
+                            element.attr("class").contains("trap") ||
+                            element.closest("[class*=trap]") != null
 
                         if (isTrap) {
                             return@mapNotNull null
@@ -55,8 +56,8 @@ class AstralScans : MangaThemesia("Astral Scans", "https://astralscans.top", "id
                             val chapterUrl = String(Base64.decode(encodedUrl, Base64.DEFAULT), Charsets.UTF_8)
                             setUrlWithoutDomain(chapterUrl)
 
-                            name = element.selectFirst(".n_4b4512")?.text() ?: "Chapter"
-                            date_upload = element.selectFirst(".d_21c0e2")?.text()?.parseChapterDate() ?: 0L
+                            name = element.selectFirst("span[class^=n_]")?.text() ?: "Chapter"
+                            date_upload = element.selectFirst("span[class^=d_]")?.text()?.parseChapterDate() ?: 0L
                         }
                     }
 
