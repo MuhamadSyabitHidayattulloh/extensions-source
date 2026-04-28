@@ -59,6 +59,7 @@ class Reimanga :
     private val preferences by getPreferencesLazy()
 
     override fun headersBuilder() = super.headersBuilder()
+        .set("Origin", baseUrl)
         .set("Referer", "$baseUrl/")
 
     private val rscHeaders = headersBuilder()
