@@ -25,9 +25,12 @@ class MGKomik :
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
+        add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+        add("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
         add("Sec-Fetch-Dest", "document")
         add("Sec-Fetch-Mode", "navigate")
         add("Sec-Fetch-Site", "same-origin")
+        add("Sec-Fetch-User", "?1")
         add("Upgrade-Insecure-Requests", "1")
         add("X-Requested-With", randomString((1..20).random())) // added for webview, and removed in interceptor for normal use
     }
