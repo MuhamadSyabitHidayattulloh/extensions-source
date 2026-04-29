@@ -59,10 +59,10 @@ class Reimanga :
     private val preferences by getPreferencesLazy()
 
     override fun headersBuilder() = super.headersBuilder()
-        .set("Origin", baseUrl)
         .set("Referer", "$baseUrl/")
 
     private val rscHeaders = headersBuilder()
+        .set("Origin", baseUrl)
         .set("rsc", "1")
         .build()
 
@@ -291,20 +291,28 @@ class Reimanga :
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
-    override fun pageListRequest(chapter: SChapter): Request {
-        val chapterId = chapter.url.substringAfterLast("/")
-
-        return GET("$baseUrl/api/chapters/$chapterId/images", headers)
-    }
+    override fun pageListRequest(chapter: SChapter): Request = GET(getChapterUrl(chapter), rscHeaders)
 
     override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/manga/${chapter.url}"
 
     override fun pageListParse(response: Response): List<Page> {
-        val data = response.parseAs<Images>()
+        val data = response.extractNextJs<Images>()
+        val chapterUrl = response.request.url.toString().substringBefore("?")
 
-        return data.images.mapIndexed { index, image ->
-            Page(index, imageUrl = image.url)
+        return data?.images.orEmpty().mapIndexed { index, image ->
+            Page(index, chapterUrl, image.url)
         }
+    }
+
+    override fun imageRequest(page: Page): Request {
+        val imageHeaders = headersBuilder().apply {
+            add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+            if (page.url.isNotEmpty()) {
+                set("Referer", page.url)
+            }
+        }.build()
+
+        return GET(page.imageUrl!!, imageHeaders)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
