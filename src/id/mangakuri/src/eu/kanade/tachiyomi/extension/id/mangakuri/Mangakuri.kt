@@ -17,11 +17,13 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
+private const val DOMAIN = "mangakuri.online"
+
 class Mangakuri : HttpSource() {
 
     override val name = "Mangakuri"
 
-    override val baseUrl = "https://lc1.mangakuri.online"
+    override val baseUrl = "https://lc1.$DOMAIN"
 
     override val lang = "id"
 
@@ -31,7 +33,7 @@ class Mangakuri : HttpSource() {
 
     override val versionId = 2
 
-    private val apiUrl = "https://api.mangakuri.online/api"
+    private val apiUrl = "https://api.$DOMAIN/api"
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
