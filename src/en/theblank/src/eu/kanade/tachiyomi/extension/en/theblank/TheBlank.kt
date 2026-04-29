@@ -347,7 +347,9 @@ class TheBlank :
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val signedUrls = response.parseAs<PageListResponse>().props.signedUrls
+        val props = response.parseAs<PageListResponse>().props
+        val signedUrls = props.signedUrls ?: props.chapter?.signedUrls
+            ?: throw IOException("Field 'signed_urls' was missing in both 'props' and 'props.chapter'")
 
         val keyPair = generateKeyPair()
         val sid = decodeUrlSafeBase64(

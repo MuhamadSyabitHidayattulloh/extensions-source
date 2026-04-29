@@ -95,8 +95,15 @@ class PageListResponse(
     @Serializable
     class Props(
         @SerialName("signed_urls")
-        val signedUrls: List<String>,
-    )
+        val signedUrls: List<String>? = null,
+        val chapter: Chapter? = null,
+    ) {
+        @Serializable
+        class Chapter(
+            @SerialName("signed_urls")
+            val signedUrls: List<String>? = null,
+        )
+    }
 }
 
 class KeyPairResult(val keyPair: KeyPair, val publicKeyBase64: String)
