@@ -23,7 +23,12 @@ import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.toJsonString
 import keiyoushi.utils.tryParse
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -348,8 +353,8 @@ class TheBlank :
 
     override fun pageListParse(response: Response): List<Page> {
         val props = response.parseAs<PageListResponse>().props
-        val signedUrls = props.signedUrls ?: props.chapter?.signedUrls
-            ?: throw IOException("Field 'signed_urls' was missing in both 'props' and 'props.chapter'")
+        val signedUrls = props.findSignedUrls()
+            ?: throw IOException("Field 'signed_urls' was missing in 'props'. Keys found: ${props.keys}")
 
         val keyPair = generateKeyPair()
         val sid = decodeUrlSafeBase64(
@@ -433,6 +438,20 @@ class TheBlank :
         val decryptedBytes = cipher.doFinal(encryptedData)
 
         return String(decryptedBytes, StandardCharsets.UTF_8)
+    }
+
+    private fun JsonElement.findSignedUrls(): List<String>? {
+        if (this is JsonObject) {
+            this["signed_urls"]?.jsonArray?.let { return it.map { it.jsonPrimitive.content } }
+            for (value in this.values) {
+                value.findSignedUrls()?.let { return it }
+            }
+        } else if (this is JsonArray) {
+            for (item in this) {
+                item.findSignedUrls()?.let { return it }
+            }
+        }
+        return null
     }
 
     private fun decodeUrlSafeBase64(data: String): ByteArray {

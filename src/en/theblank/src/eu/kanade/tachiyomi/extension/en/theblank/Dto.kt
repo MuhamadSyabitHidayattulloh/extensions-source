@@ -90,21 +90,8 @@ class MangaResponse(
 
 @Serializable
 class PageListResponse(
-    val props: Props,
-) {
-    @Serializable
-    class Props(
-        @SerialName("signed_urls")
-        val signedUrls: List<String>? = null,
-        val chapter: Chapter? = null,
-    ) {
-        @Serializable
-        class Chapter(
-            @SerialName("signed_urls")
-            val signedUrls: List<String>? = null,
-        )
-    }
-}
+    val props: kotlinx.serialization.json.JsonObject,
+)
 
 class KeyPairResult(val keyPair: KeyPair, val publicKeyBase64: String)
 
