@@ -28,24 +28,24 @@ abstract class OceanWP(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.select(popularMangaSelector).map { element ->
+        val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
         val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open val popularMangaSelector = SELECTOR_POPULAR_MANGA
+    protected open fun popularMangaSelector() = SELECTOR_POPULAR_MANGA
 
     protected open fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst(popularMangaTitleSelector)!!
+        val link = element.selectFirst(popularMangaTitleSelector())!!
         title = link.text()
         setUrlWithoutDomain(link.absUrl("href"))
-        thumbnail_url = element.selectFirst(popularMangaThumbnailSelector)?.absUrl("src")
+        thumbnail_url = element.selectFirst(popularMangaThumbnailSelector())?.absUrl("src")
     }
 
-    protected open val popularMangaTitleSelector = SELECTOR_POPULAR_MANGA_TITLE
-    protected open val popularMangaThumbnailSelector = SELECTOR_POPULAR_MANGA_THUMBNAIL
+    protected open fun popularMangaTitleSelector() = SELECTOR_POPULAR_MANGA_TITLE
+    protected open fun popularMangaThumbnailSelector() = SELECTOR_POPULAR_MANGA_THUMBNAIL
 
     protected open fun popularMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
@@ -81,24 +81,24 @@ abstract class OceanWP(
 
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.select(searchMangaSelector).map { element ->
+        val mangas = document.select(searchMangaSelector()).map { element ->
             searchMangaFromElement(element)
         }
         val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open val searchMangaSelector = SELECTOR_SEARCH_MANGA
+    protected open fun searchMangaSelector() = SELECTOR_SEARCH_MANGA
 
     protected open fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst(searchMangaTitleSelector)!!
+        val link = element.selectFirst(searchMangaTitleSelector())!!
         title = link.text()
         setUrlWithoutDomain(link.absUrl("href"))
-        thumbnail_url = element.selectFirst(searchMangaThumbnailSelector)?.absUrl("src")
+        thumbnail_url = element.selectFirst(searchMangaThumbnailSelector())?.absUrl("src")
     }
 
-    protected open val searchMangaTitleSelector = SELECTOR_SEARCH_MANGA_TITLE
-    protected open val searchMangaThumbnailSelector = SELECTOR_SEARCH_MANGA_THUMBNAIL
+    protected open fun searchMangaTitleSelector() = SELECTOR_SEARCH_MANGA_TITLE
+    protected open fun searchMangaThumbnailSelector() = SELECTOR_SEARCH_MANGA_THUMBNAIL
 
     protected open fun searchMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
@@ -106,44 +106,40 @@ abstract class OceanWP(
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
-            val content = document.selectFirst(mangaDetailsContentSelector) ?: document
-            title = content.selectFirst(mangaDetailsTitleSelector)!!.text()
-            description = content.selectFirst(mangaDetailsDescriptionSelector)?.text()
-            genre = content.select(mangaDetailsGenreSelector).joinToString { it.text() }
-            thumbnail_url = content.selectFirst(mangaDetailsThumbnailSelector)?.absUrl("src")
+            val content = document.selectFirst(mangaDetailsContentSelector()) ?: document
+            title = content.selectFirst(mangaDetailsTitleSelector())!!.text()
+            description = content.selectFirst(mangaDetailsDescriptionSelector())?.text()
+            genre = content.select(mangaDetailsGenreSelector()).joinToString { it.text() }
+            thumbnail_url = content.selectFirst(mangaDetailsThumbnailSelector())?.absUrl("src")
             update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
             status = SManga.COMPLETED
         }
     }
 
-    protected open val mangaDetailsContentSelector = SELECTOR_MANGA_DETAILS_CONTENT
-    protected open val mangaDetailsTitleSelector = SELECTOR_MANGA_DETAILS_TITLE
-    protected open val mangaDetailsDescriptionSelector = SELECTOR_MANGA_DETAILS_DESCRIPTION
-    protected open val mangaDetailsGenreSelector = SELECTOR_MANGA_DETAILS_GENRE
-    protected open val mangaDetailsThumbnailSelector = SELECTOR_MANGA_DETAILS_THUMBNAIL
+    protected open fun mangaDetailsContentSelector() = SELECTOR_MANGA_DETAILS_CONTENT
+    protected open fun mangaDetailsTitleSelector() = SELECTOR_MANGA_DETAILS_TITLE
+    protected open fun mangaDetailsDescriptionSelector() = SELECTOR_MANGA_DETAILS_DESCRIPTION
+    protected open fun mangaDetailsGenreSelector() = SELECTOR_MANGA_DETAILS_GENRE
+    protected open fun mangaDetailsThumbnailSelector() = SELECTOR_MANGA_DETAILS_THUMBNAIL
 
     // Chapters
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val document = response.asJsoup()
-        val mangaTitle = document.selectFirst(mangaDetailsTitleSelector)?.text() ?: "Chapter 1"
-        return listOf(
-            SChapter.create().apply {
-                name = mangaTitle
-                setUrlWithoutDomain(response.request.url.toString())
-            },
-        )
-    }
+    override fun chapterListParse(response: Response): List<SChapter> = listOf(
+        SChapter.create().apply {
+            name = "Chapter 1"
+            setUrlWithoutDomain(response.request.url.toString())
+        },
+    )
 
     // Pages
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        return document.select(pageListSelector).mapIndexed { i, img ->
+        return document.select(pageListSelector()).mapIndexed { i, img ->
             val url = img.absUrl("src")
             Page(i, document.location(), url)
         }
     }
 
-    protected open val pageListSelector = SELECTOR_PAGE_LIST
+    protected open fun pageListSelector() = SELECTOR_PAGE_LIST
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
@@ -180,7 +176,7 @@ abstract class OceanWP(
         if (categoryList != null) return categoryList!!
         return runCatching {
             val document = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
-            val list = listOf(Pair("Default", "")) + document.select(categorySelector).map {
+            val list = listOf(Pair("Default", "")) + document.select(categorySelector()).map {
                 Pair(it.text(), it.absUrl("href"))
             }
             if (list.size > 1) categoryList = list
@@ -192,7 +188,7 @@ abstract class OceanWP(
         if (tagList != null) return tagList!!
         return runCatching {
             val document = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
-            val list = listOf(Pair("Default", "")) + document.select(tagSelector).map {
+            val list = listOf(Pair("Default", "")) + document.select(tagSelector()).map {
                 Pair(it.text(), it.absUrl("href"))
             }
             if (list.size > 1) tagList = list
@@ -200,8 +196,8 @@ abstract class OceanWP(
         }.getOrDefault(emptyList())
     }
 
-    protected open val categorySelector = SELECTOR_CATEGORY
-    protected open val tagSelector = SELECTOR_TAG
+    protected open fun categorySelector() = SELECTOR_CATEGORY
+    protected open fun tagSelector() = SELECTOR_TAG
 
     companion object {
         const val SELECTOR_POPULAR_MANGA = "article.blog-entry"
