@@ -60,7 +60,10 @@ class Mangakuri : HttpSource() {
                 thumbnail_url = manga.posterImageUrl
             }
         }
-        return MangasPage(mangas, response.request.url.queryParameter("page")!!.toInt() < dto.totalPages)
+
+        val hasNextPage = response.request.url.queryParameter("page")?.toIntOrNull()?.let { it < dto.totalPages } ?: false
+
+        return MangasPage(mangas, hasNextPage)
     }
 
     // ================= Latest =================
