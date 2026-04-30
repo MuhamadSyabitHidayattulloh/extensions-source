@@ -21,7 +21,7 @@ abstract class OceanWP(
     override val lang: String,
 ) : HttpSource() {
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     // Popular
     override fun popularMangaRequest(page: Int): Request = GET(if (page > 1) "$baseUrl/page/$page/" else baseUrl, headers)
@@ -47,7 +47,7 @@ abstract class OceanWP(
     protected open val popularMangaTitleSelector = SELECTOR_POPULAR_MANGA_TITLE
     protected open val popularMangaThumbnailSelector = SELECTOR_POPULAR_MANGA_THUMBNAIL
 
-    protected open val popularMangaNextPageSelector = SELECTOR_PAGINATION_NEXT
+    protected open fun popularMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
     // Latest
     override fun latestUpdatesRequest(page: Int) = popularMangaRequest(page)
@@ -100,7 +100,7 @@ abstract class OceanWP(
     protected open val searchMangaTitleSelector = SELECTOR_SEARCH_MANGA_TITLE
     protected open val searchMangaThumbnailSelector = SELECTOR_SEARCH_MANGA_THUMBNAIL
 
-    protected open val searchMangaNextPageSelector = SELECTOR_PAGINATION_NEXT
+    protected open fun searchMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
     // Details
     override fun mangaDetailsParse(response: Response): SManga {
@@ -125,7 +125,7 @@ abstract class OceanWP(
     // Chapters
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
-        val mangaTitle = document.selectFirst(mangaDetailsTitleSelector)?.text() ?: "Chapter"
+        val mangaTitle = document.selectFirst(mangaDetailsTitleSelector)?.text() ?: "Chapter 1"
         return listOf(
             SChapter.create().apply {
                 name = mangaTitle
@@ -148,22 +148,24 @@ abstract class OceanWP(
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
     override fun getFilterList(): FilterList {
-        val filters = mutableListOf<Filter<*>>(
-            Filter.Header("Filter tidak bisa dikombinasikan dengan pencarian teks"),
-            Filter.Separator(),
-            Filter.Header("Filter di bawah ini tidak bisa dikombinasikan satu sama lain"),
-        )
+        val filters = mutableListOf<Filter<*>>()
+        filters.add(Filter.Header("Filter tidak bisa dikombinasikan dengan pencarian teks"))
 
         val categories = getCategoryList()
+        val tags = if (hasTagFilter) getTagList() else emptyList()
+
+        if (categories.size > 1 && tags.size > 1) {
+            filters.add(Filter.Header("Filter di bawah ini tidak bisa dikombinasikan satu sama lain"))
+        }
+
+        filters.add(Filter.Separator())
+
         if (categories.size > 1) {
             filters.add(CategoryFilter(categories))
         }
 
-        if (hasTagFilter) {
-            val tags = getTagList()
-            if (tags.size > 1) {
-                filters.add(TagFilter(tags))
-            }
+        if (tags.size > 1) {
+            filters.add(TagFilter(tags))
         }
 
         return FilterList(filters)
