@@ -31,7 +31,7 @@ abstract class OceanWP(
         val mangas = document.select(popularMangaSelector).map { element ->
             popularMangaFromElement(element)
         }
-        val hasNextPage = document.selectFirst(popularMangaNextPageSelector) != null
+        val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
         return MangasPage(mangas, hasNextPage)
     }
 
@@ -50,9 +50,9 @@ abstract class OceanWP(
     protected open fun popularMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
     // Latest
-    override fun latestUpdatesRequest(page: Int) = popularMangaRequest(page)
+    override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
 
-    override fun latestUpdatesParse(response: Response) = popularMangaParse(response)
+    override fun latestUpdatesParse(response: Response): MangasPage = throw UnsupportedOperationException()
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -84,7 +84,7 @@ abstract class OceanWP(
         val mangas = document.select(searchMangaSelector).map { element ->
             searchMangaFromElement(element)
         }
-        val hasNextPage = document.selectFirst(searchMangaNextPageSelector) != null
+        val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
         return MangasPage(mangas, hasNextPage)
     }
 
