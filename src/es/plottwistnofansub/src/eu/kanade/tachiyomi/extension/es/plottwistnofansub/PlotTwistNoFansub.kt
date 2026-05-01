@@ -55,7 +55,7 @@ class PlotTwistNoFansub : HttpSource() {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        val mangas = document.select(POPULAR_MANGA_SELECTOR).map { element ->
+        val mangas = document.select("div.page-listing-item figure").map { element ->
             SManga.create().apply {
                 val a = element.selectFirst("a")!!
                 setUrlWithoutDomain(a.attr("href"))
@@ -66,7 +66,7 @@ class PlotTwistNoFansub : HttpSource() {
             }
         }
 
-        val hasNextPage = document.selectFirst(NEXT_PAGE_SELECTOR) != null
+        val hasNextPage = document.selectFirst("a.next.page-numbers, a.next") != null
         return MangasPage(mangas, hasNextPage)
     }
 
@@ -114,7 +114,7 @@ class PlotTwistNoFansub : HttpSource() {
 
         if (!isTextSearch) return popularMangaParse(response)
 
-        val mangas = document.select(SEARCH_MANGA_SELECTOR).map { element ->
+        val mangas = document.select("div.c-tabs-item__content").map { element ->
             SManga.create().apply {
                 val a = element.selectFirst(".post-title a") ?: element.selectFirst("a")!!
                 setUrlWithoutDomain(a.attr("href"))
@@ -125,7 +125,7 @@ class PlotTwistNoFansub : HttpSource() {
             }
         }
 
-        val hasNextPage = document.selectFirst(NEXT_PAGE_SELECTOR) != null
+        val hasNextPage = document.selectFirst("a.next.page-numbers, a.next") != null
         return MangasPage(mangas, hasNextPage)
     }
 
@@ -137,29 +137,29 @@ class PlotTwistNoFansub : HttpSource() {
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
-            title = document.selectFirst(DETAILS_TITLE_SELECTOR)?.text()
-                ?: document.selectFirst(DETAILS_TITLE_FALLBACK_SELECTOR)?.text() ?: ""
-            thumbnail_url = document.selectFirst(DETAILS_THUMBNAIL_SELECTOR)?.imgAttr()
-                ?: document.selectFirst(DETAILS_THUMBNAIL_FALLBACK_SELECTOR)?.imgAttr()
+            title = document.selectFirst("p.titleMangaSingle")?.text()
+                ?: document.selectFirst(".post-title h1, .post-title h3")?.text() ?: ""
+            thumbnail_url = document.selectFirst(".thumble-container img")?.imgAttr()
+                ?: document.selectFirst(".summary_image img")?.imgAttr()
 
-            description = document.selectFirst(DETAILS_DESCRIPTION_SELECTOR)?.text()
-                ?: document.selectFirst(DETAILS_DESCRIPTION_FALLBACK_SELECTOR)?.text()
+            description = document.selectFirst("#section-sinopsis p.font-light.text-white")?.text()
+                ?: document.selectFirst(".summary__content")?.text()
 
-            val genresList = document.select(DETAILS_GENRE_SELECTOR).map { it.text() }
+            val genresList = document.select("#section-sinopsis div:contains(Generos:) + div a").map { it.text() }
             genre = if (genresList.isNotEmpty()) {
                 genresList.joinToString()
             } else {
-                document.select(DETAILS_GENRE_FALLBACK_SELECTOR).joinToString { it.text() }
+                document.select(".genres-content a").joinToString { it.text() }
             }
 
-            author = document.selectFirst(DETAILS_AUTHOR_SELECTOR)?.text()
-                ?: document.selectFirst(DETAILS_AUTHOR_FALLBACK_SELECTOR)?.text()
+            author = document.selectFirst("#section-sinopsis div:contains(Autor:) + div a")?.text()
+                ?: document.selectFirst(".author-content a")?.text()
 
             val statusText = (
-                document.selectFirst(DETAILS_STATUS_COMPLETED_SELECTOR)?.text()
-                    ?: document.selectFirst(DETAILS_STATUS_ONGOING_SELECTOR)?.text()
-                    ?: document.selectFirst(DETAILS_STATUS_FALLBACK_SELECTOR)?.text()
-                    ?: document.selectFirst(DETAILS_STATUS_FALLBACK_2_SELECTOR)?.text()
+                document.selectFirst(".btn-completed")?.text()
+                    ?: document.selectFirst(".btn-ongoing")?.text()
+                    ?: document.selectFirst("button:contains(Finalizado), button:contains(En curso)")?.text()
+                    ?: document.selectFirst(".post-status .summary-content")?.text()
                     ?: ""
                 ).lowercase()
 
@@ -177,12 +177,12 @@ class PlotTwistNoFansub : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
 
-        val mangaId = document.selectFirst(MANGA_ID_SELECTOR)
+        val mangaId = document.selectFirst("script:containsData(manga_id)")
             ?.data()
             ?.let { MANGA_ID_REGEX.find(it)?.groupValues?.get(1) }
             ?: throw Exception("No se pudo encontrar el ID del manga")
 
-        val getcapsJson = document.selectFirst(GETCAPS_SELECTOR)
+        val getcapsJson = document.selectFirst("script:containsData(plotGetcaps)")
             ?.data()
             ?: throw Exception("No se pudo encontrar la configuración de capítulos")
 
@@ -237,7 +237,7 @@ class PlotTwistNoFansub : HttpSource() {
     // =============================== Pages ================================
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        return document.select(PAGE_LIST_SELECTOR).mapIndexed { i, img ->
+        return document.select("div.page-break img").mapIndexed { i, img ->
             Page(i, imageUrl = img.imgAttr())
         }
     }
@@ -257,30 +257,6 @@ class PlotTwistNoFansub : HttpSource() {
     }
 
     companion object {
-        private const val POPULAR_MANGA_SELECTOR = "div.page-listing-item figure"
-        private const val SEARCH_MANGA_SELECTOR = "div.c-tabs-item__content"
-        private const val NEXT_PAGE_SELECTOR = "a.next.page-numbers, a.next"
-
-        private const val DETAILS_TITLE_SELECTOR = "p.titleMangaSingle"
-        private const val DETAILS_TITLE_FALLBACK_SELECTOR = ".post-title h1, .post-title h3"
-        private const val DETAILS_THUMBNAIL_SELECTOR = ".thumble-container img"
-        private const val DETAILS_THUMBNAIL_FALLBACK_SELECTOR = ".summary_image img"
-        private const val DETAILS_DESCRIPTION_SELECTOR = "#section-sinopsis p.font-light.text-white"
-        private const val DETAILS_DESCRIPTION_FALLBACK_SELECTOR = ".summary__content"
-        private const val DETAILS_GENRE_SELECTOR = "#section-sinopsis div:contains(Generos:) + div a"
-        private const val DETAILS_GENRE_FALLBACK_SELECTOR = ".genres-content a"
-        private const val DETAILS_AUTHOR_SELECTOR = "#section-sinopsis div:contains(Autor:) + div a"
-        private const val DETAILS_AUTHOR_FALLBACK_SELECTOR = ".author-content a"
-        private const val DETAILS_STATUS_COMPLETED_SELECTOR = ".btn-completed"
-        private const val DETAILS_STATUS_ONGOING_SELECTOR = ".btn-ongoing"
-        private const val DETAILS_STATUS_FALLBACK_SELECTOR = "button:contains(Finalizado), button:contains(En curso)"
-        private const val DETAILS_STATUS_FALLBACK_2_SELECTOR = ".post-status .summary-content"
-
-        private const val MANGA_ID_SELECTOR = "script:containsData(manga_id)"
-        private const val GETCAPS_SELECTOR = "script:containsData(plotGetcaps)"
-
-        private const val PAGE_LIST_SELECTOR = "div.page-break img"
-
         private val MANGA_ID_REGEX = Regex(""""manga_id"\s*:\s*"(\d+)"""")
         private val SECRET_REGEX = Regex(""""secret"\s*:\s*"([^"]+)"""")
         private val REST_URL_REGEX = Regex(""""restUrl"\s*:\s*"([^"]+)"""")
