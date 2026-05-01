@@ -31,26 +31,19 @@ abstract class OceanWP(
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         parseFilters(document)
-        val mangas = document.select(popularMangaSelector()).map { element ->
+        val mangas = document.select("article.blog-entry").map { element ->
             popularMangaFromElement(element)
         }
-        val hasNextPage = document.selectFirst(popularMangaNextPageSelector()) != null
+        val hasNextPage = document.selectFirst("ul.page-numbers li a.next") != null
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open fun popularMangaSelector() = "article.blog-entry"
-
     protected open fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst(popularMangaTitleSelector())!!
+        val link = element.selectFirst("h2.blog-entry-title a")!!
         title = link.text()
         setUrlWithoutDomain(link.absUrl("href"))
-        thumbnail_url = element.selectFirst(popularMangaThumbnailSelector())?.absUrl("src")
+        thumbnail_url = element.selectFirst("div.thumbnail img")?.absUrl("src")
     }
-
-    protected open fun popularMangaTitleSelector() = "h2.blog-entry-title a"
-    protected open fun popularMangaThumbnailSelector() = "div.thumbnail img"
-
-    protected open fun popularMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
@@ -85,46 +78,33 @@ abstract class OceanWP(
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
         parseFilters(document)
-        val mangas = document.select(searchMangaSelector()).map { element ->
+        val mangas = document.select("article").map { element ->
             searchMangaFromElement(element)
         }
-        val hasNextPage = document.selectFirst(searchMangaNextPageSelector()) != null
+        val hasNextPage = document.selectFirst("ul.page-numbers li a.next") != null
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open fun searchMangaSelector() = "article"
-
     protected open fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
-        val link = element.selectFirst(searchMangaTitleSelector())!!
+        val link = element.selectFirst("h2.search-entry-title a, h2.blog-entry-title a")!!
         title = link.text()
         setUrlWithoutDomain(link.absUrl("href"))
-        thumbnail_url = element.selectFirst(searchMangaThumbnailSelector())?.absUrl("src")
+        thumbnail_url = element.selectFirst("div.thumbnail img")?.absUrl("src")
     }
-
-    protected open fun searchMangaTitleSelector() = "h2.search-entry-title a, h2.blog-entry-title a"
-    protected open fun searchMangaThumbnailSelector() = "div.thumbnail img"
-
-    protected open fun searchMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
     // Details
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
         return SManga.create().apply {
-            val content = document.selectFirst(mangaDetailsContentSelector()) ?: document
-            title = content.selectFirst(mangaDetailsTitleSelector())!!.text()
-            description = content.selectFirst(mangaDetailsDescriptionSelector())?.text()
-            genre = content.select(mangaDetailsGenreSelector()).joinToString { it.text() }
-            thumbnail_url = content.selectFirst(mangaDetailsThumbnailSelector())?.absUrl("src")
+            val content = document.selectFirst("div#content") ?: document
+            title = content.selectFirst(".entry-title")!!.text()
+            description = content.selectFirst("div.entry-content")?.text()
+            genre = content.select("li.meta-cat a, li.meta-category a").joinToString { it.text() }
+            thumbnail_url = content.selectFirst("div.thumbnail img")?.absUrl("src")
             update_strategy = UpdateStrategy.ONLY_FETCH_ONCE
             status = SManga.COMPLETED
         }
     }
-
-    protected open fun mangaDetailsContentSelector() = "div#content"
-    protected open fun mangaDetailsTitleSelector() = ".entry-title"
-    protected open fun mangaDetailsDescriptionSelector() = "div.entry-content"
-    protected open fun mangaDetailsGenreSelector() = "li.meta-cat a, li.meta-category a"
-    protected open fun mangaDetailsThumbnailSelector() = "div.thumbnail img"
 
     // Chapters
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
@@ -140,13 +120,11 @@ abstract class OceanWP(
     // Pages
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
-        return document.select(pageListSelector()).mapIndexed { i, img ->
+        return document.select("div.entry-content img").mapIndexed { i, img ->
             val url = img.absUrl("src")
             Page(i, document.location(), url)
         }
     }
-
-    protected open fun pageListSelector() = "div.entry-content img"
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
@@ -154,7 +132,7 @@ abstract class OceanWP(
         val filters = mutableListOf<Filter<*>>()
         filters.add(Filter.Header("Filter tidak bisa dikombinasikan dengan pencarian teks"))
 
-        if (categoryList.isEmpty() && (tagList.isEmpty() || !hasTagFilter)) {
+        if (categoryList.size <= 1 && (tagList.size <= 1 || !hasTagFilter)) {
             filters.add(Filter.Header("Gunakan 'Reset' untuk memuat filter"))
         }
 
@@ -182,22 +160,15 @@ abstract class OceanWP(
 
     private fun parseFilters(document: Document) {
         if (categoryList.size <= 1) {
-            categoryList = listOf(Pair("Default", "")) + document.select(categorySelector()).map {
+            categoryList = listOf(Pair("Default", "")) + document.select("ul.sub-menu li[class*=menu-item-type-taxonomy] a").map {
                 Pair(it.text(), it.absUrl("href"))
             }
         }
 
         if (tagList.size <= 1 && hasTagFilter) {
-            tagList = listOf(Pair("Default", "")) + document.select(tagSelector()).map {
+            tagList = listOf(Pair("Default", "")) + document.select("div.tagcloud a").map {
                 Pair(it.text(), it.absUrl("href"))
             }
         }
-    }
-
-    protected open fun categorySelector() = "ul.sub-menu li[class*=menu-item-type-taxonomy] a"
-    protected open fun tagSelector() = "div.tagcloud a"
-
-    companion object {
-        const val SELECTOR_PAGINATION_NEXT = "ul.page-numbers li a.next"
     }
 }
