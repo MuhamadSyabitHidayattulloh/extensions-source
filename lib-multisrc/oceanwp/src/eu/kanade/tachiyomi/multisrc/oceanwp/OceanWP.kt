@@ -13,7 +13,9 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 
 abstract class OceanWP(
     override val name: String,
@@ -28,6 +30,7 @@ abstract class OceanWP(
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
+        parseFilters(document)
         val mangas = document.select(popularMangaSelector()).map { element ->
             popularMangaFromElement(element)
         }
@@ -35,7 +38,7 @@ abstract class OceanWP(
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open fun popularMangaSelector() = SELECTOR_POPULAR_MANGA
+    protected open fun popularMangaSelector() = "article.blog-entry"
 
     protected open fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
         val link = element.selectFirst(popularMangaTitleSelector())!!
@@ -44,8 +47,8 @@ abstract class OceanWP(
         thumbnail_url = element.selectFirst(popularMangaThumbnailSelector())?.absUrl("src")
     }
 
-    protected open fun popularMangaTitleSelector() = SELECTOR_POPULAR_MANGA_TITLE
-    protected open fun popularMangaThumbnailSelector() = SELECTOR_POPULAR_MANGA_THUMBNAIL
+    protected open fun popularMangaTitleSelector() = "h2.blog-entry-title a"
+    protected open fun popularMangaThumbnailSelector() = "div.thumbnail img"
 
     protected open fun popularMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
@@ -81,6 +84,7 @@ abstract class OceanWP(
 
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
+        parseFilters(document)
         val mangas = document.select(searchMangaSelector()).map { element ->
             searchMangaFromElement(element)
         }
@@ -88,7 +92,7 @@ abstract class OceanWP(
         return MangasPage(mangas, hasNextPage)
     }
 
-    protected open fun searchMangaSelector() = SELECTOR_SEARCH_MANGA
+    protected open fun searchMangaSelector() = "article"
 
     protected open fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
         val link = element.selectFirst(searchMangaTitleSelector())!!
@@ -97,8 +101,8 @@ abstract class OceanWP(
         thumbnail_url = element.selectFirst(searchMangaThumbnailSelector())?.absUrl("src")
     }
 
-    protected open fun searchMangaTitleSelector() = SELECTOR_SEARCH_MANGA_TITLE
-    protected open fun searchMangaThumbnailSelector() = SELECTOR_SEARCH_MANGA_THUMBNAIL
+    protected open fun searchMangaTitleSelector() = "h2.search-entry-title a, h2.blog-entry-title a"
+    protected open fun searchMangaThumbnailSelector() = "div.thumbnail img"
 
     protected open fun searchMangaNextPageSelector() = SELECTOR_PAGINATION_NEXT
 
@@ -116,19 +120,22 @@ abstract class OceanWP(
         }
     }
 
-    protected open fun mangaDetailsContentSelector() = SELECTOR_MANGA_DETAILS_CONTENT
-    protected open fun mangaDetailsTitleSelector() = SELECTOR_MANGA_DETAILS_TITLE
-    protected open fun mangaDetailsDescriptionSelector() = SELECTOR_MANGA_DETAILS_DESCRIPTION
-    protected open fun mangaDetailsGenreSelector() = SELECTOR_MANGA_DETAILS_GENRE
-    protected open fun mangaDetailsThumbnailSelector() = SELECTOR_MANGA_DETAILS_THUMBNAIL
+    protected open fun mangaDetailsContentSelector() = "div#content"
+    protected open fun mangaDetailsTitleSelector() = ".entry-title"
+    protected open fun mangaDetailsDescriptionSelector() = "div.entry-content"
+    protected open fun mangaDetailsGenreSelector() = "li.meta-cat a, li.meta-category a"
+    protected open fun mangaDetailsThumbnailSelector() = "div.thumbnail img"
 
     // Chapters
-    override fun chapterListParse(response: Response): List<SChapter> = listOf(
-        SChapter.create().apply {
+    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
+        val chapter = SChapter.create().apply {
             name = "Chapter 1"
-            setUrlWithoutDomain(response.request.url.toString())
-        },
-    )
+            setUrlWithoutDomain(manga.url)
+        }
+        return Observable.just(listOf(chapter))
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException()
 
     // Pages
     override fun pageListParse(response: Response): List<Page> {
@@ -139,7 +146,7 @@ abstract class OceanWP(
         }
     }
 
-    protected open fun pageListSelector() = SELECTOR_PAGE_LIST
+    protected open fun pageListSelector() = "div.entry-content img"
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
@@ -147,21 +154,22 @@ abstract class OceanWP(
         val filters = mutableListOf<Filter<*>>()
         filters.add(Filter.Header("Filter tidak bisa dikombinasikan dengan pencarian teks"))
 
-        val categories = getCategoryList()
-        val tags = if (hasTagFilter) getTagList() else emptyList()
+        if (categoryList.isEmpty() && (tagList.isEmpty() || !hasTagFilter)) {
+            filters.add(Filter.Header("Gunakan 'Reset' untuk memuat filter"))
+        }
 
-        if (categories.size > 1 && tags.size > 1) {
+        if (categoryList.size > 1 && tagList.size > 1) {
             filters.add(Filter.Header("Filter di bawah ini tidak bisa dikombinasikan satu sama lain"))
         }
 
         filters.add(Filter.Separator())
 
-        if (categories.size > 1) {
-            filters.add(CategoryFilter(categories))
+        if (categoryList.size > 1) {
+            filters.add(CategoryFilter(categoryList))
         }
 
-        if (tags.size > 1) {
-            filters.add(TagFilter(tags))
+        if (tagList.size > 1 && hasTagFilter) {
+            filters.add(TagFilter(tagList))
         }
 
         return FilterList(filters)
@@ -169,56 +177,27 @@ abstract class OceanWP(
 
     protected open val hasTagFilter = true
 
-    private var categoryList: List<Pair<String, String>>? = null
-    private var tagList: List<Pair<String, String>>? = null
+    private var categoryList: List<Pair<String, String>> = emptyList()
+    private var tagList: List<Pair<String, String>> = emptyList()
 
-    protected open fun getCategoryList(): List<Pair<String, String>> {
-        if (categoryList != null) return categoryList!!
-        return runCatching {
-            val document = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
-            val list = listOf(Pair("Default", "")) + document.select(categorySelector()).map {
+    private fun parseFilters(document: Document) {
+        if (categoryList.size <= 1) {
+            categoryList = listOf(Pair("Default", "")) + document.select(categorySelector()).map {
                 Pair(it.text(), it.absUrl("href"))
             }
-            if (list.size > 1) categoryList = list
-            list
-        }.getOrDefault(emptyList())
-    }
+        }
 
-    protected open fun getTagList(): List<Pair<String, String>> {
-        if (tagList != null) return tagList!!
-        return runCatching {
-            val document = client.newCall(GET(baseUrl, headers)).execute().asJsoup()
-            val list = listOf(Pair("Default", "")) + document.select(tagSelector()).map {
+        if (tagList.size <= 1 && hasTagFilter) {
+            tagList = listOf(Pair("Default", "")) + document.select(tagSelector()).map {
                 Pair(it.text(), it.absUrl("href"))
             }
-            if (list.size > 1) tagList = list
-            list
-        }.getOrDefault(emptyList())
+        }
     }
 
-    protected open fun categorySelector() = SELECTOR_CATEGORY
-    protected open fun tagSelector() = SELECTOR_TAG
+    protected open fun categorySelector() = "ul.sub-menu li[class*=menu-item-type-taxonomy] a"
+    protected open fun tagSelector() = "div.tagcloud a"
 
     companion object {
-        const val SELECTOR_POPULAR_MANGA = "article.blog-entry"
-        const val SELECTOR_POPULAR_MANGA_TITLE = "h2.blog-entry-title a"
-        const val SELECTOR_POPULAR_MANGA_THUMBNAIL = "div.thumbnail img"
-
-        const val SELECTOR_SEARCH_MANGA = "article"
-        const val SELECTOR_SEARCH_MANGA_TITLE = "h2.search-entry-title a, h2.blog-entry-title a"
-        const val SELECTOR_SEARCH_MANGA_THUMBNAIL = "div.thumbnail img"
-
         const val SELECTOR_PAGINATION_NEXT = "ul.page-numbers li a.next"
-
-        const val SELECTOR_MANGA_DETAILS_CONTENT = "div#content"
-        const val SELECTOR_MANGA_DETAILS_TITLE = ".entry-title"
-        const val SELECTOR_MANGA_DETAILS_DESCRIPTION = "div.entry-content"
-        const val SELECTOR_MANGA_DETAILS_GENRE = "li.meta-cat a, li.meta-category a"
-        const val SELECTOR_MANGA_DETAILS_THUMBNAIL = "div.thumbnail img"
-
-        const val SELECTOR_PAGE_LIST = "div.entry-content img"
-
-        const val SELECTOR_CATEGORY = "ul.sub-menu li[class*=menu-item-type-taxonomy] a"
-        const val SELECTOR_TAG = "div.tagcloud a"
     }
 }
