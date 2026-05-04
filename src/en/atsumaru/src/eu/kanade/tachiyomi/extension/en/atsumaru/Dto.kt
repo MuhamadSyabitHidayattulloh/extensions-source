@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import java.text.SimpleDateFormat
@@ -59,7 +60,8 @@ class MangaDto(
     private val authorsElement: JsonElement? = null,
     private val artists: List<ScanlatorDto>? = null,
     private val otherNames: List<String>? = null,
-    private val mbRating: Float? = null,
+    @JsonNames("mbRating", "avgRating")
+    private val ratingElement: JsonElement? = null,
     private val synopsis: String? = null,
     @JsonNames("genres", "tags")
     private val genresElement: JsonElement? = null,
@@ -93,11 +95,11 @@ class MangaDto(
             url.replaceFirst(Regex("^https?:?//"), "https://")
         }
         description = buildString {
-            synopsis?.let { append("$it\n\n") }
+            ratingElement?.jsonPrimitive?.floatOrNull?.let { append("Rating: %.2f\n\n".format(it)) }
+            synopsis?.takeIf { it.isNotEmpty() }?.let { append("$it\n\n") }
             otherNames?.takeIf { it.isNotEmpty() }?.let {
-                append("Alternative Names: ${it.joinToString()}\n")
+                append("Alternative Names: ${it.joinToString()}")
             }
-            mbRating?.let { append("Rating: %.2f".format(it)) }
         }.trim()
         genre = buildList {
             type?.let { add(it) }

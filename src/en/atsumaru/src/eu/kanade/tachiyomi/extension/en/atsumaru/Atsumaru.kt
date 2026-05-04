@@ -74,7 +74,7 @@ class Atsumaru : HttpSource() {
             addQueryParameter("query_by", "title,englishTitle,otherNames,authors")
             addQueryParameter("query_by_weights", "4,3,2,1")
             addQueryParameter("num_typos", "4,3,2,1")
-            addQueryParameter("include_fields", "id,title,englishTitle,poster,posterSmall,posterMedium,type,isAdult,status,year,synopsis,otherNames,mbRating,genres,authors,artists")
+            addQueryParameter("include_fields", "id,title,englishTitle,poster,posterSmall,posterMedium,type,isAdult,status,year,synopsis,otherNames,mbRating,tags,authors,avgRating")
             addQueryParameter("page", page.toString())
             addQueryParameter("per_page", "40")
 
@@ -168,8 +168,15 @@ class Atsumaru : HttpSource() {
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val data = response.parseAs<SearchResultsDto>()
-        return MangasPage(data.hits.map { it.document.toSManga(baseUrl) }, data.hasNextPage())
+        val body = response.body.string()
+
+        return if (body.contains("\"hits\"")) {
+            val data = body.parseAs<SearchResultsDto>()
+            MangasPage(data.hits.map { it.document.toSManga(baseUrl) }, data.hasNextPage())
+        } else {
+            val data = body.parseAs<BrowseMangaDto>()
+            MangasPage(data.items.map { it.toSManga(baseUrl) }, true)
+        }
     }
 
     // =========================== Manga Details ============================
