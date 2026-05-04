@@ -59,6 +59,8 @@ class MangaDto(
     private val genres: List<TagDto>? = null,
     private val status: String? = null,
     private val type: String? = null,
+    private val avgRating: Double? = null,
+    private val otherNames: List<String>? = null,
     val scanlators: List<ScanlatorDto>? = null,
 
     // Chapters
@@ -86,13 +88,30 @@ class MangaDto(
             }
             url.replaceFirst(Regex("^https?:?//"), "https://")
         }
-        description = synopsis
+        description = buildString {
+            avgRating?.let {
+                append("Rating: %.2f/10\n\n".format(it))
+            }
+
+            synopsis?.let {
+                append(it)
+                append("\n\n")
+            }
+
+            if (!otherNames.isNullOrEmpty()) {
+                append("Alternative Names: ")
+                append(otherNames.joinToString())
+            }
+        }.trim()
         genre = buildList {
             type?.let { add(it) }
             genres?.forEach { add(it.name) }
         }.joinToString()
-        authors?.let {
-            author = it.joinToString { author -> author.name }
+        authors?.let { list ->
+            author = list.filter { it.type == null || it.type == "Author" }
+                .joinToString { it.name }
+            artist = list.filter { it.type == "Artist" }
+                .joinToString { it.name }
         }
         this@MangaDto.status?.let {
             status = when (it.lowercase().trim()) {
@@ -115,6 +134,7 @@ class MangaDto(
     @Serializable
     class AuthorDto(
         val name: String,
+        val type: String? = null,
     )
 
     @Serializable
@@ -177,23 +197,4 @@ class PageDto(
 @Serializable
 class PageDataDto(
     val image: String,
-)
-
-@Serializable
-internal class SearchRequest(
-    val page: Int,
-    val filter: SearchFilter,
-)
-
-@Serializable
-internal class SearchFilter(
-    val search: String? = null,
-    val types: List<String>,
-    val status: List<String>? = null,
-    val includedTags: List<String>? = null,
-    val year: Int? = null,
-    val minChapters: Int? = null,
-    val showAdult: Boolean = false,
-    val officialTranslation: Boolean = false,
-    val sortBy: String? = null,
 )
