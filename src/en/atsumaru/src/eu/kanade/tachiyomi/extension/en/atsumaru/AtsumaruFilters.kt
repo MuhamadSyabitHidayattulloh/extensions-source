@@ -3,10 +3,10 @@ package eu.kanade.tachiyomi.extension.en.atsumaru
 import eu.kanade.tachiyomi.source.model.Filter
 
 internal class GenreFilter(genres: List<Genre>) :
-    Filter.Group<Filter.CheckBox>(
+    Filter.Group<Filter.TriState>(
         "Genres",
         genres.map { genre ->
-            object : Filter.CheckBox(genre.name, false) {}
+            object : Filter.TriState(genre.name) {}
         },
     ) {
     val genreIds = genres.map { it.id }
@@ -39,11 +39,11 @@ internal class MinChaptersFilter : Filter.Text("Minimum Chapters")
 internal class SortFilter :
     Filter.Sort(
         "Sort By",
-        arrayOf("Title", "Popularity", "Trending", "Date Added", "Release Date", "Top Rated"),
+        arrayOf("Title", "Views", "Trending", "Date Added", "Release Date", "Top Rated"),
         Selection(0, true),
     ) {
     companion object {
-        val VALUES = arrayOf("title", "popularity", "trending", "createdAt", "released", "topRated")
+        val VALUES = arrayOf("title", "views", "trending", "dateAdded", "releaseDate", "mbRating")
     }
 }
 

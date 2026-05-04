@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.en.atsumaru
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -11,11 +10,8 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.utils.parseAs
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
 class Atsumaru : HttpSource() {
@@ -73,106 +69,95 @@ class Atsumaru : HttpSource() {
     )
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val jsonPayload = buildSearchRequest(page - 1, filters, query)
-        val jsonString = Json.encodeToString(
-            SearchRequest.serializer(),
-            jsonPayload,
-        )
-        val requestBody = jsonString.toRequestBody("application/json".toMediaType())
+        val url = "$baseUrl/collections/manga/documents/search".toHttpUrl().newBuilder().apply {
+            addQueryParameter("q", query.ifEmpty { "*" })
+            addQueryParameter("query_by", "title,englishTitle,otherNames,authors")
+            addQueryParameter("query_by_weights", "4,3,2,1")
+            addQueryParameter("num_typos", "4,3,2,1")
+            addQueryParameter("include_fields", "id,title,englishTitle,poster,posterSmall,posterMedium,type,isAdult,status,year")
+            addQueryParameter("page", page.toString())
+            addQueryParameter("per_page", "40")
 
-        return POST("$baseUrl/api/explore/filteredView", apiHeaders, requestBody)
-    }
+            val filterBy = mutableListOf<String>()
+            filterBy.add("hidden:!=true")
+            filterBy.add("views:>0")
 
-    private fun buildSearchRequest(page: Int, filters: FilterList, query: String): SearchRequest {
-        val selectedGenres = mutableListOf<String>()
-        val typesList = mutableListOf<String>()
-        val statuses = mutableListOf<String>()
-        var year: Int? = null
-        var minChapters: Int? = null
-        var showAdult = false
-        var officialTranslation = false
-        var sortBy = "popularity"
-
-        filters.forEach { filter ->
-            when (filter) {
-                is GenreFilter -> {
-                    filter.state.forEachIndexed { index, checkBox ->
-                        if (checkBox.state) {
-                            selectedGenres.add(filter.genreIds[index])
+            filters.forEach { filter ->
+                when (filter) {
+                    is GenreFilter -> {
+                        val excluded = mutableListOf<String>()
+                        filter.state.forEachIndexed { index, triState ->
+                            val id = filter.genreIds[index]
+                            when (triState.state) {
+                                Filter.TriState.STATE_INCLUDE -> filterBy.add("genreIds:=`$id`")
+                                Filter.TriState.STATE_EXCLUDE -> excluded.add("`$id`")
+                            }
+                        }
+                        if (excluded.isNotEmpty()) {
+                            filterBy.add("genreIds:!=[${excluded.joinToString(",")}]")
                         }
                     }
-                }
 
-                is TypeFilter -> {
-                    filter.state.forEachIndexed { index, checkBox ->
-                        if (checkBox.state) {
-                            typesList.add(filter.ids[index])
+                    is TypeFilter -> {
+                        val types = filter.state.filter { it.state }.map { filter.ids[filter.state.indexOf(it)] }
+                        if (types.isNotEmpty()) {
+                            filterBy.add("type:=[${types.joinToString(",") { "`$it`" }}]")
                         }
                     }
-                }
 
-                is StatusFilter -> {
-                    filter.state.forEachIndexed { index, checkBox ->
-                        if (checkBox.state) {
-                            statuses.add(filter.ids[index])
+                    is StatusFilter -> {
+                        val statuses = filter.state.filter { it.state }.map { filter.ids[filter.state.indexOf(it)] }
+                        if (statuses.isNotEmpty()) {
+                            filterBy.add("status:=[${statuses.joinToString(",") { "`$it`" }}]")
                         }
                     }
-                }
 
-                is YearFilter -> {
-                    if (filter.state.isNotEmpty()) year = filter.state.toIntOrNull()
-                }
+                    is YearFilter -> {
+                        if (filter.state.isNotEmpty()) {
+                            filterBy.add("releaseYear:=[${filter.state}]")
+                        }
+                    }
 
-                is MinChaptersFilter -> {
-                    if (filter.state.isNotEmpty()) minChapters = filter.state.toIntOrNull()
-                }
+                    is MinChaptersFilter -> {
+                        if (filter.state.isNotEmpty()) {
+                            filterBy.add("chapterCount:>=${filter.state}")
+                        }
+                    }
 
-                is SortFilter -> {
-                    sortBy = SortFilter.VALUES[filter.state!!.index]
-                }
+                    is SortFilter -> {
+                        filter.state?.let {
+                            val field = SortFilter.VALUES[it.index]
+                            val order = if (it.ascending) "asc" else "desc"
+                            addQueryParameter("sort_by", "$field:$order")
+                        }
+                    }
 
-                is AdultFilter -> {
-                    showAdult = filter.state
-                }
+                    is AdultFilter -> {
+                        if (!filter.state) {
+                            filterBy.add("isAdult:=false")
+                            filterBy.add("(mbContentRating:=[`Safe`,`Suggestive`,`Erotica`] || mbContentRating:!=*)")
+                        }
+                    }
 
-                is OfficialFilter -> {
-                    officialTranslation = filter.state
-                }
+                    is OfficialFilter -> {
+                        if (filter.state) {
+                            filterBy.add("officialTranslation:=true")
+                        }
+                    }
 
-                else -> {}
+                    else -> {}
+                }
             }
+
+            addQueryParameter("filter_by", filterBy.joinToString(" && "))
         }
 
-        val types = typesList.ifEmpty {
-            listOf("Manga", "Manwha", "Manhua", "OEL")
-        }
-
-        return SearchRequest(
-            page = page,
-            filter = SearchFilter(
-                search = query.ifEmpty { null },
-                types = types,
-                status = statuses.ifEmpty { null },
-                includedTags = selectedGenres.ifEmpty { null },
-                year = year,
-                minChapters = minChapters,
-                showAdult = showAdult,
-                officialTranslation = officialTranslation,
-                sortBy = sortBy,
-            ),
-        )
+        return GET(url.build(), apiHeaders)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {
-        val body = response.body.string()
-
-        return if (body.contains("\"hits\"")) {
-            val data = body.parseAs<SearchResultsDto>()
-            MangasPage(data.hits.map { it.document.toSManga(baseUrl) }, data.hasNextPage())
-        } else {
-            val data = body.parseAs<BrowseMangaDto>()
-            MangasPage(data.items.map { it.toSManga(baseUrl) }, true)
-        }
+        val data = response.parseAs<SearchResultsDto>()
+        return MangasPage(data.hits.map { it.document.toSManga(baseUrl) }, data.hasNextPage())
     }
 
     // =========================== Manga Details ============================

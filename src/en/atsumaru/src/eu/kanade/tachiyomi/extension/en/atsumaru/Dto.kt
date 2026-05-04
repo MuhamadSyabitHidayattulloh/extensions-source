@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import keiyoushi.utils.tryParse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonObject
@@ -54,9 +55,11 @@ class MangaDto(
     private val imagePath: JsonElement,
 
     // Details
-    private val authors: List<AuthorDto>? = null,
+    @JsonNames("authors")
+    private val authorsElement: JsonElement? = null,
     private val synopsis: String? = null,
-    private val genres: List<TagDto>? = null,
+    @JsonNames("genres", "tags")
+    private val genresElement: JsonElement? = null,
     private val status: String? = null,
     private val type: String? = null,
     val scanlators: List<ScanlatorDto>? = null,
@@ -89,10 +92,10 @@ class MangaDto(
         description = synopsis
         genre = buildList {
             type?.let { add(it) }
-            genres?.forEach { add(it.name) }
+            genresElement?.let { addAll(parseJsonList(it)) }
         }.joinToString()
-        authors?.let {
-            author = it.joinToString { author -> author.name }
+        authorsElement?.let {
+            author = parseJsonList(it).joinToString()
         }
         this@MangaDto.status?.let {
             status = when (it.lowercase().trim()) {
@@ -108,20 +111,21 @@ class MangaDto(
     fun recommendations(baseUrl: String) = recommendations?.map { it.toSManga(baseUrl) } ?: emptyList()
 
     @Serializable
-    class TagDto(
-        val name: String,
-    )
-
-    @Serializable
-    class AuthorDto(
-        val name: String,
-    )
-
-    @Serializable
     class ScanlatorDto(
         val id: String,
         val name: String,
     )
+
+    private fun parseJsonList(element: JsonElement): List<String> = when (element) {
+        is JsonArray -> element.mapNotNull {
+            when (it) {
+                is JsonPrimitive -> it.content
+                is JsonObject -> it["name"]?.jsonPrimitive?.content
+                else -> null
+            }
+        }
+        else -> emptyList()
+    }
 }
 
 @Serializable
@@ -177,23 +181,4 @@ class PageDto(
 @Serializable
 class PageDataDto(
     val image: String,
-)
-
-@Serializable
-internal class SearchRequest(
-    val page: Int,
-    val filter: SearchFilter,
-)
-
-@Serializable
-internal class SearchFilter(
-    val search: String? = null,
-    val types: List<String>,
-    val status: List<String>? = null,
-    val includedTags: List<String>? = null,
-    val year: Int? = null,
-    val minChapters: Int? = null,
-    val showAdult: Boolean = false,
-    val officialTranslation: Boolean = false,
-    val sortBy: String? = null,
 )
