@@ -57,6 +57,9 @@ class MangaDto(
     // Details
     @JsonNames("authors")
     private val authorsElement: JsonElement? = null,
+    private val artists: List<ScanlatorDto>? = null,
+    private val otherNames: List<String>? = null,
+    private val mbRating: Float? = null,
     private val synopsis: String? = null,
     @JsonNames("genres", "tags")
     private val genresElement: JsonElement? = null,
@@ -89,13 +92,33 @@ class MangaDto(
             }
             url.replaceFirst(Regex("^https?:?//"), "https://")
         }
-        description = synopsis
+        description = buildString {
+            synopsis?.let { append("$it\n\n") }
+            otherNames?.takeIf { it.isNotEmpty() }?.let {
+                append("Alternative Names: ${it.joinToString()}\n")
+            }
+            mbRating?.let { append("Rating: %.2f".format(it)) }
+        }.trim()
         genre = buildList {
             type?.let { add(it) }
             genresElement?.let { addAll(parseJsonList(it)) }
         }.joinToString()
-        authorsElement?.let {
-            author = parseJsonList(it).joinToString()
+        authorsElement?.let { element ->
+            val all = when (element) {
+                is JsonArray -> element.mapNotNull {
+                    when (it) {
+                        is JsonPrimitive -> it.content to null
+                        is JsonObject -> it["name"]?.jsonPrimitive?.content to it["type"]?.jsonPrimitive?.content
+                        else -> null
+                    }
+                }
+                else -> emptyList()
+            }
+            author = all.filter { it.second == null || it.second == "Author" }.joinToString { it.first ?: "" }
+            artist = all.filter { it.second == "Artist" }.joinToString { it.first ?: "" }
+        }
+        if (artist.isNullOrEmpty()) {
+            artist = artists?.joinToString { it.name }
         }
         this@MangaDto.status?.let {
             status = when (it.lowercase().trim()) {
