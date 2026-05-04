@@ -95,7 +95,7 @@ class MangaDto(
             url.replaceFirst(Regex("^https?:?//"), "https://")
         }
         description = buildString {
-            ratingElement?.jsonPrimitive?.floatOrNull?.let { append("Rating: %.2f\n\n".format(it)) }
+            ratingElement?.jsonPrimitive?.floatOrNull?.let { append("Rating: %.2f/10\n\n".format(it)) }
             synopsis?.takeIf { it.isNotEmpty() }?.let { append("$it\n\n") }
             otherNames?.takeIf { it.isNotEmpty() }?.let {
                 append("Alternative Names: ${it.joinToString()}")

@@ -74,7 +74,7 @@ class Atsumaru : HttpSource() {
             addQueryParameter("query_by", "title,englishTitle,otherNames,authors")
             addQueryParameter("query_by_weights", "4,3,2,1")
             addQueryParameter("num_typos", "4,3,2,1")
-            addQueryParameter("include_fields", "id,title,englishTitle,poster,posterSmall,posterMedium,type,isAdult,status,year,synopsis,otherNames,mbRating,tags,authors,avgRating")
+            addQueryParameter("include_fields", "id,title,englishTitle,poster,posterSmall,posterMedium,type,isAdult,status,year")
             addQueryParameter("page", page.toString())
             addQueryParameter("per_page", "40")
 
