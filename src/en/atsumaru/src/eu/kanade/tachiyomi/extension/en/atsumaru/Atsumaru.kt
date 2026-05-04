@@ -38,6 +38,12 @@ class Atsumaru : HttpSource() {
 
     private val apiHeaders by lazy { apiHeadersBuilder().build() }
 
+    private val searchHeaders by lazy {
+        apiHeadersBuilder()
+            .add("X-Typesense-API-Key", "uh7v4383kblrqpsjvqejuvlfm9uubkep")
+            .build()
+    }
+
     // ============================== Popular ===============================
 
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/api/infinite/trending?page=${page - 1}&types=Manga,Manwha,Manhua,OEL", apiHeaders)
@@ -81,7 +87,7 @@ class Atsumaru : HttpSource() {
             val filterBy = mutableListOf<String>()
             filterBy.add("hidden:!=true")
 
-            var sortBy = "popularity"
+            var sortBy = ""
 
             filters.forEach { filter ->
                 when (filter) {
@@ -130,7 +136,7 @@ class Atsumaru : HttpSource() {
                     }
 
                     is SortFilter -> {
-                        sortBy = SortFilter.VALUES[filter.state!!.index]
+                        sortBy = filter.getSortBy()
                     }
 
                     is AdultFilter -> {
@@ -154,20 +160,11 @@ class Atsumaru : HttpSource() {
             }
 
             if (sortBy.isNotEmpty()) {
-                val sortParam = when (sortBy) {
-                    "title" -> "title:asc"
-                    "popularity" -> "views:desc"
-                    "trending" -> "trending:desc"
-                    "createdAt" -> "createdAt:desc"
-                    "released" -> "released:desc"
-                    "topRated" -> "avgRating:desc"
-                    else -> null
-                }
-                sortParam?.let { addQueryParameter("sort_by", it) }
+                addQueryParameter("sort_by", sortBy)
             }
         }.build()
 
-        return GET(url, apiHeaders)
+        return GET(url, searchHeaders)
     }
 
     override fun searchMangaParse(response: Response): MangasPage {

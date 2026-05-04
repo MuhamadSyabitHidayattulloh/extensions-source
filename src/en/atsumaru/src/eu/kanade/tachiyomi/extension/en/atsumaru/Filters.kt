@@ -40,10 +40,24 @@ internal class SortFilter :
     Filter.Sort(
         "Sort By",
         arrayOf("Title", "Popularity", "Trending", "Date Added", "Release Date", "Top Rated"),
-        Selection(0, true),
+        Selection(1, false),
     ) {
+    fun getSortBy(): String {
+        val sortValue = VALUES[state!!.index]
+        val order = if (state!!.ascending) "asc" else "desc"
+        return when (sortValue) {
+            "title" -> "title:$order"
+            "popularity" -> "views:$order"
+            "trending" -> "trending:$order"
+            "createdAt" -> "createdAt:$order"
+            "released" -> "released:$order"
+            "topRated" -> "avgRating:$order"
+            else -> "views:desc"
+        }
+    }
+
     companion object {
-        val VALUES = arrayOf("title", "popularity", "trending", "createdAt", "released", "topRated")
+        private val VALUES = arrayOf("title", "popularity", "trending", "createdAt", "released", "topRated")
     }
 }
 
