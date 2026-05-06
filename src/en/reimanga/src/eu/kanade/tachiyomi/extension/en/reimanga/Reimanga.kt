@@ -24,7 +24,6 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
@@ -53,7 +52,6 @@ class Reimanga :
         .addNetworkInterceptor(
             CookieInterceptor(DOMAIN, "showAdultContent" to "true"),
         )
-        .protocols(listOf(Protocol.HTTP_1_1))
         .build()
 
     private val preferences by getPreferencesLazy()
@@ -62,8 +60,11 @@ class Reimanga :
         .set("Referer", "$baseUrl/")
 
     private val rscHeaders = headersBuilder()
+        .set("Accept", "text/x-component")
         .set("rsc", "1")
         .build()
+
+    // ============================== Popular ===============================
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         if (page > 1) {
@@ -85,9 +86,13 @@ class Reimanga :
         return MangasPage(mangas, true)
     }
 
+    // =============================== Latest ===============================
+
     override fun latestUpdatesRequest(page: Int): Request = searchMangaRequest(page, "", getFilterList())
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
+
+    // =============================== Search ===============================
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith("https://")) {
@@ -168,6 +173,93 @@ class Reimanga :
     private val isFetchingTags = AtomicBoolean(false)
     private val tagFetchFailures = AtomicInteger(0)
 
+    override fun searchMangaParse(response: Response): MangasPage {
+        val data = response.parseAs<MangaList>()
+        val mangas = data.data.map { it.toSManga() }
+        val hasNextPage = data.pagination.hasNextPage()
+
+        return MangasPage(mangas, hasNextPage)
+    }
+
+    // =========================== Manga Details ============================
+
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        val mangaId = manga.url.substringAfterLast("-")
+
+        return GET("$baseUrl/api/manga/$mangaId", headers)
+    }
+
+    override fun getMangaUrl(manga: SManga): String = "$baseUrl/manga/${manga.url}"
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val data = response.parseAs<MangaPage>()
+
+        return data.manga.toSManga()
+    }
+
+    override fun relatedMangaListRequest(manga: SManga): Request {
+        val mangaId = manga.url.substringAfterLast("-")
+
+        return GET("$baseUrl/api/manga/$mangaId/similar", headers)
+    }
+
+    override fun relatedMangaListParse(response: Response): List<SManga> {
+        val data = response.parseAs<List<Manga>>()
+
+        return data.map { it.toSManga() }
+    }
+
+    // ============================ Chapter List ============================
+
+    override fun chapterListRequest(manga: SManga): Request {
+        val mangaUrl = getMangaUrl(manga)
+        val headers = rscHeaders.newBuilder()
+            .set("Referer", mangaUrl)
+            .build()
+        return GET(mangaUrl, headers)
+    }
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val data = response.extractNextJs<ChapterList>()
+            ?: return emptyList()
+
+        return data.chapters.map { chapter ->
+            SChapter.create().apply {
+                url = "${data.manga.slug}-${data.manga.id}/${chapter.id}"
+                name = chapter.name.replace(spaceRegex, " ").trim()
+                date_upload = dateFormat.tryParse(chapter.uploadDate ?: chapter.updatedAt ?: chapter.createdAt)
+            }
+        }
+    }
+
+    private val spaceRegex = Regex("""\s+""")
+
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+
+    // ============================= Page List ==============================
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        val chapterUrl = getChapterUrl(chapter)
+        val headers = rscHeaders.newBuilder()
+            .set("Referer", chapterUrl)
+            .build()
+        return GET(chapterUrl, headers)
+    }
+
+    override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/manga/${chapter.url}"
+
+    override fun pageListParse(response: Response): List<Page> {
+        val data = response.extractNextJs<Images>()
+
+        return data?.images.orEmpty().mapIndexed { index, image ->
+            Page(index, imageUrl = image.url)
+        }
+    }
+
+    // ============================== Filters ===============================
+
     override fun getFilterList(): FilterList {
         val filters = mutableListOf(
             SortFilter(),
@@ -235,72 +327,7 @@ class Reimanga :
         return FilterList(filters)
     }
 
-    override fun searchMangaParse(response: Response): MangasPage {
-        val data = response.parseAs<MangaList>()
-        val mangas = data.data.map { it.toSManga() }
-        val hasNextPage = data.pagination.hasNextPage()
-
-        return MangasPage(mangas, hasNextPage)
-    }
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        val mangaId = manga.url.substringAfterLast("-")
-
-        return GET("$baseUrl/api/manga/$mangaId", headers)
-    }
-
-    override fun getMangaUrl(manga: SManga): String = "$baseUrl/manga/${manga.url}"
-
-    override fun mangaDetailsParse(response: Response): SManga {
-        val data = response.parseAs<MangaPage>()
-
-        return data.manga.toSManga()
-    }
-
-    override fun relatedMangaListRequest(manga: SManga): Request {
-        val mangaId = manga.url.substringAfterLast("-")
-
-        return GET("$baseUrl/api/manga/$mangaId/similar", headers)
-    }
-
-    override fun relatedMangaListParse(response: Response): List<SManga> {
-        val data = response.parseAs<List<Manga>>()
-
-        return data.map { it.toSManga() }
-    }
-
-    override fun chapterListRequest(manga: SManga): Request = GET(getMangaUrl(manga), rscHeaders)
-
-    override fun chapterListParse(response: Response): List<SChapter> {
-        val data = response.extractNextJs<ChapterList>()
-            ?: return emptyList()
-
-        return data.chapters.map { chapter ->
-            SChapter.create().apply {
-                url = "${data.manga.slug}-${data.manga.id}/${chapter.id}"
-                name = chapter.name.replace(spaceRegex, " ").trim()
-                date_upload = dateFormat.tryParse(chapter.uploadDate ?: chapter.updatedAt ?: chapter.createdAt)
-            }
-        }
-    }
-
-    private val spaceRegex = Regex("""\s+""")
-
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-
-    override fun pageListRequest(chapter: SChapter): Request = GET(getChapterUrl(chapter), rscHeaders)
-
-    override fun getChapterUrl(chapter: SChapter): String = "$baseUrl/manga/${chapter.url}"
-
-    override fun pageListParse(response: Response): List<Page> {
-        val data = response.extractNextJs<Images>()
-
-        return data?.images.orEmpty().mapIndexed { index, image ->
-            Page(index, imageUrl = image.url)
-        }
-    }
+    // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val cachedTags = runCatching {
