@@ -353,7 +353,7 @@ class TheBlank :
     override fun pageListParse(response: Response): List<Page> {
         val props = response.parseAs<PageListResponse>().props
 
-        val signedUrls = props.findSignedUrls()
+        val signedUrls = findSignedUrlsRecursive(props)
             ?: throw IllegalStateException("signed_urls not found")
 
         val keyPair = generateKeyPair()
@@ -379,25 +379,45 @@ class TheBlank :
         }
     }
 
-    private fun PageListResponse.Props.findSignedUrls(): List<String>? = sequenceOf(
-        signedUrls, pages, images,
-        chapter?.signedUrls, chapter?.pages, chapter?.images,
-        chapter?.data?.signedUrls, chapter?.data?.pages, chapter?.data?.images,
-        serie?.chapter?.signedUrls, serie?.chapter?.pages, serie?.chapter?.images,
-        serie?.chapter?.data?.signedUrls, serie?.chapter?.data?.pages, serie?.chapter?.data?.images,
-    ).filterNotNull()
-        .mapNotNull { it.extractUrls() }
-        .firstOrNull()
+    private fun findSignedUrlsRecursive(element: JsonElement): List<String>? {
+        if (element is JsonObject) {
+            val keys = listOf("signed_urls", "pages", "images", "data", "serie", "chapter", "signed_url")
+            for (key in keys) {
+                val child = element[key] ?: continue
+                if (key == "signed_urls" || key == "pages" || key == "images") {
+                    val urls = child.extractUrls()
+                    if (urls != null) return urls
+                }
+                val found = findSignedUrlsRecursive(child)
+                if (found != null) return found
+            }
+
+            // Fallback: search all object keys
+            for (value in element.values) {
+                val found = findSignedUrlsRecursive(value)
+                if (found != null) return found
+            }
+        } else if (element is JsonArray) {
+            val urls = element.extractUrls()
+            if (urls != null) return urls
+
+            for (child in element) {
+                val found = findSignedUrlsRecursive(child)
+                if (found != null) return found
+            }
+        }
+        return null
+    }
 
     private fun JsonElement.extractUrls(): List<String>? {
         if (this !is JsonArray) return null
         return this.mapNotNull { element ->
             when (element) {
-                is JsonPrimitive -> if (element.isString) element.content else null
+                is JsonPrimitive -> if (element.isString && element.content.contains("https://")) element.content else null
                 is JsonObject -> {
-                    sequenceOf("signed_url", "url", "image", "file", "path")
+                    listOf("signed_url", "url", "image", "file", "path", "src", "link")
                         .mapNotNull { key -> element[key] as? JsonPrimitive }
-                        .filter { it.isString }
+                        .filter { it.isString && it.content.contains("https://") }
                         .map { it.content }
                         .firstOrNull()
                 }
