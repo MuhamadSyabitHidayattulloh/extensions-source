@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.en.theblank
 import eu.kanade.tachiyomi.source.model.SManga
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
 import java.security.KeyPair
 
@@ -95,13 +96,32 @@ class PageListResponse(
     @Serializable
     class Props(
         @SerialName("signed_urls")
-        val signedUrls: List<String>? = null,
+        val signedUrls: JsonElement? = null,
+        val pages: JsonElement? = null,
+        val images: JsonElement? = null,
         val chapter: Chapter? = null,
+        val serie: Serie? = null,
     ) {
         @Serializable
         class Chapter(
             @SerialName("signed_urls")
-            val signedUrls: List<String>,
+            val signedUrls: JsonElement? = null,
+            val pages: JsonElement? = null,
+            val images: JsonElement? = null,
+            val data: Data? = null,
+        ) {
+            @Serializable
+            class Data(
+                @SerialName("signed_urls")
+                val signedUrls: JsonElement? = null,
+                val pages: JsonElement? = null,
+                val images: JsonElement? = null,
+            )
+        }
+
+        @Serializable
+        class Serie(
+            val chapter: Chapter? = null,
         )
     }
 }

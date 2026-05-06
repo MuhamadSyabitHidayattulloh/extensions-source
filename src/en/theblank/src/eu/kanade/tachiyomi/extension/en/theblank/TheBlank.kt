@@ -23,6 +23,10 @@ import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.toJsonString
 import keiyoushi.utils.tryParse
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
@@ -348,7 +352,8 @@ class TheBlank :
 
     override fun pageListParse(response: Response): List<Page> {
         val props = response.parseAs<PageListResponse>().props
-        val signedUrls = props.signedUrls ?: props.chapter?.signedUrls
+
+        val signedUrls = props.findSignedUrls()
             ?: throw IllegalStateException("signed_urls not found")
 
         val keyPair = generateKeyPair()
@@ -362,7 +367,7 @@ class TheBlank :
 
             val fileName = httpUrl.queryParameter("path")
                 ?.substringAfterLast('/')
-                ?: throw IllegalStateException("Image URL missing 'path' parameter: $img")
+                ?: httpUrl.pathSegments.last()
 
             Page(
                 index = idx,
@@ -372,6 +377,33 @@ class TheBlank :
                     .toString(),
             )
         }
+    }
+
+    private fun PageListResponse.Props.findSignedUrls(): List<String>? = sequenceOf(
+        signedUrls, pages, images,
+        chapter?.signedUrls, chapter?.pages, chapter?.images,
+        chapter?.data?.signedUrls, chapter?.data?.pages, chapter?.data?.images,
+        serie?.chapter?.signedUrls, serie?.chapter?.pages, serie?.chapter?.images,
+        serie?.chapter?.data?.signedUrls, serie?.chapter?.data?.pages, serie?.chapter?.data?.images,
+    ).filterNotNull()
+        .mapNotNull { it.extractUrls() }
+        .firstOrNull()
+
+    private fun JsonElement.extractUrls(): List<String>? {
+        if (this !is JsonArray) return null
+        return this.mapNotNull { element ->
+            when (element) {
+                is JsonPrimitive -> if (element.isString) element.content else null
+                is JsonObject -> {
+                    sequenceOf("signed_url", "url", "image", "file", "path")
+                        .mapNotNull { key -> element[key] as? JsonPrimitive }
+                        .filter { it.isString }
+                        .map { it.content }
+                        .firstOrNull()
+                }
+                else -> null
+            }
+        }.takeIf { it.isNotEmpty() }
     }
 
     private fun fetchSessionId(publicKeyBase64: String): String {
