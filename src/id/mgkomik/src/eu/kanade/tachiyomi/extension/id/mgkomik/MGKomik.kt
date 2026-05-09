@@ -18,22 +18,15 @@ class MGKomik :
         "id",
         SimpleDateFormat("dd MMM yy", Locale.US),
     ) {
-    override val useLoadMoreRequest = LoadMoreStrategy.Always
+    override val useLoadMoreRequest = LoadMoreStrategy.Never
 
     override val useNewChapterEndpoint = false
 
     override val mangaSubString = "komik"
 
-    private val randomXwu = randomString((10..20).random())
-
     override fun headersBuilder() = super.headersBuilder().apply {
         set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-        set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
-        set("Sec-Fetch-Dest", "document")
-        set("Sec-Fetch-Mode", "navigate")
-        set("Sec-Fetch-Site", "none")
-        set("Upgrade-Insecure-Requests", "1")
-        set("X-Requested-With", randomXwu)
+        set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
     }
 
     override val client = network.cloudflareClient.newBuilder()
@@ -47,6 +40,10 @@ class MGKomik :
                     set("Sec-Fetch-Mode", "cors")
                     set("Sec-Fetch-Site", "same-origin")
                 } else {
+                    set("Sec-Fetch-Dest", "document")
+                    set("Sec-Fetch-Mode", "navigate")
+                    set("Sec-Fetch-Site", "none")
+                    set("Upgrade-Insecure-Requests", "1")
                     removeAll("X-Requested-With")
                 }
             }.build()
@@ -55,13 +52,6 @@ class MGKomik :
         }
         .rateLimit(9, 2)
         .build()
-
-    private fun randomString(length: Int): String {
-        val charPool = ('a'..'z') + ('A'..'Z')
-        return (1..length)
-            .map { charPool.random() }
-            .joinToString("")
-    }
 
     // ================================== Popular ======================================
 
