@@ -24,24 +24,44 @@ class MGKomik :
 
     override val mangaSubString = "komik"
 
+    private val randomXwu = randomString((10..20).random())
+
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("Sec-Fetch-Site", "same-origin")
-        set("Upgrade-Insecure-Requests", "1")
-        set("Referer", "$baseUrl/")
+        set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+        set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
+        set("Sec-Fetch-Dest", "document")
+        set("Sec-Fetch-Mode", "navigate")
         set("Sec-Fetch-Site", "none")
+        set("Upgrade-Insecure-Requests", "1")
+        set("X-Requested-With", randomXwu)
     }
 
     override val client = network.cloudflareClient.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
             val headers = request.headers.newBuilder().apply {
-                removeAll("X-Requested-With")
+                val isXhr = request.header("X-Requested-With") == "XMLHttpRequest"
+
+                if (isXhr) {
+                    set("Sec-Fetch-Dest", "empty")
+                    set("Sec-Fetch-Mode", "cors")
+                    set("Sec-Fetch-Site", "same-origin")
+                } else {
+                    removeAll("X-Requested-With")
+                }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
         }
         .rateLimit(9, 2)
         .build()
+
+    private fun randomString(length: Int): String {
+        val charPool = ('a'..'z') + ('A'..'Z')
+        return (1..length)
+            .map { charPool.random() }
+            .joinToString("")
+    }
 
     // ================================== Popular ======================================
 
