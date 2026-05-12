@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.id.holotoon
 import android.util.Base64
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -38,12 +39,18 @@ class Holotoon :
 
     override val client = network.cloudflareClient.newBuilder()
         .addInterceptor(::imageIntercept)
+        .rateLimit(3)
         .build()
 
     override fun headersBuilder() = super.headersBuilder()
         .setRandomUserAgent()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
         .add("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
+        .add("Sec-Fetch-Dest", "document")
+        .add("Sec-Fetch-Mode", "navigate")
+        .add("Sec-Fetch-Site", "none")
+        .add("Sec-Fetch-User", "?1")
+        .add("Upgrade-Insecure-Requests", "1")
 
     // ============================== Popular ==============================
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/browse?sort=popular&page=$page", headers)
@@ -95,10 +102,10 @@ class Holotoon :
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
 
     // ============================== Details ==============================
-    override fun getMangaUrl(manga: SManga): String = baseUrl + fixMangaUrl(manga.url)
+    override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        // Migration from old web urls to the new api based
+        // Migration from old web urls to the new one
         if (manga.url.contains("/komik/")) {
             throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
         }
@@ -142,7 +149,7 @@ class Holotoon :
 
     // =============================== Pages ===============================
     override fun pageListRequest(chapter: SChapter): Request {
-        // Migration from old web urls to the new api based
+        // Migration from old web urls to the new one
         if (chapter.url.contains("/komik/")) {
             throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
         }
@@ -182,10 +189,17 @@ class Holotoon :
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
+    // =============================== Image ===============================
     override fun imageRequest(page: Page): Request {
         val isEncrypted = page.imageUrl!!.contains("#")
 
         val newHeaders = headers.newBuilder().apply {
+            removeAll("Sec-Fetch-Dest")
+            removeAll("Sec-Fetch-Mode")
+            removeAll("Sec-Fetch-Site")
+            removeAll("Sec-Fetch-User")
+            removeAll("Upgrade-Insecure-Requests")
+
             if (page.url.isNotEmpty()) {
                 set("Referer", page.url)
             }
@@ -217,8 +231,6 @@ class Holotoon :
     )
 
     // ============================= Utilities =============================
-
-    private fun fixMangaUrl(url: String): String = url.replace("/komik/", "/comic/")
 
     private fun parseDate(dateStr: String?): Long {
         if (dateStr == null) return 0L
