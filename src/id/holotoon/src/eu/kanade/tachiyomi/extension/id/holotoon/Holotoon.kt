@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.id.holotoon
 
 import android.util.Base64
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
-import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -12,8 +10,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import keiyoushi.lib.randomua.addRandomUAPreference
-import keiyoushi.lib.randomua.setRandomUserAgent
 import keiyoushi.utils.firstInstanceOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -25,9 +21,7 @@ import okio.ForwardingSource
 import okio.buffer
 import java.util.Calendar
 
-class Holotoon :
-    HttpSource(),
-    ConfigurableSource {
+class Holotoon : HttpSource() {
 
     override val name = "Holotoon"
 
@@ -41,16 +35,6 @@ class Holotoon :
         .addInterceptor(::imageIntercept)
         .rateLimit(3)
         .build()
-
-    override fun headersBuilder() = super.headersBuilder()
-        .setRandomUserAgent()
-        .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-        .add("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
-        .add("Sec-Fetch-Dest", "document")
-        .add("Sec-Fetch-Mode", "navigate")
-        .add("Sec-Fetch-Site", "none")
-        .add("Sec-Fetch-User", "?1")
-        .add("Upgrade-Insecure-Requests", "1")
 
     // ============================== Popular ==============================
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/browse?sort=popular&page=$page", headers)
@@ -105,7 +89,7 @@ class Holotoon :
     override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        // Migration from old web urls to the new one
+        // Migration from old web urls to the new api based
         if (manga.url.contains("/komik/")) {
             throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
         }
@@ -149,7 +133,7 @@ class Holotoon :
 
     // =============================== Pages ===============================
     override fun pageListRequest(chapter: SChapter): Request {
-        // Migration from old web urls to the new one
+        // Migration from old web urls to the new api based
         if (chapter.url.contains("/komik/")) {
             throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
         }
@@ -189,31 +173,18 @@ class Holotoon :
 
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
-    // =============================== Image ===============================
     override fun imageRequest(page: Page): Request {
         val isEncrypted = page.imageUrl!!.contains("#")
 
         val newHeaders = headers.newBuilder().apply {
-            removeAll("Sec-Fetch-Dest")
-            removeAll("Sec-Fetch-Mode")
-            removeAll("Sec-Fetch-Site")
-            removeAll("Sec-Fetch-User")
-            removeAll("Upgrade-Insecure-Requests")
-
             if (page.url.isNotEmpty()) {
                 set("Referer", page.url)
             }
 
             if (isEncrypted) {
                 set("Accept", "*/*")
-                set("Sec-Fetch-Dest", "empty")
-                set("Sec-Fetch-Mode", "cors")
-                set("Sec-Fetch-Site", "same-origin")
             } else {
                 set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-                set("Sec-Fetch-Dest", "image")
-                set("Sec-Fetch-Mode", "no-cors")
-                set("Sec-Fetch-Site", "same-origin")
             }
         }.build()
 
@@ -311,9 +282,5 @@ class Holotoon :
         return response.newBuilder()
             .body(xorSource.buffer().asResponseBody(contentType))
             .build()
-    }
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        screen.addRandomUAPreference()
     }
 }
