@@ -1,9 +1,7 @@
 ext {
     extName = 'Holotoon'
     extClass = '.Holotoon'
-    baseUrl = 'https://v1.holotoon.site'
-    overrideVersionCode = 0
-    extVersionCode = 51
+    extVersionCode = 50
     isNsfw = true
 }
 

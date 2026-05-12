@@ -22,6 +22,7 @@ import okhttp3.ResponseBody.Companion.asResponseBody
 import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
+import java.util.Calendar
 
 class Holotoon :
     HttpSource(),
@@ -43,11 +44,6 @@ class Holotoon :
         .setRandomUserAgent()
         .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
         .add("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
-        .add("Upgrade-Insecure-Requests", "1")
-        .add("Sec-Fetch-Dest", "document")
-        .add("Sec-Fetch-Mode", "navigate")
-        .add("Sec-Fetch-Site", "same-origin")
-        .add("Sec-Fetch-User", "?1")
 
     // ============================== Popular ==============================
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/browse?sort=popular&page=$page", headers)
@@ -101,7 +97,14 @@ class Holotoon :
     // ============================== Details ==============================
     override fun getMangaUrl(manga: SManga): String = baseUrl + fixMangaUrl(manga.url)
 
-    override fun mangaDetailsRequest(manga: SManga): Request = GET(baseUrl + fixMangaUrl(manga.url), headers)
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        // Migration from old web urls to the new api based
+        if (manga.url.contains("/komik/")) {
+            throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
+        }
+
+        return GET(baseUrl + manga.url, headers)
+    }
 
     override fun mangaDetailsParse(response: Response): SManga {
         val document = response.asJsoup()
@@ -112,18 +115,19 @@ class Holotoon :
             description = document.selectFirst("#synopsis-text")?.text()
             genre = document.select("a[href*=/browse?genre=]").joinToString(", ") { it.text() }
 
-            val statusText = document.selectFirst(".flex.items-start.gap-3 span.border")?.text()?.lowercase() ?: ""
-            status = when {
-                statusText.contains("ongoing") -> SManga.ONGOING
-                statusText.contains("completed") -> SManga.COMPLETED
-                statusText.contains("hiatus") -> SManga.ON_HIATUS
-                else -> SManga.UNKNOWN
-            }
+            status = document.selectFirst(".flex.items-start.gap-3 span.border")?.text()?.lowercase()?.let {
+                when {
+                    it.contains("ongoing") -> SManga.ONGOING
+                    it.contains("completed") -> SManga.COMPLETED
+                    it.contains("hiatus") -> SManga.ON_HIATUS
+                    else -> SManga.UNKNOWN
+                }
+            } ?: SManga.UNKNOWN
         }
     }
 
     // ============================= Chapters ==============================
-    override fun chapterListRequest(manga: SManga): Request = GET(baseUrl + fixMangaUrl(manga.url), headers)
+    override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
@@ -131,18 +135,57 @@ class Holotoon :
             SChapter.create().apply {
                 setUrlWithoutDomain(element.absUrl("href"))
                 name = element.select(".chapter-link").joinToString(" ") { it.text() }
-                date_upload = parseDate(element.selectFirst("span.text-right")?.text() ?: "")
+                date_upload = parseDate(element.selectFirst("span.text-right")?.text())
             }
         }
     }
 
     // =============================== Pages ===============================
+    override fun pageListRequest(chapter: SChapter): Request {
+        // Migration from old web urls to the new api based
+        if (chapter.url.contains("/komik/")) {
+            throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
+        }
+
+        return GET(baseUrl + chapter.url, headers)
+    }
+
+    override fun pageListParse(response: Response): List<Page> {
+        val document = response.asJsoup()
+        val referer = response.request.url.toString()
+
+        val pageElements = document.select("#reader-pages [data-sec-src], #reader-pages img[src]:not([src='']), #reader-pages img[data-src]")
+
+        if (pageElements.isEmpty()) {
+            val title = document.title()
+            if (title.contains("Just a moment", true) || title.contains("Cloudflare", true)) {
+                throw Exception("Tolong selesaikan Captcha di WebView")
+            }
+
+            throw Exception("Tidak ada halaman ditemukan. Kemungkinan chapter kosong.")
+        }
+
+        return pageElements.mapNotNull { element ->
+            val secSrc = element.attr("data-sec-src").trim()
+            val xorKey = element.attr("data-xor-key").trim()
+
+            if (secSrc.isNotEmpty() && xorKey.isNotEmpty()) {
+                element.absUrl("data-sec-src") + "#" + xorKey
+            } else {
+                val src = element.attr("abs:data-src").takeIf { it.isNotEmpty() } ?: element.absUrl("src")
+                src.takeIf { it.isNotEmpty() }
+            }
+        }.distinct().mapIndexed { index, url ->
+            Page(index, url = referer, imageUrl = url)
+        }
+    }
+
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
+
     override fun imageRequest(page: Page): Request {
         val isEncrypted = page.imageUrl!!.contains("#")
 
         val newHeaders = headers.newBuilder().apply {
-            removeAll("Upgrade-Insecure-Requests")
-            removeAll("Sec-Fetch-User")
             if (page.url.isNotEmpty()) {
                 set("Referer", page.url)
             }
@@ -163,43 +206,6 @@ class Holotoon :
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    override fun pageListParse(response: Response): List<Page> {
-        val document = response.asJsoup()
-        val referer = response.request.url.toString()
-
-        val pageElements = document.select("#reader-pages [data-sec-src], #reader-pages img[src]:not([src='']), #reader-pages img[data-src]")
-
-        if (pageElements.isEmpty()) {
-            val title = document.title()
-            if (title.contains("Just a moment", true) || title.contains("Cloudflare", true)) {
-                throw Exception("Tolong selesaikan Captcha di WebView")
-            }
-
-            val text = document.text()
-            if (text.contains("Login required", true) || text.contains("Premium", true) || document.select("script:containsData(open-login-modal)").isNotEmpty()) {
-                throw Exception("Chapter ini membutuhkan Login atau Koin. Silakan buka di WebView.")
-            }
-
-            throw Exception("Tidak ada halaman ditemukan. Kemungkinan chapter kosong atau dikunci.")
-        }
-
-        return pageElements.mapNotNull { element ->
-            val secSrc = element.attr("data-sec-src").trim()
-            val xorKey = element.attr("data-xor-key").trim()
-
-            if (secSrc.isNotEmpty() && xorKey.isNotEmpty()) {
-                element.absUrl("data-sec-src") + "#" + xorKey
-            } else {
-                val src = element.attr("abs:data-src").takeIf { it.isNotEmpty() } ?: element.absUrl("src")
-                src.takeIf { it.isNotEmpty() }
-            }
-        }.distinct().mapIndexed { index, url ->
-            Page(index, url = referer, imageUrl = url)
-        }
-    }
-
-    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
-
     // ============================== Filters ==============================
     override fun getFilterList() = FilterList(
         SortFilter(),
@@ -214,40 +220,23 @@ class Holotoon :
 
     private fun fixMangaUrl(url: String): String = url.replace("/komik/", "/comic/")
 
-    private fun parseDate(dateStr: String): Long {
+    private fun parseDate(dateStr: String?): Long {
+        if (dateStr == null) return 0L
         val trimmed = dateStr.trim().lowercase()
-        return when {
-            trimmed.contains("baru saja") -> System.currentTimeMillis()
-            trimmed.contains("detik") -> {
-                val seconds = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - seconds * 1000L
+        val value = trimmed.split(" ").firstOrNull()?.toIntOrNull() ?: return 0L
+
+        return Calendar.getInstance().apply {
+            when {
+                trimmed.contains("detik") -> add(Calendar.SECOND, -value)
+                trimmed.contains("menit") -> add(Calendar.MINUTE, -value)
+                trimmed.contains("jam") -> add(Calendar.HOUR_OF_DAY, -value)
+                trimmed.contains("hari") -> add(Calendar.DATE, -value)
+                trimmed.contains("minggu") -> add(Calendar.DATE, -value * 7)
+                trimmed.contains("bulan") -> add(Calendar.MONTH, -value)
+                trimmed.contains("tahun") -> add(Calendar.YEAR, -value)
+                else -> return 0L
             }
-            trimmed.contains("menit") -> {
-                val minutes = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - minutes * 60000L
-            }
-            trimmed.contains("jam") -> {
-                val hours = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - hours * 3600000L
-            }
-            trimmed.contains("hari") -> {
-                val days = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - days * 86400000L
-            }
-            trimmed.contains("minggu") -> {
-                val weeks = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - weeks * 7 * 86400000L
-            }
-            trimmed.contains("bulan") -> {
-                val months = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - months * 30 * 86400000L
-            }
-            trimmed.contains("tahun") -> {
-                val years = trimmed.substringBefore(" ").toLongOrNull() ?: 0
-                System.currentTimeMillis() - years * 365 * 86400000L
-            }
-            else -> 0L
-        }
+        }.timeInMillis
     }
 
     private fun imageIntercept(chain: Interceptor.Chain): Response {
