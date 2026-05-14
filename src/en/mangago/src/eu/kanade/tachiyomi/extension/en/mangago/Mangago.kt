@@ -214,23 +214,22 @@ class Mangago :
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         return document.select("table#chapter_table > tbody > tr, table.uk-table > tbody > tr")
-            .map { element ->
-                SChapter.create().apply {
-                    val link = element.select("a.chico")
+            .mapNotNull { element ->
+                val link = element.selectFirst("a.chico") ?: return@mapNotNull null
 
+                SChapter.create().apply {
                     val urlOriginal = link.attr("href")
                     if (urlOriginal.startsWith("http")) url = urlOriginal else setUrlWithoutDomain(urlOriginal)
 
-                    val chapterName = link.text().trim()
+                    val chapterName = link.text().replace(whitespaceRegex, " ").trim()
                     date_upload = runCatching {
                         dateFormat.parse(element.select("td:last-child").text().trim())?.time
                     }.getOrNull() ?: 0L
-                    scanlator = element.selectFirst("td.no a, td.uk-table-shrink a")?.text()?.trim()
-                    if (scanlator.isNullOrBlank()) {
-                        scanlator = "Unknown"
-                    }
+                    scanlator = element.selectFirst("td.no, td.uk-table-shrink:not(:last-child)")?.text()?.trim()
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "Unknown"
 
-                    name = if (scanlator != "Unknown") "$chapterName ($scanlator)" else chapterName
+                    name = "$chapterName ($scanlator)"
                 }
             }
     }
@@ -602,6 +601,8 @@ class Mangago :
 
     private val colsRegex =
         Regex("""var\s*widthnum\s*=\s*heightnum\s*=\s*(\d+);""")
+
+    private val whitespaceRegex = Regex("\\s+")
 
     private val replacePosBytecode by lazy {
         QuickJs.create().use {
