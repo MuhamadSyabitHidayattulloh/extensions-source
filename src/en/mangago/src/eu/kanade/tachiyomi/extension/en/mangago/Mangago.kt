@@ -219,8 +219,6 @@ class Mangago :
 
                 SChapter.create().apply {
                     val urlOriginal = link.attr("href")
-                    if (urlOriginal.startsWith("http")) url = urlOriginal else setUrlWithoutDomain(urlOriginal)
-
                     val chapterName = link.text().replace(whitespaceRegex, " ").trim()
                     date_upload = runCatching {
                         dateFormat.parse(element.select("td:last-child").text().trim())?.time
@@ -229,7 +227,22 @@ class Mangago :
                         ?.takeIf { it.isNotBlank() }
                         ?: "Unknown"
 
-                    name = "$chapterName ($scanlator)"
+                    val normalizedUrl = if (urlOriginal.startsWith("http")) {
+                        urlOriginal.toHttpUrl().newBuilder()
+                            .host("www.$domain")
+                            .scheme("https")
+                            .setQueryParameter("scanlator", scanlator)
+                            .build()
+                            .toString()
+                    } else {
+                        val httpUrl = (baseUrl + urlOriginal).toHttpUrl().newBuilder()
+                            .setQueryParameter("scanlator", scanlator)
+                            .build()
+                        httpUrl.encodedPath + (httpUrl.encodedQuery?.let { "?$it" } ?: "")
+                    }
+
+                    url = normalizedUrl
+                    name = chapterName
                 }
             }
     }
