@@ -220,7 +220,8 @@ class Mangago :
 
                     val urlOriginal = link.attr("href")
                     if (urlOriginal.startsWith("http")) url = urlOriginal else setUrlWithoutDomain(urlOriginal)
-                    name = link.text().trim()
+
+                    val chapterName = link.text().trim()
                     date_upload = runCatching {
                         dateFormat.parse(element.select("td:last-child").text().trim())?.time
                     }.getOrNull() ?: 0L
@@ -228,6 +229,8 @@ class Mangago :
                     if (scanlator.isNullOrBlank()) {
                         scanlator = "Unknown"
                     }
+
+                    name = if (scanlator != "Unknown") "$chapterName ($scanlator)" else chapterName
                 }
             }
     }
