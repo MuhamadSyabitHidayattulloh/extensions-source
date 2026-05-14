@@ -18,24 +18,37 @@ class MGKomik :
         "id",
         SimpleDateFormat("dd MMM yy", Locale.US),
     ) {
-    override val useLoadMoreRequest = LoadMoreStrategy.Always
+    override val useLoadMoreRequest = LoadMoreStrategy.Never
 
     override val useNewChapterEndpoint = false
 
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("Sec-Fetch-Site", "same-origin")
-        set("Upgrade-Insecure-Requests", "1")
-        set("Referer", "$baseUrl/")
-        set("Sec-Fetch-Site", "none")
+        set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36")
+        set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+        set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
+        set("Sec-CH-UA", "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"")
+        set("Sec-CH-UA-Mobile", "?0")
+        set("Sec-CH-UA-Platform", "\"Windows\"")
     }
 
     override val client = network.cloudflareClient.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
+            val url = request.url.toString()
             val headers = request.headers.newBuilder().apply {
-                removeAll("X-Requested-With")
+                if (url.contains("admin-ajax.php") || url.contains("/ajax/chapters")) {
+                    set("X-Requested-With", "XMLHttpRequest")
+                    set("Sec-Fetch-Dest", "empty")
+                    set("Sec-Fetch-Mode", "cors")
+                    set("Sec-Fetch-Site", "same-origin")
+                } else {
+                    removeAll("X-Requested-With")
+                    set("Sec-Fetch-Dest", "document")
+                    set("Sec-Fetch-Mode", "navigate")
+                    set("Sec-Fetch-Site", "none")
+                }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
