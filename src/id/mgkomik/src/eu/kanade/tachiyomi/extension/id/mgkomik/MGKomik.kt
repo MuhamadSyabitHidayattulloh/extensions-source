@@ -25,12 +25,12 @@ class MGKomik :
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36")
-        set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+        set("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36")
         set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
         set("Sec-CH-UA", "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"")
-        set("Sec-CH-UA-Mobile", "?0")
-        set("Sec-CH-UA-Platform", "\"Windows\"")
+        set("Sec-CH-UA-Mobile", "?1")
+        set("Sec-CH-UA-Platform", "\"Android\"")
+        set("Referer", "https://mgkomik.id/")
     }
 
     override val client = network.cloudflareClient.newBuilder()
@@ -38,22 +38,38 @@ class MGKomik :
             val request = chain.request()
             val url = request.url.toString()
             val headers = request.headers.newBuilder().apply {
-                if (url.contains("admin-ajax.php") || url.contains("/ajax/chapters")) {
-                    set("X-Requested-With", "XMLHttpRequest")
-                    set("Sec-Fetch-Dest", "empty")
-                    set("Sec-Fetch-Mode", "cors")
-                    set("Sec-Fetch-Site", "same-origin")
-                } else {
-                    removeAll("X-Requested-With")
-                    set("Sec-Fetch-Dest", "document")
-                    set("Sec-Fetch-Mode", "navigate")
-                    set("Sec-Fetch-Site", "none")
+                when {
+                    url.contains("admin-ajax.php") || url.contains("/ajax/chapters") -> {
+                        set("Accept", "*/*")
+                        set("X-Requested-With", "XMLHttpRequest")
+                        set("Sec-Fetch-Dest", "empty")
+                        set("Sec-Fetch-Mode", "cors")
+                        set("Sec-Fetch-Site", "same-origin")
+                        set("Priority", "u=1")
+                    }
+                    url.contains(baseUrl) && (url.contains(".jpg") || url.contains(".png") || url.contains(".webp") || url.contains(".jpeg")) -> {
+                        set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                        set("Sec-Fetch-Dest", "image")
+                        set("Sec-Fetch-Mode", "no-cors")
+                        set("Sec-Fetch-Site", "same-origin")
+                        set("Priority", "u=1, i")
+                    }
+                    else -> {
+                        set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                        removeAll("X-Requested-With")
+                        set("Sec-Fetch-Dest", "document")
+                        set("Sec-Fetch-Mode", "navigate")
+                        set("Sec-Fetch-Site", "none")
+                        set("Sec-Fetch-User", "?1")
+                        set("Upgrade-Insecure-Requests", "1")
+                        set("Priority", "u=0, i")
+                    }
                 }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
         }
-        .rateLimit(9, 2)
+        .rateLimit(3)
         .build()
 
     // ================================== Popular ======================================
