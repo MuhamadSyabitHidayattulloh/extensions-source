@@ -1,9 +1,9 @@
 ext {
     extName = 'Rimu Scans'
     extClass = '.RimuScans'
-    baseUrl = 'https://rimu-scans.fr'
-    extVersionCode = 34
+    baseUrl = 'https://rimuscan.fr'
+    extVersionCode = 35
     isNsfw = false
 }
 
-apply from: "$rootDir/common.gradle"
+apply plugin: "kei.plugins.extension.legacy"

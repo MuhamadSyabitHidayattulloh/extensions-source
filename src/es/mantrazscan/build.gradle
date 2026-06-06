@@ -1,8 +1,8 @@
 ext {
     extName = 'Manhwa Scan'
     extClass = '.ManhwaScan'
-    extVersionCode = 55
+    extVersionCode = 56
     isNsfw = true
 }
 
-apply from: "$rootDir/common.gradle"
+apply plugin: "kei.plugins.extension.legacy"

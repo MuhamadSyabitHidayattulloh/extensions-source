@@ -38,7 +38,7 @@ class CManga :
 
     override val lang = "vi"
 
-    private val defaultBaseUrl = "https://cmangax16.com"
+    private val defaultBaseUrl = "https://cmangax17.com"
 
     override val baseUrl get() = getPrefBaseUrl()
 
@@ -55,7 +55,7 @@ class CManga :
         }
     }
 
-    override val client = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .rateLimit(5)
         .build()
 

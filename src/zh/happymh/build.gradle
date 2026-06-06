@@ -1,7 +1,7 @@
 ext {
     extName = 'Happymh'
     extClass = '.Happymh'
-    extVersionCode = 21
+    extVersionCode = 24
 }
 
-apply from: "$rootDir/common.gradle"
+apply plugin: "kei.plugins.extension.legacy"

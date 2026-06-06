@@ -25,13 +25,12 @@ class MGKomik :
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("Sec-Fetch-Site", "same-origin")
         set("Upgrade-Insecure-Requests", "1")
         set("Referer", "$baseUrl/")
         set("Sec-Fetch-Site", "none")
     }
 
-    override val client = network.cloudflareClient.newBuilder()
+    override val client = network.client.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
             val headers = request.headers.newBuilder().apply {
@@ -40,7 +39,7 @@ class MGKomik :
 
             chain.proceed(request.newBuilder().headers(headers).build())
         }
-        .rateLimit(9, 2)
+        .rateLimit(2)
         .build()
 
     // ================================== Popular ======================================

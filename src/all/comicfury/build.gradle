@@ -1,11 +1,11 @@
 ext {
     extName = 'Comic Fury'
     extClass = '.ComicFuryFactory'
-    extVersionCode = 7
+    extVersionCode = 8
     isNsfw = true
 }
 
-apply from: "$rootDir/common.gradle"
+apply plugin: "kei.plugins.extension.legacy"
 
 dependencies {
     implementation(project(':lib:textinterceptor'))

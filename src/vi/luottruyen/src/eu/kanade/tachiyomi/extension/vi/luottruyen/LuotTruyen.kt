@@ -31,13 +31,11 @@ class LuotTruyen :
 
     override val lang = "vi"
 
-    private val defaultBaseUrl = "https://luottruyen5.com"
+    private val defaultBaseUrl = "https://luottruyen7.com"
 
     override val baseUrl get() = getPrefBaseUrl()
 
     override val supportsLatest = true
-
-    override val client = network.cloudflareClient
 
     private val preferences: SharedPreferences = getPreferences()
 
