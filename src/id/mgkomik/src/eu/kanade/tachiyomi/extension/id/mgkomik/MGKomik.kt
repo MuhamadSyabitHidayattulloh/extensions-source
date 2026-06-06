@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SManga
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -25,16 +26,29 @@ class MGKomik :
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("Upgrade-Insecure-Requests", "1")
-        set("Referer", "$baseUrl/")
-        set("Sec-Fetch-Site", "none")
+        set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
     }
 
     override val client = network.client.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
+            val url = request.url
             val headers = request.headers.newBuilder().apply {
                 removeAll("X-Requested-With")
+                if (url.host == baseUrl.toHttpUrl().host &&
+                    url.pathSegments.any { it.contains("wp-content") || it.contains("uploads") }.not()
+                ) {
+                    set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                    set("Sec-Fetch-Dest", "document")
+                    set("Sec-Fetch-Mode", "navigate")
+                    set("Sec-Fetch-Site", "none")
+                    set("Upgrade-Insecure-Requests", "1")
+                } else {
+                    set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                    set("Sec-Fetch-Dest", "image")
+                    set("Sec-Fetch-Mode", "no-cors")
+                    set("Sec-Fetch-Site", if (url.host == baseUrl.toHttpUrl().host) "same-origin" else "cross-site")
+                }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
