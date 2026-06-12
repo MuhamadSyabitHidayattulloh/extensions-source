@@ -13,7 +13,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
-class PageDto(
+data class PageDto(
     @SerialName("image")
     val imageUrl: String,
     @SerialName("texts")
@@ -25,14 +25,16 @@ class PageDto(
 data class Dialog(
     val x: Float,
     val y: Float,
-    private val _width: Float,
-    private val _height: Float,
+    @SerialName("_width")
+    val widthValue: Float,
+    @SerialName("_height")
+    val heightValue: Float,
     val angle: Float = 0f,
     val textByLanguage: Map<String, String> = emptyMap(),
 ) {
     var scale: Float = 1F
-    val height: Float get() = scale * _height
-    val width: Float get() = scale * _width
+    val height: Float get() = scale * heightValue
+    val width: Float get() = scale * widthValue
 
     val text: String get() = textByLanguage["text"] ?: throw Exception("Dialog not found")
     fun getTextBy(language: Language) = when {

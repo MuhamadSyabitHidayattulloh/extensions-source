@@ -329,9 +329,12 @@ class Manhuarm(
         }
 
         val dialog = try {
-            val response = client.newCall(
+            val ocrUrl = vault[4].replace("\\/", "/")
+            val absOcrUrl = if (ocrUrl.startsWith("http")) ocrUrl else "$baseUrl/${ocrUrl.removePrefix("/")}"
+
+            val response = network.client.newCall(
                 POST(
-                    vault[4].replace("\\/", "/"),
+                    absOcrUrl,
                     jsonHeaders,
                     payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()),
                 ),
