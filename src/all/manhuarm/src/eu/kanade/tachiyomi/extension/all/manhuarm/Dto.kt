@@ -11,7 +11,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.IOException
 
 @Serializable
 class PageDto(
@@ -59,11 +58,11 @@ private object DialogListSerializer :
         return JsonArray(
             element.jsonArray.mapNotNull { jsonElement ->
                 try {
-                    val coordinates = getCoordinates(jsonElement) ?: return@mapNotNull null
+                    val coordinates = getCoordinates(jsonElement)
                     val textByLanguage = getDialogs(jsonElement)
 
                     // Validate coordinates array has at least 4 elements
-                    if (coordinates.size < 4) return@mapNotNull null
+                    if (coordinates == null || coordinates.size < 4) return@mapNotNull null
 
                     buildJsonObject {
                         put("x", coordinates[0])
@@ -79,11 +78,10 @@ private object DialogListSerializer :
         )
     }
 
-    private fun getCoordinates(element: JsonElement): JsonArray = when (element) {
+    private fun getCoordinates(element: JsonElement): JsonArray? = when (element) {
         is JsonArray -> element.jsonArray[0].jsonArray
 
         else -> element.jsonObject["box"]?.jsonArray
-            ?: throw IOException("Dialog box position not found")
     }
 
     private fun getDialogs(element: JsonElement): JsonObject = buildJsonObject {
