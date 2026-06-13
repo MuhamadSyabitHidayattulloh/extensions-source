@@ -11,7 +11,6 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.extension.all.manhuarm.interceptors.CloudflareWarmupInterceptor
 import eu.kanade.tachiyomi.extension.all.manhuarm.interceptors.ComposedImageInterceptor
-import eu.kanade.tachiyomi.extension.all.manhuarm.interceptors.OcrUrlInterceptor
 import eu.kanade.tachiyomi.extension.all.manhuarm.interceptors.TranslationInterceptor
 import eu.kanade.tachiyomi.extension.all.manhuarm.translator.bing.BingTranslator
 import eu.kanade.tachiyomi.extension.all.manhuarm.translator.google.GoogleTranslator
@@ -28,14 +27,12 @@ import keiyoushi.lib.i18n.Intl.Companion.createDefaultMessageFileName
 import keiyoushi.network.rateLimit
 import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
+import keiyoushi.utils.toJsonRequestBody
 import kotlinx.serialization.encodeToString
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import org.jsoup.nodes.Document
@@ -129,8 +126,6 @@ class Manhuarm(
         preferences.getString(TRANSLATOR_PROVIDER_PREF, translators.first())!!
 
     private val warmupInterceptor = CloudflareWarmupInterceptor(baseUrl, headers)
-
-    private val ocrUrlInterceptor by lazy { OcrUrlInterceptor(headers) }
 
     /**
      * This ensures that the `OkHttpClient` instance is only created when required, and it is rebuilt
@@ -306,27 +301,38 @@ class Manhuarm(
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = super.pageListParse(document)
-        val chapterUrl = document.location().toHttpUrl().newBuilder()
-            .removeAllQueryParameters("style")
-            .build()
+        val chapterUrl = document.location()
 
-        val ocrRequest = ocrUrlInterceptor.getOcrRequest(chapterUrl.toString()) ?: return pages
+        val vault = document.select("script").firstNotNullOfOrNull { script ->
+            VAULT_REGEX.find(script.data())?.groupValues?.get(1)
+                ?.split(",")
+                ?.map { it.trim().removeSurrounding("\"", "'") }
+        } ?: return pages
 
-        val jsonHeaders = Headers.Builder().apply {
-            add("Referer", chapterUrl.toString())
-            add("Accept", "*/*")
+        if (vault.size < 6) return pages
 
-            ocrRequest.interceptedHeaders.forEach { (name, value) ->
-                set(name, value)
-            }
+        val jsonHeaders = headersBuilder().apply {
+            add("Referer", chapterUrl)
+            add("Accept", "application/json, text/javascript, */*; q=0.01")
+            add("X-Requested-With", "XMLHttpRequest")
+            add("X-Gate-Token", vault[1])
+            add("X-Gate-Nonce", vault[3])
+            add("X-Gate-Timestamp", vault[2])
+            add("Cache-Control", "no-cache")
+            add("Origin", baseUrl)
         }.build()
 
+        val payload = OcrRequestDto(vault[0], vault[5])
+
         val dialog = try {
+            val ocrUrl = vault[4].replace("\\/", "/")
+            val absOcrUrl = if (ocrUrl.startsWith("http")) ocrUrl else "$baseUrl/${ocrUrl.removePrefix("/")}"
+
             val response = client.newCall(
                 POST(
-                    ocrRequest.url,
+                    absOcrUrl,
                     jsonHeaders,
-                    ocrRequest.body.toRequestBody("application/json; charset=utf-8".toMediaType()),
+                    payload.toJsonRequestBody(),
                 ),
             ).execute()
 
@@ -346,16 +352,19 @@ class Manhuarm(
             return pages
         }
 
-        return dialog.mapIndexed { index, dto ->
-            val page = pages.first { it.imageUrl?.contains(dto.imageUrl, true)!! }
+        return pages.map { page ->
+            val dto = dialog.firstOrNull { page.imageUrl?.substringBefore("#")?.contains(it.imageUrl, true) == true }
+                ?: return@map page
+
             val fragment = json.encodeToString<List<Dialog>>(
                 dto.dialogues.filter { it.getTextBy(language).isNotBlank() },
             )
+
             if (dto.dialogues.isEmpty()) {
-                return@mapIndexed page
+                return@map page
             }
 
-            Page(index, imageUrl = "${page.imageUrl}${fragment.toFragment()}")
+            page.apply { imageUrl = "${page.imageUrl?.substringBefore("#")}${fragment.toFragment()}" }
         }
     }
 
@@ -595,7 +604,7 @@ class Manhuarm(
     }
 
     companion object {
-        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)#\\[.*?]", RegexOption.IGNORE_CASE)
+        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)(?:\\?.*?)?#.*?", RegexOption.IGNORE_CASE)
 
         const val DEVICE_FONT = "device:"
         private const val FONT_SIZE_PREF = "fontSizePref"
@@ -607,5 +616,7 @@ class Manhuarm(
         private const val TRANSLATOR_PROVIDER_PREF = "translatorProviderPref"
         private const val CUSTOM_UA_PREF = "customUserAgentPref"
         private const val DEFAULT_FONT_SIZE = "28"
+
+        private val VAULT_REGEX = Regex("""_0xvault\s*=\s*\[(.*?)]""")
     }
 }
