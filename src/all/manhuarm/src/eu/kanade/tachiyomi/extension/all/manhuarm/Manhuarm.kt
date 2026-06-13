@@ -27,15 +27,12 @@ import keiyoushi.lib.i18n.Intl.Companion.createDefaultMessageFileName
 import keiyoushi.network.rateLimit
 import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
+import keiyoushi.utils.toJsonRequestBody
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import org.jsoup.nodes.Document
@@ -314,29 +311,28 @@ class Manhuarm(
 
         if (vault.size < 6) return pages
 
-        val jsonHeaders = Headers.Builder().apply {
+        val jsonHeaders = headersBuilder().apply {
             add("Referer", chapterUrl)
             add("Accept", "application/json, text/javascript, */*; q=0.01")
             add("X-Requested-With", "XMLHttpRequest")
             add("X-Gate-Token", vault[1])
             add("X-Gate-Nonce", vault[3])
             add("X-Gate-Timestamp", vault[2])
+            add("Cache-Control", "no-cache")
+            add("Origin", baseUrl)
         }.build()
 
-        val payload = buildJsonObject {
-            put("cid", vault[0])
-            put("ref", vault[5])
-        }
+        val payload = OcrRequestDto(vault[0], vault[5])
 
         val dialog = try {
             val ocrUrl = vault[4].replace("\\/", "/")
             val absOcrUrl = if (ocrUrl.startsWith("http")) ocrUrl else "$baseUrl/${ocrUrl.removePrefix("/")}"
 
-            val response = network.client.newCall(
+            val response = client.newCall(
                 POST(
                     absOcrUrl,
                     jsonHeaders,
-                    payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()),
+                    payload.toJsonRequestBody(),
                 ),
             ).execute()
 
@@ -357,7 +353,7 @@ class Manhuarm(
         }
 
         return pages.map { page ->
-            val dto = dialog.firstOrNull { page.imageUrl?.contains(it.imageUrl, true) == true }
+            val dto = dialog.firstOrNull { page.imageUrl?.substringBefore("#")?.contains(it.imageUrl, true) == true }
                 ?: return@map page
 
             val fragment = json.encodeToString<List<Dialog>>(
@@ -368,7 +364,7 @@ class Manhuarm(
                 return@map page
             }
 
-            page.apply { imageUrl = "${page.imageUrl}${fragment.toFragment()}" }
+            page.apply { imageUrl = "${page.imageUrl?.substringBefore("#")}${fragment.toFragment()}" }
         }
     }
 
@@ -608,7 +604,7 @@ class Manhuarm(
     }
 
     companion object {
-        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)#\\[.*?]", RegexOption.IGNORE_CASE)
+        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)(?:\\?.*?)?#\\[.*?]", RegexOption.IGNORE_CASE)
 
         const val DEVICE_FONT = "device:"
         private const val FONT_SIZE_PREF = "fontSizePref"

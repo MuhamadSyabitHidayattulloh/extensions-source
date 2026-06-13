@@ -47,15 +47,9 @@ class TranslationInterceptor(
         }
 
         val newRequest = request.newBuilder()
-            .url("${url.substringBeforeLast("#")}#${json.encodeToString(translated)}")
+            .url("${url.substringBeforeLast("#")}#${json.encodeToString<List<Dialog>>(translated)}")
             .build()
 
         return chain.proceed(newRequest)
     }
-
-    private fun Dialog.replaceText(value: String) = this.copy(
-        textByLanguage = mutableMapOf(
-            "text" to value,
-        ),
-    )
 }

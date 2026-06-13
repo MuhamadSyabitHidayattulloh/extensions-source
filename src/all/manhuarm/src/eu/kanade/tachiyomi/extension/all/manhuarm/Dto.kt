@@ -13,37 +13,53 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
-data class PageDto(
+class PageDto(
     @SerialName("image")
     val imageUrl: String,
     @SerialName("texts")
     @Serializable(with = DialogListSerializer::class)
-    val dialogues: List<Dialog> = emptyList(),
+    val dialogues: List<Dialog>,
 )
 
 @Serializable
-data class Dialog(
+class Dialog(
     val x: Float,
     val y: Float,
     @SerialName("_width")
-    val widthValue: Float,
+    private val widthValue: Float,
     @SerialName("_height")
-    val heightValue: Float,
+    private val heightValue: Float,
     val angle: Float = 0f,
+    @SerialName("textByLanguage")
     val textByLanguage: Map<String, String> = emptyMap(),
 ) {
     var scale: Float = 1F
     val height: Float get() = scale * heightValue
     val width: Float get() = scale * widthValue
 
-    val text: String get() = textByLanguage["text"] ?: throw Exception("Dialog not found")
+    val text: String get() = textByLanguage["text"] ?: ""
     fun getTextBy(language: Language) = when {
         !language.disableTranslator -> textByLanguage[language.origin]
         else -> textByLanguage[language.target]
     } ?: text
     val centerY get() = height / 2 + y
     val centerX get() = width / 2 + x
+
+    fun replaceText(value: String) = Dialog(
+        x = x,
+        y = y,
+        widthValue = widthValue,
+        heightValue = heightValue,
+        angle = angle,
+        textByLanguage = mapOf("text" to value),
+    )
 }
+
+@Serializable
+class OcrRequestDto(
+    val cid: String,
+    val ref: String,
+)
 
 private object DialogListSerializer :
     JsonTransformingSerializer<List<Dialog>>(ListSerializer(Dialog.serializer())) {

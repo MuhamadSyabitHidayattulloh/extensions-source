@@ -39,11 +39,18 @@ class ComposedImageInterceptor(
             return chain.proceed(request)
         }
 
-        val dialogues = request.url.fragment?.parseAs<List<Dialog>>()
-            ?: emptyList()
+        val dialogues = try {
+            request.url.fragment?.parseAs<List<Dialog>>() ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        if (dialogues.isEmpty()) {
+            return chain.proceed(request)
+        }
 
         val imageRequest = request.newBuilder()
-            .url(url)
+            .url(url.substringBefore("#"))
             .build()
 
         val response = chain.proceed(imageRequest)
@@ -78,7 +85,7 @@ class ComposedImageInterceptor(
 
         bitmap.compress(format, 100, output)
 
-        val responseBody = output.toByteArray().toResponseBody(mediaType)
+        val responseBody = output.toByteArray().toResponseBody(response.body.contentType())
 
         return response.newBuilder()
             .body(responseBody)
