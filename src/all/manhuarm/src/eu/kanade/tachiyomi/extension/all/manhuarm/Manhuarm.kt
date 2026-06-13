@@ -604,7 +604,7 @@ class Manhuarm(
     }
 
     companion object {
-        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)(?:\\?.*?)?#\\[.*?]", RegexOption.IGNORE_CASE)
+        val PAGE_REGEX = Regex(".*?\\.(webp|png|jpg|jpeg)(?:\\?.*?)?#.*?", RegexOption.IGNORE_CASE)
 
         const val DEVICE_FONT = "device:"
         private const val FONT_SIZE_PREF = "fontSizePref"
