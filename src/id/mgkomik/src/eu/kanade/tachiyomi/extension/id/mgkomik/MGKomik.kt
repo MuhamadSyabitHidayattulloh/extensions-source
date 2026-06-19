@@ -23,6 +23,9 @@ class MGKomik :
 
     override fun headersBuilder() = super.headersBuilder().apply {
         set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
+        set("Sec-CH-UA", "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\"")
+        set("Sec-CH-UA-Mobile", "?1")
+        set("Sec-CH-UA-Platform", "\"Android\"")
     }
 
     override val client = network.client.newBuilder()
@@ -49,11 +52,11 @@ class MGKomik :
                     }
                     else -> {
                         set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-                        removeAll("Referer")
+                        set("Referer", "$baseUrl/")
                         removeAll("X-Requested-With")
                         set("Sec-Fetch-Dest", "document")
                         set("Sec-Fetch-Mode", "navigate")
-                        set("Sec-Fetch-Site", "none")
+                        set("Sec-Fetch-Site", "same-origin")
                         set("Sec-Fetch-User", "?1")
                         set("Upgrade-Insecure-Requests", "1")
                     }
