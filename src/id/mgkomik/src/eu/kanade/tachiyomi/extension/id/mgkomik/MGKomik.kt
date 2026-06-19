@@ -24,7 +24,6 @@ class MGKomik :
     override fun headersBuilder() = super.headersBuilder().apply {
         set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
         set("Referer", "$baseUrl/")
-        set("Upgrade-Insecure-Requests", "1")
     }
 
     override val client = network.client.newBuilder()
@@ -32,22 +31,33 @@ class MGKomik :
             val request = chain.request()
             val url = request.url.toString()
             val headers = request.headers.newBuilder().apply {
-                removeAll("X-Requested-With")
-
-                if (url.contains("wp-content") || url.contains("uploads") || !url.startsWith(baseUrl)) {
-                    set("Sec-Fetch-Dest", "image")
-                    set("Sec-Fetch-Mode", "no-cors")
-                    set("Sec-Fetch-Site", if (url.startsWith(baseUrl)) "same-origin" else "cross-site")
-                } else {
-                    set("Sec-Fetch-Dest", "document")
-                    set("Sec-Fetch-Mode", "navigate")
-                    set("Sec-Fetch-Site", "none")
+                when {
+                    url.contains("admin-ajax.php") || url.contains("/ajax/chapters") -> {
+                        set("X-Requested-With", "XMLHttpRequest")
+                        set("Sec-Fetch-Dest", "empty")
+                        set("Sec-Fetch-Mode", "cors")
+                        set("Sec-Fetch-Site", "same-origin")
+                    }
+                    url.contains("wp-content") || url.contains("uploads") || !url.startsWith(baseUrl) -> {
+                        removeAll("X-Requested-With")
+                        set("Sec-Fetch-Dest", "image")
+                        set("Sec-Fetch-Mode", "no-cors")
+                        set("Sec-Fetch-Site", if (url.startsWith(baseUrl)) "same-origin" else "cross-site")
+                    }
+                    else -> {
+                        removeAll("X-Requested-With")
+                        set("Sec-Fetch-Dest", "document")
+                        set("Sec-Fetch-Mode", "navigate")
+                        set("Sec-Fetch-Site", "none")
+                        set("Sec-Fetch-User", "?1")
+                        set("Upgrade-Insecure-Requests", "1")
+                    }
                 }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
         }
-        .rateLimit(2)
+        .rateLimit(1)
         .build()
 
     // ================================== Popular ======================================
