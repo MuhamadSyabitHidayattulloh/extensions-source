@@ -22,16 +22,27 @@ class MGKomik :
     override val mangaSubString = "komik"
 
     override fun headersBuilder() = super.headersBuilder().apply {
-        set("Upgrade-Insecure-Requests", "1")
+        set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
         set("Referer", "$baseUrl/")
-        set("Sec-Fetch-Site", "none")
+        set("Upgrade-Insecure-Requests", "1")
     }
 
     override val client = network.client.newBuilder()
         .addInterceptor { chain ->
             val request = chain.request()
+            val url = request.url.toString()
             val headers = request.headers.newBuilder().apply {
                 removeAll("X-Requested-With")
+
+                if (url.contains("wp-content") || url.contains("uploads") || !url.startsWith(baseUrl)) {
+                    set("Sec-Fetch-Dest", "image")
+                    set("Sec-Fetch-Mode", "no-cors")
+                    set("Sec-Fetch-Site", if (url.startsWith(baseUrl)) "same-origin" else "cross-site")
+                } else {
+                    set("Sec-Fetch-Dest", "document")
+                    set("Sec-Fetch-Mode", "navigate")
+                    set("Sec-Fetch-Site", "none")
+                }
             }.build()
 
             chain.proceed(request.newBuilder().headers(headers).build())
