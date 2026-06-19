@@ -23,7 +23,6 @@ class MGKomik :
 
     override fun headersBuilder() = super.headersBuilder().apply {
         set("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
-        set("Referer", "$baseUrl/")
     }
 
     override val client = network.client.newBuilder()
@@ -33,18 +32,24 @@ class MGKomik :
             val headers = request.headers.newBuilder().apply {
                 when {
                     url.contains("admin-ajax.php") || url.contains("/ajax/chapters") -> {
+                        set("Accept", "application/json, text/javascript, */*; q=0.01")
+                        set("Referer", "$baseUrl/")
                         set("X-Requested-With", "XMLHttpRequest")
                         set("Sec-Fetch-Dest", "empty")
                         set("Sec-Fetch-Mode", "cors")
                         set("Sec-Fetch-Site", "same-origin")
                     }
                     url.contains("wp-content") || url.contains("uploads") || !url.startsWith(baseUrl) -> {
+                        set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                        set("Referer", "$baseUrl/")
                         removeAll("X-Requested-With")
                         set("Sec-Fetch-Dest", "image")
                         set("Sec-Fetch-Mode", "no-cors")
                         set("Sec-Fetch-Site", if (url.startsWith(baseUrl)) "same-origin" else "cross-site")
                     }
                     else -> {
+                        set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                        removeAll("Referer")
                         removeAll("X-Requested-With")
                         set("Sec-Fetch-Dest", "document")
                         set("Sec-Fetch-Mode", "navigate")
