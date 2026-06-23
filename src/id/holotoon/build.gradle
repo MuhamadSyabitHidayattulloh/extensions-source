@@ -2,7 +2,7 @@ ext {
     extName = 'Holotoon'
     extClass = '.Holotoon'
     baseUrl = 'https://v1.holotoon.site'
-    extVersionCode = 51
+    extVersionCode = 52
     isNsfw = true
 }
 
