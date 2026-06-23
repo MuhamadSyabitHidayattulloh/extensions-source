@@ -21,6 +21,8 @@ class MGKomik :
 
     override val mangaSubString = "komik"
 
+    override val useLoadMoreRequest = LoadMoreStrategy.Always
+
     override fun headersBuilder() = super.headersBuilder().apply {
         set("Upgrade-Insecure-Requests", "1")
         set("Referer", "$baseUrl/")
