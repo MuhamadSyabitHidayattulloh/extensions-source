@@ -38,19 +38,18 @@ class MangaDto(
         thumbnail_url = coverUrl
         description = buildString {
             this@MangaDto.description?.let {
-                val parsedDescription = Jsoup.parseBodyFragment(
-                    it.replace("&lt;", "<")
-                        .replace("&gt;", ">")
-                        .replace("&amp;", "&")
-                        .replace("&quot;", "\"")
-                        .replace("&apos;", "'"),
-                )
-                parsedDescription.select("p:has(strong:contains(Download Batch))").remove()
-                val text = parsedDescription.text().replace("Sinopsis: ", "", ignoreCase = true)
+                val decoded = it.replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&amp;", "&")
+                    .replace("&quot;", "\"")
+                    .replace("&apos;", "'")
+                val doc = Jsoup.parseBodyFragment(decoded)
+                doc.select("p:has(strong:contains(Download Batch))").remove()
+                val text = doc.text().replace(Regex("^Sinopsis:\\s*", RegexOption.IGNORE_CASE), "")
                 if (text.isNotEmpty()) append(text).append("\n\n")
             }
-            if (!altTitles.isNullOrEmpty()) append("Judul Alternatif: ").append(altTitles).append("\n")
-            if (!serialization.isNullOrEmpty()) append("Serialisasi: ").append(serialization).append("\n")
+            if (!altTitles.isNullOrEmpty() && altTitles != "N/A") append("Judul Alternatif: ").append(altTitles).append("\n")
+            if (!serialization.isNullOrEmpty() && serialization != "N/A") append("Serialisasi: ").append(serialization).append("\n")
             if (!type.isNullOrEmpty()) append("Tipe: ").append(type.replaceFirstChar { it.uppercase() })
         }.trim()
         status = when (this@MangaDto.status?.lowercase()) {
@@ -81,7 +80,7 @@ class ChapterDto(
 ) {
     fun toSChapter() = SChapter.create().apply {
         url = "/chapters/$id"
-        name = title ?: "Chapter ${chapterNumber.toString().removeSuffix(".0")}"
+        name = title?.takeIf { it.isNotBlank() } ?: "Chapter ${chapterNumber.toString().removeSuffix(".0")}"
         chapter_number = chapterNumber.toFloat()
         date_upload = dateFormat.tryParse(createdAt)
     }

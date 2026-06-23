@@ -9,8 +9,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.lib.cookieinterceptor.CookieInterceptor
-import keiyoushi.lib.randomua.addRandomUAPreference
-import keiyoushi.lib.randomua.setRandomUserAgent
 import keiyoushi.utils.getPreferencesLazy
 import keiyoushi.utils.parseAs
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -39,7 +37,6 @@ class DoujinDesu :
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
         .add("X-App-Secret", APP_SECRET)
-        .setRandomUserAgent()
 
     // Decryption logic
     private fun wH(e: Long): String {
@@ -108,7 +105,14 @@ class DoujinDesu :
 
     override fun popularMangaParse(response: Response): MangasPage {
         val mangaList = response.parseEncrypted<List<MangaDto>>()
-        return MangasPage(mangaList.map { it.toSManga() }, mangaList.size == LIMIT)
+        return MangasPage(
+            mangaList.map {
+                it.toSManga().apply {
+                    initialized = true
+                }
+            },
+            mangaList.size == LIMIT,
+        )
     }
 
     // Latest Updates
@@ -161,7 +165,7 @@ class DoujinDesu :
     // Manga Details
     override fun mangaDetailsRequest(manga: SManga): Request = GET("$baseUrl/api${manga.url}", headers)
 
-    override fun mangaDetailsParse(response: Response): SManga = response.parseEncrypted<MangaDto>().toSManga()
+    override fun mangaDetailsParse(response: Response): SManga = response.parseEncrypted<MangaDto>().toSManga().apply { initialized = true }
 
     // Chapter List
     override fun chapterListRequest(manga: SManga): Request = mangaDetailsRequest(manga)
@@ -177,7 +181,7 @@ class DoujinDesu :
     override fun pageListParse(response: Response): List<Page> {
         val chapter = response.parseEncrypted<ChapterDto>()
         return chapter.contentUrls?.mapIndexed { index, url ->
-            Page(index, imageUrl = url)
+            Page(index, imageUrl = url.replace(" ", "%20"))
         } ?: emptyList()
     }
 
@@ -194,9 +198,7 @@ class DoujinDesu :
         GenreList(genreList),
     )
 
-    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
-        screen.addRandomUAPreference()
-    }
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {}
 
     companion object {
         private const val SALT = "doujindesu-scrapers-cannot-read-this-super-secret-salt-2026-v2"
