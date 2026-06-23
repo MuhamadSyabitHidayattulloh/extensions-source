@@ -37,11 +37,22 @@ class MangaDto(
         url = "/manga/$slug"
         thumbnail_url = coverUrl
         description = buildString {
-            this@MangaDto.description?.let { append(Jsoup.parseBodyFragment(it).text()).append("\n\n") }
+            this@MangaDto.description?.let {
+                val parsedDescription = Jsoup.parseBodyFragment(
+                    it.replace("&lt;", "<")
+                        .replace("&gt;", ">")
+                        .replace("&amp;", "&")
+                        .replace("&quot;", "\"")
+                        .replace("&apos;", "'"),
+                )
+                parsedDescription.select("p:has(strong:contains(Download Batch))").remove()
+                val text = parsedDescription.text().replace("Sinopsis: ", "", ignoreCase = true)
+                if (text.isNotEmpty()) append(text).append("\n\n")
+            }
             if (!altTitles.isNullOrEmpty()) append("Judul Alternatif: ").append(altTitles).append("\n")
             if (!serialization.isNullOrEmpty()) append("Serialisasi: ").append(serialization).append("\n")
             if (!type.isNullOrEmpty()) append("Tipe: ").append(type.replaceFirstChar { it.uppercase() })
-        }
+        }.trim()
         status = when (this@MangaDto.status?.lowercase()) {
             "ongoing" -> SManga.ONGOING
             "completed", "finished", "published" -> SManga.COMPLETED
