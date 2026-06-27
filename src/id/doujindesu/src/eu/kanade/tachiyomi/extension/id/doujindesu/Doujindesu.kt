@@ -18,6 +18,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.LinkedHashMap
 
@@ -214,7 +215,7 @@ class Doujindesu :
     }
 
     override fun pageListParse(response: Response): List<Page> = response.parseAs<PageList>().pages.mapIndexed { i, imgUrl ->
-        Page(i, imageUrl = imgUrl.replace("&rsquo;", "’").replace("&amp;", "&"))
+        Page(i, imageUrl = Parser.unescapeEntities(imgUrl, false))
     }
 
     fun SManga.getSlug(): String {
