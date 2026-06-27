@@ -50,9 +50,7 @@ class Doujindesu :
             val url = request.url.toString()
             val headers = request.headers.newBuilder()
 
-            if (url.contains("desu.photos") || url.contains("cdn-static.desu.xxx") ||
-                url.contains("desu.pics") || url.contains("uploads") || url.contains("upload")
-            ) {
+            if (imageDomains.any { url.contains(it) }) {
                 headers.removeAll("x-app-secret")
             }
 
@@ -231,6 +229,8 @@ class Doujindesu :
     companion object {
         private const val APP_SECRET = "dfdf72051dbfdc7d76889ebd31324e74"
         private const val LIMIT = 24
+
+        private val imageDomains = listOf("desu.photos", "cdn-static.desu.xxx", "desu.pics", "uploads", "upload")
 
         private const val PREF_BASE_URL = "defaultBaseUrl"
         private const val PREF_CUSTOM_BASE_URL = "customBaseUrl"
