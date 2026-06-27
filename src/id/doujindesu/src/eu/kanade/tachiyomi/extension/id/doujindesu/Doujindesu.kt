@@ -45,6 +45,17 @@ class Doujindesu :
 
     override val client = super.client.newBuilder()
         .addInterceptor(decryptor.xorInterceptor())
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val url = request.url.toString()
+            val headers = request.headers.newBuilder()
+
+            if (url.contains("desu.photos") || url.contains("cdn-static.desu.xxx") || url.contains("uploads") || url.contains("upload")) {
+                headers.removeAll("x-app-secret")
+            }
+
+            chain.proceed(request.newBuilder().headers(headers.build()).build())
+        }
         .build()
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -181,10 +192,7 @@ class Doujindesu :
     }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
-        if (!manga.url.startsWith("/manga/")) {
-            throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
-        }
-        val slug = manga.url.removePrefix("/manga/").removeSuffix("/")
+        val slug = manga.getSlug()
         return GET("$apiUrl/manga/$slug", headers)
     }
 
@@ -201,10 +209,8 @@ class Doujindesu :
     override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException()
 
     override fun pageListRequest(chapter: SChapter): Request {
-        if (chapter.url.contains("/") || chapter.url.startsWith("http")) {
-            throw Exception("Migrate dari $name ke $name (ekstensi yang sama)")
-        }
-        return GET("$apiUrl/chapters/${chapter.url}", headers)
+        val id = chapter.url.split("/").last { it.isNotBlank() }
+        return GET("$apiUrl/chapters/$id", headers)
     }
 
     override fun pageListParse(response: Response): List<Page> = response.parseAs<PageList>().pages.mapIndexed { i, imgUrl ->
