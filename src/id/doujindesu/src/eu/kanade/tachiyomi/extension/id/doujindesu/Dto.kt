@@ -6,6 +6,7 @@ import keiyoushi.utils.tryParse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 import java.text.SimpleDateFormat
 
 val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -109,10 +110,11 @@ class PageList(
 ) {
     val pages: List<String>
         get() = contentUrls.map { page ->
+            val unescaped = Parser.unescapeEntities(page, false)
             when {
-                page.contains("/uploads/") && !page.contains("/storage/uploads/") -> page.replace("/uploads/", "/storage/uploads/")
-                page.contains("/upload/") && !page.contains("/storage/upload/") -> page.replace("/upload/", "/storage/upload/")
-                else -> page
+                unescaped.contains("/uploads/") && !unescaped.contains("/storage/uploads/") -> unescaped.replace("/uploads/", "/storage/uploads/")
+                unescaped.contains("/upload/") && !unescaped.contains("/storage/upload/") -> unescaped.replace("/upload/", "/storage/upload/")
+                else -> unescaped
             }
         }
 }
