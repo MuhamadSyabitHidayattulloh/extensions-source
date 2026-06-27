@@ -50,7 +50,9 @@ class Doujindesu :
             val url = request.url.toString()
             val headers = request.headers.newBuilder()
 
-            if (url.contains("desu.photos") || url.contains("cdn-static.desu.xxx") || url.contains("uploads") || url.contains("upload")) {
+            if (url.contains("desu.photos") || url.contains("cdn-static.desu.xxx") ||
+                url.contains("desu.pics") || url.contains("uploads") || url.contains("upload")
+            ) {
                 headers.removeAll("x-app-secret")
             }
 
@@ -214,7 +216,7 @@ class Doujindesu :
     }
 
     override fun pageListParse(response: Response): List<Page> = response.parseAs<PageList>().pages.mapIndexed { i, imgUrl ->
-        Page(i, imageUrl = imgUrl)
+        Page(i, imageUrl = imgUrl.replace("&rsquo;", "’").replace("&amp;", "&"))
     }
 
     fun SManga.getSlug(): String {
