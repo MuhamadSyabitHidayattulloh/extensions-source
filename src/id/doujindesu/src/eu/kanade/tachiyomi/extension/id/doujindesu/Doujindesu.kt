@@ -37,11 +37,17 @@ abstract class Doujindesu : HttpSource() {
             .addInterceptor(decryptor.xorInterceptor())
             .addInterceptor { chain ->
                 val request = chain.request()
-                val url = request.url.toString()
+                val url = request.url
                 val headers = request.headers.newBuilder()
 
-                if (imageDomains.any { url.contains(it) }) {
+                if (url.pathSegments.contains("api")) {
+                    headers.set("x-app-secret", APP_SECRET)
+                } else {
                     headers.removeAll("x-app-secret")
+                    headers.set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                    headers.set("Sec-Fetch-Dest", "image")
+                    headers.set("Sec-Fetch-Mode", "no-cors")
+                    headers.set("Sec-Fetch-Site", "cross-site")
                 }
 
                 chain.proceed(request.newBuilder().headers(headers.build()).build())
@@ -50,7 +56,6 @@ abstract class Doujindesu : HttpSource() {
     }
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("x-app-secret", APP_SECRET)
         .add("Referer", "$baseUrl/")
 
     override fun popularMangaRequest(page: Int): Request = searchRequest(page, "rating")
@@ -211,7 +216,5 @@ abstract class Doujindesu : HttpSource() {
     companion object {
         private const val APP_SECRET = "dfdf72051dbfdc7d76889ebd31324e74"
         private const val LIMIT = 24
-
-        private val imageDomains = listOf("desu.photos", "cdn-static.desu.xxx", "desu.pics", "uploads", "upload")
     }
 }
