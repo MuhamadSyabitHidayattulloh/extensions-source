@@ -1,27 +1,28 @@
 package eu.kanade.tachiyomi.extension.all.lunaranime
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import keiyoushi.annotation.Source
+import keiyoushi.network.get
+import keiyoushi.network.post
 import keiyoushi.network.rateLimit
+import keiyoushi.source.KeiSource
 import keiyoushi.utils.parseAs
 import keiyoushi.utils.toJsonRequestBody
+import kotlinx.serialization.json.JsonElement
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import rx.Observable
 
 @Source
-abstract class LunarAnime : HttpSource() {
+abstract class LunarAnime : KeiSource() {
 
     private val internalLang: String = when (lang) {
         "pt-BR" -> "pt-br"
@@ -35,7 +36,7 @@ abstract class LunarAnime : HttpSource() {
 
     private val signer = LunarWebViewSigner(baseUrl, API_URL)
 
-    override val client: OkHttpClient = network.client.newBuilder()
+    override fun OkHttpClient.Builder.configureClient(): OkHttpClient.Builder = this
         .addInterceptor(signer.dpopInterceptor())
         .addInterceptor { chain ->
             val request = chain.request()
@@ -50,22 +51,19 @@ abstract class LunarAnime : HttpSource() {
             }
         }
         .rateLimit(2) { it.host == apiurlHost || it.host == cdnurlHost }
-        .build()
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+    override fun Headers.Builder.configureHeaders(): Headers.Builder = this
         .add("Referer", "$baseUrl/")
 
     private val crypto = LunarDecryptor(client, API_URL)
 
     // ============================== Popular ===============================
 
-    override fun popularMangaRequest(page: Int): Request = searchMangaRequest(page, "", FilterList())
-
-    override fun popularMangaParse(response: Response): MangasPage = searchMangaParse(response)
+    override suspend fun getPopularManga(page: Int): MangasPage = getSearchMangaList(page, "", FilterList())
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request {
+    override suspend fun getLatestUpdates(page: Int): MangasPage {
         val url = API_URL.toHttpUrl().newBuilder().apply {
             addPathSegments("api/manga/recent")
             addQueryParameter("page", page.toString())
@@ -75,10 +73,7 @@ abstract class LunarAnime : HttpSource() {
                 addQueryParameter("language", internalLang)
             }
         }.build()
-        return GET(url.toString(), headers)
-    }
-
-    override fun latestUpdatesParse(response: Response): MangasPage {
+        val response = client.get(url, headers)
         val result = response.parseAs<LunarRecentResponse>()
         return MangasPage(
             mangas = result.mangas.map { it.toSManga() },
@@ -88,7 +83,7 @@ abstract class LunarAnime : HttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+    override suspend fun getSearchMangaList(page: Int, query: String, filters: FilterList): MangasPage {
         val url = API_URL.toHttpUrl().newBuilder().apply {
             addPathSegments("api/manga/search")
             addQueryParameter("page", page.toString())
@@ -123,10 +118,7 @@ abstract class LunarAnime : HttpSource() {
             }
             addQueryParameter("sort", "relevance")
         }.build()
-        return GET(url.toString(), headers)
-    }
-
-    override fun searchMangaParse(response: Response): MangasPage {
+        val response = client.get(url, headers)
         val result = response.parseAs<LunarSearchResponse>()
         return MangasPage(
             mangas = result.manga.map { it.toSManga() },
@@ -134,98 +126,98 @@ abstract class LunarAnime : HttpSource() {
         )
     }
 
-    // =========================== Manga Details ============================
+    // =========================== Manga Updates ============================
+
+    override suspend fun fetchMangaUpdate(
+        manga: SManga,
+        chapters: List<SChapter>,
+        fetchDetails: Boolean,
+        fetchChapters: Boolean,
+    ): SMangaUpdate {
+        val slug = manga.url.substringAfterLast("/")
+
+        val updatedManga = if (fetchDetails) {
+            val url = API_URL.toHttpUrl().newBuilder()
+                .addPathSegments("api/manga/title")
+                .addPathSegment(slug)
+                .build()
+            val response = client.get(url, headers)
+            val result = response.parseAs<LunarMangaResponse>()
+            result.manga.toSManga()
+        } else {
+            manga
+        }
+
+        val updatedChapters = if (fetchChapters) {
+            val passwordUrl = API_URL.toHttpUrl().newBuilder()
+                .addPathSegments("api/manga/password/info")
+                .addPathSegment(slug)
+                .build()
+            val passwordResponse = client.get(passwordUrl, headers)
+            val passwordInfo = passwordResponse.parseAs<LunarPasswordInfoResponse>()
+
+            val requestUrl = API_URL.toHttpUrl().newBuilder()
+                .addPathSegments("api/manga")
+                .addPathSegment(slug)
+                .build()
+            val response = client.get(requestUrl, headers)
+            val result = response.parseAs<LunarChapterListResponse>()
+
+            result.data.filter {
+                lang == "all" || it.language == internalLang
+            }.map { chapter ->
+                val isLocked = passwordInfo.hasSeriesPassword ||
+                    passwordInfo.chapterPasswords.any {
+                        it.chapterNumber == chapter.chapter && (it.language == null || it.language == chapter.language)
+                    }
+                chapter.toSChapter(slug, isLocked)
+            }.reversed()
+        } else {
+            chapters
+        }
+
+        return SMangaUpdate(
+            manga = updatedManga,
+            chapters = updatedChapters,
+        )
+    }
 
     override fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
-
-    override fun mangaDetailsRequest(manga: SManga): Request {
-        val slug = manga.url.substringAfterLast("/")
-        val url = API_URL.toHttpUrl().newBuilder()
-            .addPathSegments("api/manga/title")
-            .addPathSegment(slug)
-            .build()
-        return GET(url.toString(), headers)
-    }
-
-    override fun mangaDetailsParse(response: Response): SManga {
-        val result = response.parseAs<LunarMangaResponse>()
-        return result.manga.toSManga().apply { initialized = true }
-    }
-
-    // ============================== Chapters ==============================
 
     override fun getChapterUrl(chapter: SChapter): String {
         val url = chapter.url.substringBefore("?")
         return baseUrl + url
     }
 
-    override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> = Observable.fromCallable {
-        val slug = manga.url.substringAfterLast("/")
-
-        val passwordUrl = API_URL.toHttpUrl().newBuilder()
-            .addPathSegments("api/manga/password/info")
-            .addPathSegment(slug)
-            .build()
-        val passwordRequest = GET(passwordUrl.toString(), headers)
-        val passwordInfo = client.newCall(passwordRequest).execute().parseAs<LunarPasswordInfoResponse>()
-
-        val requestUrl = API_URL.toHttpUrl().newBuilder()
-            .addPathSegments("api/manga")
-            .addPathSegment(slug)
-            .build()
-        val request = GET(requestUrl.toString(), headers)
-
-        val result = client.newCall(request).execute().parseAs<LunarChapterListResponse>()
-
-        result.data.filter {
-            lang == "all" || it.language == internalLang
-        }.map { chapter ->
-            val isLocked = passwordInfo.hasSeriesPassword ||
-                passwordInfo.chapterPasswords.any {
-                    it.chapterNumber == chapter.chapter && (it.language == null || it.language == chapter.language)
-                }
-            chapter.toSChapter(slug, isLocked)
-        }.reversed()
-    }
-
-    override fun chapterListRequest(manga: SManga): Request = throw UnsupportedOperationException("Not used.")
-
-    override fun chapterListParse(response: Response): List<SChapter> = throw UnsupportedOperationException("Not used.")
-
     // =============================== Pages ================================
 
-    private fun viewChapter(slug: String, number: String, lang: String) {
-        val statusRequest = GET(API_URL + "/api/manga/rating/status/$slug/$number")
-        client.newCall(statusRequest).execute().close()
+    private suspend fun viewChapter(slug: String, number: String, lang: String) {
+        val statusUrl = "$API_URL/api/manga/rating/status/$slug/$number"
+        client.get(statusUrl, headers).close()
 
         val body = ViewRequestBody(slug, number, lang).toJsonRequestBody()
-        val viewRequest = POST(API_URL + "/api/manga/chapter/view", headers, body)
-        client.newCall(viewRequest).execute().close()
+        val viewUrl = "$API_URL/api/manga/chapter/view"
+        client.post(viewUrl, headers, body).close()
     }
 
-    override fun fetchPageList(chapter: SChapter): Observable<List<Page>> = Observable.fromCallable {
+    override suspend fun getPageList(chapter: SChapter): List<Page> {
         val chapterUrl = (baseUrl + chapter.url).toHttpUrl()
         val language = chapterUrl.queryParameter("lang") ?: "en"
         val (slug, chapterNumber) = chapterUrl.pathSegments.takeLast(2)
 
-        val response = client.newCall(GET(chapterUrl)).execute()
-        if (!response.isSuccessful) error("HTTP ${response.code} fetching chapter")
+        val response = client.get(chapterUrl, headers)
 
         // Required requests or fake images are returned
         viewChapter(slug, chapterNumber, language)
 
+        val fingerprint = signer.getFingerprintWv()
+
         // I see decryption is always required now
-        val decryptedImages = crypto.decryptChapterImages(response, slug, chapterNumber, language)
-        decryptedImages.mapIndexed { index, imageUrl ->
+        val decryptedImages = crypto.decryptChapterImages(response, slug, chapterNumber, language, fingerprint)
+        return decryptedImages.mapIndexed { index, imageUrl ->
             Page(index, chapter.url, imageUrl)
         }
     }
-
-    override fun pageListRequest(chapter: SChapter): Request = throw UnsupportedOperationException("Not used.")
-
-    override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("Not used.")
-
-    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used.")
 
     override fun imageRequest(page: Page): Request {
         val imageHeaders = headersBuilder()
@@ -237,7 +229,7 @@ abstract class LunarAnime : HttpSource() {
 
     // ============================== Filters ===============================
 
-    override fun getFilterList(): FilterList {
+    override fun getFilterList(data: JsonElement?): FilterList {
         val filters = mutableListOf<Filter<*>>(
             StatusFilter(),
             TypeFilter(),

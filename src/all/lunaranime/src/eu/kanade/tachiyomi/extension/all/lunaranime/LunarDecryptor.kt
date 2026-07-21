@@ -18,7 +18,7 @@ class LunarDecryptor(
     private val apiUrl: String,
 ) {
 
-    fun decryptChapterImages(chapterResponse: Response, slug: String, chapterNum: String, lang: String): List<String> {
+    fun decryptChapterImages(chapterResponse: Response, slug: String, chapterNum: String, lang: String, fingerprint: String? = null): List<String> {
         val seedObjs = chapterResponse.extractSeeds()
         require(seedObjs.size >= 2) { "Failed to find payload seeds" }
 
@@ -31,8 +31,29 @@ class LunarDecryptor(
 
         val sessionDataB64 = fetchSessionData(token, lang)
 
-        val finalJson = decryptSessionImages(sessionDataB64, rctx0)
-        return finalJson.parseAs<LunarPageListDecrypted>().data.images
+        val candidates = if (!fingerprint.isNullOrEmpty()) {
+            listOf(rctx0 + "\u0001" + fingerprint, rctx0)
+        } else {
+            listOf(rctx0)
+        }
+
+        var decryptedJson: String? = null
+        var lastError: Exception? = null
+
+        for (candidate in candidates) {
+            try {
+                decryptedJson = decryptSessionImages(sessionDataB64, candidate)
+                break
+            } catch (e: Exception) {
+                lastError = e
+            }
+        }
+
+        if (decryptedJson == null) {
+            throw lastError ?: Exception("Failed to decrypt session images")
+        }
+
+        return decryptedJson.parseAs<LunarPageListDecrypted>().data.images
     }
 
     private fun fetchSessionData(token: String, lang: String): String {
