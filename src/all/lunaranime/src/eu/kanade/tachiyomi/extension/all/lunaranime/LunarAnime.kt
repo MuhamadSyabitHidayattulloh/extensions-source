@@ -210,7 +210,7 @@ abstract class LunarAnime : KeiSource() {
         // Required requests or fake images are returned
         viewChapter(slug, chapterNumber, language)
 
-        val fingerprint = signer.getFingerprintWv()
+        val fingerprint = signer.getFingerprint()
 
         // I see decryption is always required now
         val decryptedImages = crypto.decryptChapterImages(response, slug, chapterNumber, language, fingerprint)
