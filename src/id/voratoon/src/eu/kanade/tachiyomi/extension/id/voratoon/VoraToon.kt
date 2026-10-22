@@ -110,7 +110,7 @@ abstract class VoraToon : KeiSource() {
 
     override suspend fun getPageList(chapter: SChapter): List<Page> {
         val (slug, chapterIndex) = chapter.getSlugAndIndex(baseUrl)
-        return client.get("$apiUrl/series/$slug/chapters/$chapterIndex").parseAs<ChapterDetailResponse>().data.toPageList()
+        return client.get("$apiUrl/series/$slug/chapters/$chapterIndex").parseAs<ChapterDetailResponse>().data?.toPageList() ?: emptyList()
     }
 
     private fun parseSeriesListResponse(response: Response): MangasPage {

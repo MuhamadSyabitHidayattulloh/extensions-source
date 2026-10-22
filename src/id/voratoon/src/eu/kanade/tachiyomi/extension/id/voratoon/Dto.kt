@@ -11,23 +11,23 @@ import kotlin.time.Instant
 
 @Serializable
 class SeriesListResponse(
-    val data: List<SeriesItem>,
+    val data: List<SeriesItem> = emptyList(),
     val meta: Meta? = null,
 )
 
 @Serializable
 class SeriesItem(
     private val id: Int,
-    private val data: SeriesData,
+    private val data: SeriesData? = null,
 ) {
     fun toSManga(): SManga = SManga.create().apply {
-        url = "/series/${data.slug ?: id}"
-        title = data.title
-        thumbnail_url = data.coverImage
-        author = data.author
-        description = data.synopsis
-        genre = data.genres?.joinToString { it.data.name } ?: ""
-        status = when (data.status?.lowercase()) {
+        url = "/series/${data?.slug ?: id}"
+        title = data?.title ?: ""
+        thumbnail_url = data?.coverImage
+        author = data?.author
+        description = data?.synopsis
+        genre = data?.genres?.mapNotNull { it.data?.name }?.joinToString() ?: ""
+        status = when (data?.status?.lowercase()) {
             "ongoing", "on going" -> SManga.ONGOING
             "completed", "complete" -> SManga.COMPLETED
             "hiatus" -> SManga.ON_HIATUS
@@ -40,8 +40,8 @@ class SeriesItem(
 
 @Serializable
 class SeriesData(
-    val slug: String?,
-    val title: String,
+    val slug: String? = null,
+    val title: String = "",
     val author: String? = null,
     val status: String? = null,
     val synopsis: String? = null,
@@ -51,25 +51,25 @@ class SeriesData(
 
 @Serializable
 class GenreData(
-    val data: GenreInfo,
+    val data: GenreInfo? = null,
 )
 
 @Serializable
 class GenreInfo(
-    val name: String,
+    val name: String = "",
 )
 
 @Serializable
 class GenreResponse(
-    val data: List<GenreItem>,
+    val data: List<GenreItem> = emptyList(),
 )
 
 @Serializable
 class GenreItem(
     val id: Int,
-    private val data: GenreInfo,
+    private val data: GenreInfo? = null,
 ) {
-    fun toPair(): Pair<String, String> = data.name to id.toString()
+    fun toPair(): Pair<String, String> = (data?.name ?: "") to id.toString()
 }
 
 @Serializable
@@ -80,30 +80,30 @@ class Meta(
 
 @Serializable
 class SeriesDetailResponse(
-    val data: SeriesItem,
+    val data: SeriesItem? = null,
 )
 
 @Serializable
 class ChapterItem(
-    private val data: ChapterData,
+    private val data: ChapterData? = null,
     private val createdAt: String? = null,
     private val updatedAt: String? = null,
     private val chapterIndex: Float? = null,
 ) {
     fun toSChapter(seriesSlug: String?): SChapter = SChapter.create().apply {
-        val index = (data.index ?: chapterIndex) ?: 0f
+        val index = (data?.index ?: chapterIndex) ?: 0f
         val formattedIndex = index.toString().removeSuffix(".0")
         url = "/series/$seriesSlug/chapter/$formattedIndex"
-        name = if (data.title.isNullOrBlank()) {
+        name = if (data?.title.isNullOrBlank()) {
             "Chapter $formattedIndex"
         } else {
-            "Chapter $formattedIndex: ${data.title}"
+            "Chapter $formattedIndex: ${data?.title}"
         }
         date_upload = parseChapterDate(createdAt ?: updatedAt ?: "")
         chapter_number = index
     }
 
-    fun toPageList(): List<Page> = data.images?.mapIndexed { index, imageUrl ->
+    fun toPageList(): List<Page> = data?.images?.mapIndexed { index, imageUrl ->
         Page(index, imageUrl = imageUrl)
     } ?: emptyList()
 }
@@ -117,12 +117,12 @@ class ChapterData(
 
 @Serializable
 class ChapterListResponse(
-    val data: List<ChapterItem>,
+    val data: List<ChapterItem> = emptyList(),
 )
 
 @Serializable
 class ChapterDetailResponse(
-    val data: ChapterItem,
+    val data: ChapterItem? = null,
 )
 
 private fun parseChapterDate(dateString: String): Long = Instant.tryParse(dateString)
