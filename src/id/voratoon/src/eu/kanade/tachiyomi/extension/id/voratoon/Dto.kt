@@ -20,28 +20,31 @@ class SeriesItem(
     private val id: Int,
     private val data: SeriesData? = null,
 ) {
-    fun toSManga(): SManga = SManga.create().apply {
-        url = "/series/${data?.slug ?: id}"
-        title = data?.title ?: ""
-        thumbnail_url = data?.coverImage
-        author = data?.author
-        description = data?.synopsis
-        genre = data?.genres?.mapNotNull { it.data?.name }?.joinToString() ?: ""
-        status = when (data?.status?.lowercase()) {
-            "ongoing", "on going" -> SManga.ONGOING
-            "completed", "complete" -> SManga.COMPLETED
-            "hiatus" -> SManga.ON_HIATUS
-            "cancelled", "canceled" -> SManga.CANCELLED
-            else -> SManga.UNKNOWN
+    fun toSManga(): SManga? {
+        val seriesData = data ?: return null
+        return SManga.create().apply {
+            url = "/series/${seriesData.slug ?: id}"
+            title = seriesData.title
+            thumbnail_url = seriesData.coverImage
+            author = seriesData.author
+            description = seriesData.synopsis
+            genre = seriesData.genres?.mapNotNull { it.data?.name }?.joinToString() ?: ""
+            status = when (seriesData.status?.lowercase()) {
+                "ongoing", "on going" -> SManga.ONGOING
+                "completed", "complete" -> SManga.COMPLETED
+                "hiatus" -> SManga.ON_HIATUS
+                "cancelled", "canceled" -> SManga.CANCELLED
+                else -> SManga.UNKNOWN
+            }
+            initialized = true
         }
-        initialized = true
     }
 }
 
 @Serializable
 class SeriesData(
     val slug: String? = null,
-    val title: String = "",
+    val title: String,
     val author: String? = null,
     val status: String? = null,
     val synopsis: String? = null,
@@ -56,7 +59,7 @@ class GenreData(
 
 @Serializable
 class GenreInfo(
-    val name: String = "",
+    val name: String,
 )
 
 @Serializable
@@ -69,7 +72,10 @@ class GenreItem(
     val id: Int,
     private val data: GenreInfo? = null,
 ) {
-    fun toPair(): Pair<String, String> = (data?.name ?: "") to id.toString()
+    fun toPair(): Pair<String, String>? {
+        val genreInfo = data ?: return null
+        return genreInfo.name to id.toString()
+    }
 }
 
 @Serializable

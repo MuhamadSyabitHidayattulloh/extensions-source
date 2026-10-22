@@ -94,7 +94,7 @@ abstract class VoraToon : KeiSource() {
 
         SMangaUpdate(
             manga = details?.await()?.parseAs<SeriesDetailResponse>()?.data?.toSManga() ?: manga,
-            chapters = chapterList?.await()?.parseAs<ChapterListResponse>()?.data?.map { it.toSChapter(slug) } ?: chapters,
+            chapters = chapterList?.await()?.parseAs<ChapterListResponse>()?.data?.mapNotNull { it.toSChapter(slug) } ?: chapters,
         )
     }
 
@@ -115,7 +115,7 @@ abstract class VoraToon : KeiSource() {
 
     private fun parseSeriesListResponse(response: Response): MangasPage {
         val result = response.parseAs<SeriesListResponse>()
-        val mangas = result.data.map { it.toSManga() }
+        val mangas = result.data.mapNotNull { it.toSManga() }
         val hasNextPage = result.meta?.let { (it.page ?: 0) < (it.lastPage ?: 0) } ?: false
         return MangasPage(mangas, hasNextPage)
     }
@@ -125,7 +125,7 @@ abstract class VoraToon : KeiSource() {
     override suspend fun fetchFilterData(): JsonElement = client.get("$apiUrl/genres").parseAs()
 
     override fun getFilterList(data: JsonElement?): FilterList {
-        val genres = data?.parseAs<GenreResponse>()?.data?.map { it.toPair() }
+        val genres = data?.parseAs<GenreResponse>()?.data?.mapNotNull { it.toPair() }
         return FilterList(
             buildList {
                 add(SortFilter())
