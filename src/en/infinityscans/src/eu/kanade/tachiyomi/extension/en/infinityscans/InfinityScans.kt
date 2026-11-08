@@ -40,6 +40,10 @@ abstract class InfinityScans : KeiSource() {
         get() = preferences.getString(PREF_SLUG_HASH, DEFAULT_SLUG_HASH) ?: DEFAULT_SLUG_HASH
         set(value) = preferences.edit().putString(PREF_SLUG_HASH, value).apply()
 
+    private var comicActionId: String
+        get() = preferences.getString(PREF_COMIC_ACTION_ID, DEFAULT_COMIC_ACTION_ID) ?: DEFAULT_COMIC_ACTION_ID
+        set(value) = preferences.edit().putString(PREF_COMIC_ACTION_ID, value).apply()
+
     override fun OkHttpClient.Builder.configureClient() = apply {
         addInterceptor(WebviewInterceptor(baseUrl))
         rateLimit(5)
@@ -193,20 +197,48 @@ abstract class InfinityScans : KeiSource() {
         val chapterId = chapter.url.substringAfterLast('/')
         val mangaId = chapter.url.split("/")[1]
 
-        val pageHeaders = headersBuilder()
-            .set("next-action", "603b9ae64dc53c5457f77cf6a4ea08b361e2e36b2f")
-            .build()
-
         val body = listOf(mangaId, chapterId).toJsonRequestBody()
         // Dummy slug for server to trigger empty set-cookie if expired, baseUrl alone doesn't.
         val pagesUrl = "$baseUrl/comic/$mangaId/dummy-slug/chapter/$chapterId"
 
-        val response = client.post(pagesUrl, pageHeaders, Fetch.DOCUMENT, body)
-        val pages = response.extractNextJs<List<PageEntryDto>>()
-        return pages?.mapIndexed { index, p ->
+        val pages = runCatching {
+            fetchPages(pagesUrl, comicActionId, body)
+        }.getOrElse {
+            val newActionId = extractComicActionId(pagesUrl) ?: DEFAULT_COMIC_ACTION_ID
+            comicActionId = newActionId
+            fetchPages(pagesUrl, newActionId, body)
+        }
+
+        return pages.mapIndexed { index, p ->
             Page(index, imageUrl = "https://$pageCdnHost/${p.path}")
-        } ?: emptyList()
+        }
     }
+
+    private suspend fun fetchPages(url: String, actionId: String, body: okhttp3.RequestBody): List<PageEntryDto> {
+        val pageHeaders = headersBuilder()
+            .set("next-action", actionId)
+            .build()
+
+        val response = client.post(url, pageHeaders, Fetch.DOCUMENT, body)
+        if (response.code == 404) {
+            error("Action ID expired: 404")
+        }
+        return response.extractNextJs<List<PageEntryDto>>() ?: emptyList()
+    }
+
+    private suspend fun extractComicActionId(chapterUrl: String): String? = runCatching {
+        val html = client.get(chapterUrl, Fetch.DOCUMENT).body.string()
+        val refMatch = REF_REGEX.find(html) ?: return null
+        val ref = refMatch.groupValues[1]
+
+        val chunkRegex = Regex("""(?:\\n|push\(\[1,")""" + ref + """:I\[\d+,\[(.*?)\]""")
+        val chunkMatch = chunkRegex.find(html) ?: return null
+        val chunkPath = CHUNK_PATH_REGEX.findAll(chunkMatch.groupValues[1]).lastOrNull()?.groupValues?.get(1)
+            ?: return null
+
+        val chunkJs = client.get("$baseUrl$chunkPath", Fetch.DOCUMENT).body.string()
+        ACTION_REGEX.findAll(chunkJs).firstOrNull()?.groupValues?.get(1)
+    }.getOrNull()
 
     override fun getImageRequest(page: Page): Request {
         val pageHeaders = headers.newBuilder().apply {
@@ -263,5 +295,11 @@ abstract class InfinityScans : KeiSource() {
         private const val DEFAULT_SLUG_HASH = "d806990541c8"
         private const val PREF_SLUG_HASH = "pref_slug_hash"
         private val HASH_REGEX = Regex("NEXT_REDIRECT.*https.+?-(\\w+);")
+
+        private const val DEFAULT_COMIC_ACTION_ID = "60610a8a90f941d06db8af699e17f246116e26badf"
+        private const val PREF_COMIC_ACTION_ID = "pref_comic_action_id"
+        private val REF_REGEX = Regex("""\\"\${'$'}L([0-9a-f]+)\\",null,\{\\"searchParamsObject\\":\{\},\\"title\\":""")
+        private val CHUNK_PATH_REGEX = Regex("""(/_next/static/chunks/[^\\"\?]+)""")
+        private val ACTION_REGEX = Regex("""createServerReference\)\("([a-f0-9]{40,})"""")
     }
 }
