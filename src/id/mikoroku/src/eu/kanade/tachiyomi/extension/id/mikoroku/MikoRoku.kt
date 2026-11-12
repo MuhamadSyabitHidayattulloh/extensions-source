@@ -9,28 +9,35 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import keiyoushi.annotation.Source
 import keiyoushi.network.Fetch
-import keiyoushi.network.fetch
 import keiyoushi.network.get
+import keiyoushi.network.post
 import keiyoushi.network.rateLimit
 import keiyoushi.source.KeiSource
+import keiyoushi.utils.array
 import keiyoushi.utils.firstInstanceOrNull
+import keiyoushi.utils.intOrNull
+import keiyoushi.utils.jsonInstance
+import keiyoushi.utils.obj
 import keiyoushi.utils.parseAs
+import keiyoushi.utils.stringOrNull
 import keiyoushi.utils.tryParse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
-import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.net.URLEncoder
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -42,14 +49,12 @@ abstract class MikoRoku : KeiSource() {
     override fun OkHttpClient.Builder.configureClient(): OkHttpClient.Builder = rateLimit(10, 1.seconds, 300.milliseconds)
         .readTimeout(30, TimeUnit.SECONDS)
 
-    private val chapterImages = ConcurrentHashMap<String, List<String>>()
-
     override suspend fun getPopularManga(page: Int): MangasPage = fetchCatalog().sortedByDescending { it.rating }.toMangasPage()
 
     override suspend fun getLatestUpdates(page: Int): MangasPage = fetchCatalog().toMangasPage()
 
     override suspend fun getSearchMangaList(page: Int, query: String, filters: FilterList): MangasPage {
-        val normalizedQuery = query.normalize()
+        val normalizedQuery = query.normalized()
         if (normalizedQuery.isEmpty() && query.isNotBlank()) return MangasPage(emptyList(), false)
 
         val sort = filters.firstInstanceOrNull<SortFilter>()?.state ?: 0
@@ -58,8 +63,8 @@ abstract class MikoRoku : KeiSource() {
         var entries = fetchCatalog()
         if (normalizedQuery.isNotEmpty()) {
             entries = entries.filter { entry ->
-                entry.title.normalize().contains(normalizedQuery) ||
-                    entry.altTitle.split(";").any { it.normalize().contains(normalizedQuery) }
+                entry.title.normalized().contains(normalizedQuery) ||
+                    entry.altTitle.split(";").any { it.normalized().contains(normalizedQuery) }
             }
         }
         if (genre != "Semua") {
@@ -103,7 +108,7 @@ abstract class MikoRoku : KeiSource() {
     }
 
     override fun getMangaUrl(manga: SManga): String {
-        val slug = slugFromMangaUrl(manga.url) ?: return baseUrl + manga.url
+        val slug = slugFromMangaUrl(manga.url) ?: manga.url
         return "$baseUrl/series/$slug"
     }
 
@@ -120,7 +125,6 @@ abstract class MikoRoku : KeiSource() {
         if (url.startsWith("/detail.html")) {
             return "$baseUrl$url".toHttpUrlOrNull()?.queryParameter("slug")
         }
-        // Bare slug (no leading slash, no extra path segments).
         if (!url.startsWith("/") && !url.contains("/")) {
             return url.takeIf { it.isNotBlank() }
         }
@@ -131,7 +135,7 @@ abstract class MikoRoku : KeiSource() {
         val fields = fetchFirestoreDoc(slug)?.fields.orEmpty()
         val entry = fetchCatalog().find { it.slug == slug }
         return SManga.create().apply {
-            url = "/series/$slug"
+            url = slug
             title = fields.getString("title").nonBlank()
                 ?: entry?.title
                 ?: throw Exception("Manga tidak ditemukan")
@@ -158,17 +162,8 @@ abstract class MikoRoku : KeiSource() {
         val byNum = sortedMapOf<Float, SChapter>(reverseOrder())
 
         addFromSiteApi(slug, title, byNum)
-        if (byNum.isEmpty()) {
-            val short = title.substringBefore("~").substringBefore("(").trim()
-            if (short.length >= 4 && short != title) addFromSiteApi(slug, short, byNum)
-        }
         if (byNum.isEmpty()) addFromListen(slug, byNum)
-        if (byNum.isEmpty()) {
-            addFromBloggerFeed(BLOGGER_SV1, slug, title, byNum)
-        }
-        if (byNum.isEmpty()) {
-            addFromBloggerFeed(BLOGGER_SV2, slug, title, byNum)
-        }
+
         return byNum.values.toList()
     }
 
@@ -187,13 +182,19 @@ abstract class MikoRoku : KeiSource() {
             val num = c.num.toFloatOrNull()
                 ?: c.title.chapterNumber().toFloat().takeIf { it >= 0 } ?: continue
             val images = c.images.map { it.replace("/s1600/", "/s0/") }
-            if (images.isNotEmpty()) chapterImages["$slug|$num"] = images
             if (!byNum.containsKey(num)) {
                 byNum[num] = SChapter.create().apply {
-                    this.url = "/series/$slug/chapter/$num"
-                    name = c.title.ifBlank { "Chapter $num" }
+                    url = "/series/$slug/chapter/$num"
+                    name = c.title.ifBlank { "Chapter ${num.toString().removeSuffix(".0")}" }
                     chapter_number = num
                     date_upload = Instant.tryParse(c.createdAt)
+                    if (images.isNotEmpty()) {
+                        memo = buildJsonObject {
+                            putJsonArray("images") {
+                                for (img in images) add(JsonPrimitive(img))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -203,90 +204,66 @@ abstract class MikoRoku : KeiSource() {
         val parent = "$FIRESTORE_DB/documents/manga/$slug"
         val docs = firestoreListenDocs(parent, "chapters")
         for (doc in docs) {
-            val f = doc.optJSONObject("fields") ?: continue
-            if (fsBool(f, "isDraft")) continue
-            val docId = doc.optString("name").substringAfterLast("/")
-            val numRaw = fsStr(f, "num").ifBlank { fsStr(f, "chapter") }
-                .ifBlank { docId }.ifBlank { fsStr(f, "order") }
-                .ifBlank { fsStr(f, "title") }
+            val f = doc.fields
+            if (f.getBoolean("isDraft") == true) continue
+            val docId = doc.name.substringAfterLast("/")
+            val numRaw = f.getString("num").orEmpty().ifBlank { f.getString("chapter").orEmpty() }
+                .ifBlank { docId }.ifBlank { f.getString("order").orEmpty() }
+                .ifBlank { f.getString("title").orEmpty() }
             val num = numRaw.toFloatOrNull()
-                ?: fsStr(f, "title").chapterNumber().toFloat().takeIf { it >= 0 } ?: continue
-            val images = fsStrList(f, "images").map { it.replace("/s1600/", "/s0/") }
-            if (images.isNotEmpty()) chapterImages["$slug|$num"] = images
+                ?: f.getString("title").orEmpty().chapterNumber().toFloat().takeIf { it >= 0 } ?: continue
+            val images = f.getStringList("images").map { it.replace("/s1600/", "/s0/") }
             if (!byNum.containsKey(num)) {
-                val dateMillis = f.optJSONObject("date")?.optString("integerValue")
-                    ?.toLongOrNull() ?: 0L
+                val dateMillis = f.getLong("date") ?: 0L
                 byNum[num] = SChapter.create().apply {
                     url = "/series/$slug/chapter/$num"
-                    name = fsStr(f, "title").ifBlank { "Chapter $num" }
+                    name = f.getString("title").nonBlank() ?: "Chapter ${num.toString().removeSuffix(".0")}"
                     chapter_number = num
                     date_upload = dateMillis
+                    if (images.isNotEmpty()) {
+                        memo = buildJsonObject {
+                            putJsonArray("images") {
+                                for (img in images) add(JsonPrimitive(img))
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    private suspend fun addFromBloggerFeed(
-        feedBase: String,
-        slug: String,
-        title: String,
-        byNum: MutableMap<Float, SChapter>,
-    ) {
-        searchBlogger("$feedBase/feeds/posts/default", title, 500)
-            .mapNotNull { it.toSChapter(slug, title) }
-            .forEach { ch ->
-                val num = ch.name.chapterNumber().toFloat().takeIf { it >= 0 } ?: return@forEach
-                ch.chapter_number = num
-                if (!byNum.containsKey(num)) byNum[num] = ch
-            }
-    }
-
-    // Firestore WebChannel Listen: the same transport the site's own Firebase
-    // SDK uses. The REST API answers 429 for this project, Listen works
-    // without an API key. Open POST returns the session id in the "c" message
-    // and the gsessionid in the X-HTTP-Session-Id response header; the
-    // backchannel GET streams length-prefixed JSON frames with the documents.
     private suspend fun firestoreListenDocs(
         parent: String,
         collectionId: String,
-    ): List<JSONObject> {
-        val docs = mutableListOf<JSONObject>()
+    ): List<FirestoreDoc> {
+        val docs = mutableListOf<FirestoreDoc>()
         try {
             val dbEnc = URLEncoder.encode(FIRESTORE_DB, "UTF-8")
-            val reqJson = JSONObject()
-                .put("database", FIRESTORE_DB)
-                .put(
-                    "addTarget",
-                    JSONObject()
-                        .put(
-                            "query",
-                            JSONObject()
-                                .put(
-                                    "structuredQuery",
-                                    JSONObject()
-                                        .put(
-                                            "from",
-                                            JSONArray().put(
-                                                JSONObject().put("collectionId", collectionId),
-                                            ),
-                                        )
-                                        .put(
-                                            "orderBy",
-                                            JSONArray().put(
-                                                JSONObject()
-                                                    .put(
-                                                        "field",
-                                                        JSONObject().put("fieldPath", "__name__"),
-                                                    )
-                                                    .put("direction", "ASCENDING"),
-                                            ),
-                                        ),
-                                )
-                                .put("parent", parent),
-                        )
-                        .put("targetId", 2),
-                )
-                .toString()
+            val reqJson = buildJsonObject {
+                put("database", FIRESTORE_DB)
+                putJsonObject("addTarget") {
+                    putJsonObject("query") {
+                        putJsonObject("structuredQuery") {
+                            putJsonArray("from") {
+                                addJsonObject {
+                                    put("collectionId", collectionId)
+                                }
+                            }
+                            putJsonArray("orderBy") {
+                                addJsonObject {
+                                    putJsonObject("field") {
+                                        put("fieldPath", "__name__")
+                                    }
+                                    put("direction", "ASCENDING")
+                                }
+                            }
+                        }
+                        put("parent", parent)
+                    }
+                    put("targetId", 2)
+                }
+            }.toString()
+
             val initHeaders =
                 "X-Goog-Api-Client:gl-js/ fire/11.0.2\r\n" +
                     "Content-Type:text/plain\r\n" +
@@ -296,89 +273,97 @@ abstract class MikoRoku : KeiSource() {
             val rid = 10000 + (Math.random() * 90000).toInt()
             val openUrl = "$FIRESTORE_LISTEN?VER=8&database=$dbEnc&RID=$rid" +
                 "&CVER=22&X-HTTP-Session-Id=gsessionid&zx=${randomBase36(12)}&t=1"
-            val session = withContext(Dispatchers.IO) {
-                val req = Request.Builder().url(openUrl)
-                    .post(openBody.toRequestBody("text/plain".toMediaType()))
-                    .header("X-Client-Protocol", "webchannel")
-                    .fetch(Fetch.NONE)
-                    .build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return@withContext Pair(null, null)
-                    val g = resp.header("X-HTTP-Session-Id")
-                    val b = resp.body?.string() ?: ""
-                    val m = Regex("\"c\",\"([A-Za-z0-9_\\-]+)\"").find(b)
-                    Pair(m?.groupValues?.getOrNull(1), g)
-                }
+
+            val postHeaders = headers.newBuilder()
+                .set("X-Client-Protocol", "webchannel")
+                .build()
+            val session = client.post(
+                openUrl,
+                postHeaders,
+                Fetch.NONE,
+                openBody.toRequestBody("text/plain".toMediaType()),
+                ensureSuccess = false,
+            ).use { resp ->
+                if (!resp.isSuccessful) return emptyList()
+                val g = resp.header("X-HTTP-Session-Id")
+                val b = resp.body.string()
+                val m = Regex("\"c\",\"([A-Za-z0-9_\\-]+)\"").find(b)
+                Pair(m?.groupValues?.getOrNull(1), g)
             }
+
             val sid = session.first
             val gsession = session.second
             if (sid.isNullOrBlank() || gsession.isNullOrBlank()) return docs
+
             val backUrl = "$FIRESTORE_LISTEN?gsessionid=$gsession&VER=8&database=$dbEnc" +
                 "&RID=rpc&SID=$sid&AID=0&CI=0&TYPE=xmlhttp&zx=${randomBase36(12)}&t=1"
-            withContext(Dispatchers.IO) {
-                val req = Request.Builder().url(backUrl)
-                    .header("X-Client-Protocol", "webchannel")
-                    .fetch(Fetch.NONE)
-                    .build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return@withContext
-                    val src = resp.body?.source() ?: return@withContext
-                    var done = false
-                    while (!done) {
-                        val lenLine = try {
-                            var line = src.readUtf8LineStrict()
-                            while (line.isBlank()) line = src.readUtf8LineStrict()
-                            line
-                        } catch (e: Exception) {
-                            break
-                        }
-                        val len = lenLine.trim().toLongOrNull() ?: break
-                        if (len <= 0 || len > 20_000_000) break
-                        val frame = try {
-                            src.readUtf8(len)
-                        } catch (e: Exception) {
-                            break
-                        }
-                        try {
-                            val arr = JSONArray(frame)
-                            for (i in 0 until arr.length()) {
-                                val msg = arr.optJSONArray(i) ?: continue
-                                if (msg.length() < 2) continue
-                                val payload = msg.opt(1) ?: continue
-                                val items = when (payload) {
-                                    is JSONArray -> payload
-                                    is JSONObject -> JSONArray().put(payload)
-                                    else -> continue
-                                }
-                                for (j in 0 until items.length()) {
-                                    val item = items.optJSONObject(j) ?: continue
-                                    if (item.has("documentChange")) {
-                                        val doc = item.optJSONObject("documentChange")
-                                            ?.optJSONObject("document")
-                                        if (doc != null) docs += doc
-                                    } else if (item.has("targetChange")) {
-                                        val tc = item.optJSONObject("targetChange")
-                                        if (tc?.optString("targetChangeType") == "CURRENT") {
-                                            val ids = tc.optJSONArray("targetIds")
-                                            if (ids != null) {
-                                                for (k in 0 until ids.length()) {
-                                                    if (ids.optInt(k) == 2) done = true
-                                                }
-                                            }
-                                        }
-                                    } else if (item.has("__sm__")) {
-                                        done = true
+            val getHeaders = headers.newBuilder()
+                .set("X-Client-Protocol", "webchannel")
+                .build()
+
+            client.get(
+                backUrl,
+                getHeaders,
+                Fetch.NONE,
+                ensureSuccess = false,
+            ).use { resp ->
+                if (!resp.isSuccessful) return docs
+                val src = resp.body.source()
+                var done = false
+                while (!done) {
+                    val lenLine = try {
+                        var line = src.readUtf8LineStrict()
+                        while (line.isBlank()) line = src.readUtf8LineStrict()
+                        line
+                    } catch (e: Exception) {
+                        break
+                    }
+                    val len = lenLine.trim().toLongOrNull() ?: break
+                    if (len <= 0 || len > 20_000_000) break
+                    val frame = try {
+                        src.readUtf8(len)
+                    } catch (e: Exception) {
+                        break
+                    }
+                    try {
+                        val arr = jsonInstance.parseToJsonElement(frame).array
+                        for (msg in arr) {
+                            val msgArr = msg as? JsonArray ?: continue
+                            if (msgArr.size < 2) continue
+                            val payload = msgArr[1]
+                            val items = when (payload) {
+                                is JsonArray -> payload
+                                is JsonObject -> listOf(payload)
+                                else -> continue
+                            }
+                            for (item in items) {
+                                val obj = item as? JsonObject ?: continue
+                                val docChange = obj["documentChange"]?.obj
+                                if (docChange != null) {
+                                    val doc = docChange["document"]
+                                    if (doc != null) {
+                                        docs += doc.parseAs<FirestoreDoc>()
                                     }
+                                } else if (obj.containsKey("targetChange")) {
+                                    val tc = obj["targetChange"]?.obj
+                                    if (tc?.get("targetChangeType")?.stringOrNull == "CURRENT") {
+                                        val ids = tc["targetIds"] as? JsonArray
+                                        if (ids != null && ids.any { it.intOrNull == 2 }) {
+                                            done = true
+                                        }
+                                    }
+                                } else if (obj.containsKey("__sm__")) {
+                                    done = true
                                 }
                             }
-                        } catch (e: Exception) {
-                            // Broken frame: skip it and read the next one.
                         }
+                    } catch (e: Exception) {
+                        // Broken frame: skip it and read the next one.
                     }
                 }
             }
         } catch (e: Exception) {
-            // Listen failed: the caller falls back to the Blogger feed.
+            // Listen failed
         }
         return docs
     }
@@ -390,34 +375,17 @@ abstract class MikoRoku : KeiSource() {
         return sb.toString()
     }
 
-    private fun fsStr(f: JSONObject, name: String): String = f.optJSONObject(name)?.optString("stringValue") ?: ""
-
-    private fun fsBool(f: JSONObject, name: String): Boolean = f.optJSONObject(name)?.optBoolean("booleanValue") ?: false
-
-    private fun fsStrList(f: JSONObject, name: String): List<String> {
-        val values = f.optJSONObject(name)?.optJSONObject("arrayValue")
-            ?.optJSONArray("values") ?: return emptyList()
-        val out = mutableListOf<String>()
-        for (i in 0 until values.length()) {
-            val s = values.getJSONObject(i).optString("stringValue")
-            if (s.isNotBlank()) out += s
-        }
-        return out
-    }
-
     override suspend fun getPageList(chapter: SChapter): List<Page> {
+        val memoImages = chapter.memo["images"]?.array?.mapNotNull { it.stringOrNull }
+        if (!memoImages.isNullOrEmpty()) {
+            return memoImages.toPages()
+        }
+
         SERIES_CHAPTER_URL_REGEX.find(chapter.url)?.let { match ->
             val slug = match.groupValues[1]
             val num = match.groupValues[2].toFloatOrNull()
                 ?: throw Exception("Unsupported chapter URL: ${chapter.url}")
-            chapterImages["$slug|$num"]?.let { return it.toPages() }
-
-            val entry = fetchCatalog().find { it.slug == slug }
-            if (entry != null) fetchChapterList(slug, entry.title)
-            chapterImages["$slug|$num"]?.let { return it.toPages() }
-
-            val title = entry?.title ?: return emptyList()
-            return fetchBloggerChapterPages(title, chapter.name)
+            return fetchSeriesChapterPages(slug, num)
         }
 
         POST_URL_REGEX.find(chapter.url)?.let { match ->
@@ -427,23 +395,58 @@ abstract class MikoRoku : KeiSource() {
         CHAPTER_URL_REGEX.find(chapter.url)?.let { match ->
             val slug = match.groupValues[1]
             val key = match.groupValues[2]
-            fetchListenChapterImages(slug, key)?.let { return it.toPages() }
-
-            val title = fetchCatalog().find { it.slug == slug }?.title ?: return emptyList()
-            return fetchBloggerChapterPages(title, chapter.name)
+            return fetchListenChapterImages(slug, key)?.toPages() ?: emptyList()
         }
 
         throw Exception("Unsupported chapter URL: ${chapter.url}")
+    }
+
+    private suspend fun fetchSeriesChapterPages(slug: String, num: Float): List<Page> {
+        val entry = fetchCatalog().find { it.slug == slug }
+        val title = entry?.title ?: slug
+
+        val url = "$baseUrl/api/blogger/chapters?title=${URLEncoder.encode(title, "UTF-8")}"
+        try {
+            val chapters = client.get(url, Fetch.XHR).parseAs<ApiChaptersResponse>().chapters
+            for (c in chapters) {
+                val cNum = c.num.toFloatOrNull()
+                    ?: c.title.chapterNumber().toFloat().takeIf { it >= 0 } ?: continue
+                if (cNum == num && c.images.isNotEmpty()) {
+                    return c.images.map { it.replace("/s1600/", "/s0/") }.toPages()
+                }
+            }
+        } catch (e: Exception) {
+            // Fall back to Listen
+        }
+
+        val parent = "$FIRESTORE_DB/documents/manga/$slug"
+        val docs = firestoreListenDocs(parent, "chapters")
+        for (doc in docs) {
+            val f = doc.fields
+            if (f.getBoolean("isDraft") == true) continue
+            val docId = doc.name.substringAfterLast("/")
+            val numRaw = f.getString("num").orEmpty().ifBlank { f.getString("chapter").orEmpty() }
+                .ifBlank { docId }.ifBlank { f.getString("order").orEmpty() }
+                .ifBlank { f.getString("title").orEmpty() }
+            val docNum = numRaw.toFloatOrNull()
+                ?: f.getString("title").orEmpty().chapterNumber().toFloat().takeIf { it >= 0 } ?: continue
+            if (docNum == num) {
+                val images = f.getStringList("images").map { it.replace("/s1600/", "/s0/") }
+                if (images.isNotEmpty()) return images.toPages()
+            }
+        }
+
+        return emptyList()
     }
 
     private suspend fun fetchListenChapterImages(slug: String, key: String): List<String>? {
         val parent = "$FIRESTORE_DB/documents/manga/$slug"
         val docs = firestoreListenDocs(parent, "chapters")
         for (doc in docs) {
-            if (doc.optString("name").substringAfterLast("/") != key) continue
-            val f = doc.optJSONObject("fields") ?: continue
-            if (fsBool(f, "isDraft")) continue
-            val images = fsStrList(f, "images").map { it.replace("/s1600/", "/s0/") }
+            if (doc.name.substringAfterLast("/") != key) continue
+            val f = doc.fields
+            if (f.getBoolean("isDraft") == true) continue
+            val images = f.getStringList("images").map { it.replace("/s1600/", "/s0/") }
             if (images.isNotEmpty()) return images
         }
         return null
@@ -455,17 +458,6 @@ abstract class MikoRoku : KeiSource() {
             .build()
 
         return client.get(url, Fetch.XHR).parseAs<BloggerEntryResponse>().entry.imageUrls().toPages()
-    }
-
-    private suspend fun fetchBloggerChapterPages(mangaTitle: String, chapterName: String): List<Page> {
-        val label = chapterName.chapterLabel() ?: return emptyList()
-        val number = label.chapterNumber()
-
-        return searchBlogger("https://www.mikodrive.my.id/feeds/posts/default", "$mangaTitle $label", 5)
-            .firstOrNull { it.chapterLabel(mangaTitle)?.chapterNumber() == number }
-            ?.imageUrls()
-            .orEmpty()
-            .toPages()
     }
 
     private fun List<String>.toPages(): List<Page> = mapIndexed { index, url -> Page(index, imageUrl = url) }
@@ -494,40 +486,6 @@ abstract class MikoRoku : KeiSource() {
         return response.parseAs<FirestoreMap>()
     }
 
-    private suspend fun searchBlogger(feedUrl: String, query: String, maxResults: Int): List<BloggerEntry> {
-        searchBloggerWithQuery(feedUrl, query, maxResults).takeIf { it.isNotEmpty() }?.let { return it }
-
-        // Blogger's q= doesn't match "2" with "II", so retry with the
-        // trailing number/roman numeral stripped (e.g. "isekai furin 2" -> "isekai furin").
-        val stripped = query.replace(Regex("\\s+(\\d+|[ivxl]+)$", RegexOption.IGNORE_CASE), "").trim()
-        if (stripped.isNotBlank() && stripped != query) {
-            searchBloggerWithQuery(feedUrl, stripped, maxResults).takeIf { it.isNotEmpty() }?.let { return it }
-        }
-
-        // For conversion mismatches (e.g. "konten" vs "tamashiten"),
-        // trying progressively shorter queries. The titleWordsMatch filter in toSChapter will reject false positives.
-        val words = query.split(Regex("\\s+")).filter { it.isNotBlank() }
-        for (n in listOf(4, 3)) {
-            if (words.size > n) {
-                val short = words.take(n).joinToString(" ")
-                searchBloggerWithQuery(feedUrl, short, maxResults).takeIf { it.isNotEmpty() }?.let { return it }
-            }
-        }
-        return emptyList()
-    }
-
-    private suspend fun searchBloggerWithQuery(feedUrl: String, query: String, maxResults: Int): List<BloggerEntry> {
-        val url = feedUrl.toHttpUrl().newBuilder()
-            .addQueryParameter("alt", "json")
-            .addQueryParameter("max-results", maxResults.toString())
-            .addQueryParameter("q", query)
-            .build()
-
-        return client.get(url, Fetch.XHR).parseAs<BloggerFeedResponse>().feed.entry
-    }
-
-    private fun String.normalize(): String = normalized()
-
     private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }
 
     private class SortFilter :
@@ -546,9 +504,6 @@ abstract class MikoRoku : KeiSource() {
         private const val FIRESTORE_DB = "projects/mikoroku/databases/(default)"
         private const val FIRESTORE_LISTEN =
             "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel"
-
-        private const val BLOGGER_SV1 = "https://www.mikodrive.my.id"
-        private const val BLOGGER_SV2 = "https://www.yomidays.my.id"
 
         private val GENRES = listOf(
             "Semua", "Action", "Adult", "Adventure", "Cheating", "Comedy",
